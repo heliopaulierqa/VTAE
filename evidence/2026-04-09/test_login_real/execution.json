@@ -1,0 +1,46 @@
+{
+  "test_name": "test_login_real",
+  "status": "PASSOU",
+  "started_at": "2026-04-09T19:52:15.995557",
+  "finished_at": "2026-04-09T19:52:19.221713",
+  "duration_seconds": 3.23,
+  "summary": {
+    "total_flows": 1,
+    "total_steps": 3,
+    "passed_steps": 3,
+    "failed_steps": 0
+  },
+  "flows": [
+    {
+      "flow_name": "LoginFlow",
+      "success": true,
+      "total_duration_ms": 3175.0,
+      "steps": [
+        {
+          "step_id": "L01",
+          "success": true,
+          "duration_ms": 1250.7,
+          "screenshot": "evidence\\2026-04-09\\test_login_real\\L01_usuario.png",
+          "error": null,
+          "timestamp": "2026-04-09T19:52:17.293850"
+        },
+        {
+          "step_id": "L02",
+          "success": true,
+          "duration_ms": 1257.9,
+          "screenshot": "evidence\\2026-04-09\\test_login_real\\L02_senha.png",
+          "error": null,
+          "timestamp": "2026-04-09T19:52:18.552926"
+        },
+        {
+          "step_id": "L03",
+          "success": true,
+          "duration_ms": 666.3,
+          "screenshot": "evidence\\2026-04-09\\test_login_real\\L03_entrar.png",
+          "error": null,
+          "timestamp": "2026-04-09T19:52:19.220728"
+        }
+      ]
+    }
+  ]
+}

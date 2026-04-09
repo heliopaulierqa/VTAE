@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: vtae
+Version: 0.2.0
+Summary: Visual Test Automation Engine
+Requires-Python: >=3.10
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4; extra == "dev"
+Requires-Dist: pytest-cov>=4.1; extra == "dev"

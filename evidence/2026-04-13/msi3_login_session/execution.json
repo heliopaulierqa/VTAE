@@ -1,9 +1,9 @@
 {
   "test_name": "msi3_login_session",
   "status": "PASSOU",
-  "started_at": "2026-04-13T09:11:58.526087",
-  "finished_at": "2026-04-13T09:12:08.256587",
-  "duration_seconds": 9.73,
+  "started_at": "2026-04-13T09:46:55.266484",
+  "finished_at": "2026-04-13T09:47:05.037487",
+  "duration_seconds": 9.77,
   "summary": {
     "total_flows": 1,
     "total_steps": 5,
@@ -14,47 +14,47 @@
     {
       "flow_name": "LoginFlowMsi3",
       "success": true,
-      "total_duration_ms": 7205.9,
+      "total_duration_ms": 7236.2,
       "steps": [
         {
           "step_id": "MW01",
           "success": true,
-          "duration_ms": 1206.9,
+          "duration_ms": 1283.0,
           "screenshot": "evidence\\2026-04-13\\msi3_login_session\\MW01_pagina.png",
           "error": null,
-          "timestamp": "2026-04-13T09:12:02.253692"
+          "timestamp": "2026-04-13T09:46:59.080510"
         },
         {
           "step_id": "MW02",
           "success": true,
-          "duration_ms": 715.9,
+          "duration_ms": 783.6,
           "screenshot": "evidence\\2026-04-13\\msi3_login_session\\MW02_usuario.png",
           "error": null,
-          "timestamp": "2026-04-13T09:12:02.970245"
+          "timestamp": "2026-04-13T09:46:59.864678"
         },
         {
           "step_id": "MW03",
           "success": true,
-          "duration_ms": 727.6,
+          "duration_ms": 725.6,
           "screenshot": "evidence\\2026-04-13\\msi3_login_session\\MW03_senha.png",
           "error": null,
-          "timestamp": "2026-04-13T09:12:03.698762"
+          "timestamp": "2026-04-13T09:47:00.591074"
         },
         {
           "step_id": "MW04",
           "success": true,
-          "duration_ms": 4454.7,
+          "duration_ms": 4347.7,
           "screenshot": "evidence\\2026-04-13\\msi3_login_session\\MW04_submetido.png",
           "error": null,
-          "timestamp": "2026-04-13T09:12:08.154281"
+          "timestamp": "2026-04-13T09:47:04.939560"
         },
         {
           "step_id": "MW05",
           "success": true,
-          "duration_ms": 100.8,
+          "duration_ms": 96.3,
           "screenshot": "evidence\\2026-04-13\\msi3_login_session\\MW05_principal.png",
           "error": null,
-          "timestamp": "2026-04-13T09:12:08.255965"
+          "timestamp": "2026-04-13T09:47:05.036661"
         }
       ]
     }

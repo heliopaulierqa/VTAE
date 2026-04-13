@@ -1,153 +1,262 @@
-VTAE — Visual Test Automation Engine
+# VTAE — Visual Test Automation Engine
 
-Automação de testes via visão computacional para sistemas legados.
+> Automação de testes via visão computacional para sistemas desktop e web.
 
-Show Image
-Show Image
-Show Image
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![Versão](https://img.shields.io/badge/versão-0.2.0-purple)
+![Testes](https://img.shields.io/badge/testes-32%20passando-green)
 
-O que é o VTAE
-O VTAE é um framework de automação de testes construído sobre visão computacional. Em vez de depender de seletores HTML ou APIs do sistema, ele interage com a tela como um usuário humano: localiza elementos por imagem, clica, digita e captura evidências em cada etapa.
-Ideal para sistemas legados onde não há acesso ao código-fonte ou a APIs de automação.
+---
 
-Instalação
-Dependências Python
-bashpip install opencv-python pyautogui pillow numpy
+## O que é o VTAE
 
-# Verificar instalação
-python -c "import cv2, pyautogui, numpy; print('ok')"
-Dependências do projeto (modo desenvolvimento)
-bashpip install pytest pytest-cov
+O VTAE é um framework de automação de testes que combina visão computacional e controle de browser. Ele interage com sistemas como um usuário humano — localiza elementos por imagem ou seletor CSS, clica, digita e captura evidências em cada etapa.
 
-# Rodar testes unitários
-PYTHONPATH=. python -m pytest vtae/tests/unit/ -v
+Ideal para:
+- Sistemas legados desktop sem API de automação
+- Sistemas web complexos como Oracle APEX
+- Ambientes onde Playwright e OpenCV precisam trabalhar juntos
 
-Windows (PowerShell): substitua PYTHONPATH=. por $env:PYTHONPATH=".";
+---
 
+## Instalação
 
-Estrutura do projeto
+```bash
+# dependências
+pip install -r requirements.txt
+
+# instalar o projeto
+pip install -e .
+
+# instalar o browser (só na primeira vez)
+playwright install chromium
+```
+
+> **Windows (PowerShell):** use `$env:PYTHONPATH="."` no lugar de `PYTHONPATH=.`
+
+---
+
+## Estrutura do projeto
+
+```
 vtae/
 ├── core/
-│   ├── base_runner.py      # contrato abstrato do runner
-│   ├── context.py          # FlowContext — contexto compartilhado
-│   └── result.py           # StepResult e FlowResult
-├── flows/
-│   ├── login_flow.py       # fluxo de login
-│   ├── admissao_flow.py    # fluxo de admissão
-│   └── suprimentos_flow.py
+│   ├── base_runner.py       # contrato abstrato do runner
+│   ├── context.py           # FlowContext — contexto compartilhado
+│   ├── result.py            # StepResult e FlowResult
+│   ├── observer.py          # logs, evidências e relatório HTML
+│   └── report_generator.py  # gerador de relatório HTML
+├── flows/                   # lógica dos fluxos de teste
 ├── runners/
-│   └── opencv_runner.py    # runner real (visão computacional)
-├── components/
-│   └── login_component.py  # bloco reutilizável com validação
-├── configs/
-│   └── sislab/
-│       └── login_config.py
-├── legacy/
-│   └── login.py            # código antigo isolado
-├── dsl/
-│   └── interpreter.py      # executa testes escritos em YAML
-├── cli/
-│   └── run.py              # interface de linha de comando
+│   ├── opencv_runner.py     # runner desktop (visão computacional)
+│   └── playwright_runner.py # runner web (browser)
+├── components/              # blocos reutilizáveis
+├── configs/                 # credenciais por sistema
+├── legacy/                  # código antigo isolado
+├── dsl/                     # interpreter YAML (Fase 5)
+├── cli/                     # linha de comando (Fase 6)
 └── tests/
-    ├── conftest.py         # fixtures compartilhadas
-    ├── unit/               # testes sem tela real (32 testes)
-    └── integration/        # testes com sistema real
+    ├── conftest.py          # fixtures compartilhadas
+    ├── unit/                # testes sem tela real (32 testes)
+    └── integration/         # testes com sistema real
+templates/                   # recortes de tela por sistema
+evidence/                    # screenshots e relatórios por execução
+```
 
-Como usar
-1. Testes unitários (sem tela real)
-bash# Rodar todos os testes unitários
-PYTHONPATH=. python -m pytest vtae/tests/unit/ -v
+---
 
-# Com relatório de cobertura
-PYTHONPATH=. python -m pytest vtae/tests/unit/ --cov=vtae
-2. Teste de integração (com sistema real)
-bash# 1. Abra o sistema alvo na tela
-# 2. Garanta que os templates estão em templates/sislab/
-# 3. Execute:
-PYTHONPATH=. python -m pytest vtae/tests/integration/ -v -s
+## Como usar
 
-O flag -s mostra os prints em tempo real — útil para acompanhar a execução.
+### Testes unitários (sem tela real)
 
-3. Via CLI
-bashpython -m vtae.cli.run run --all
+```bash
+python -m pytest vtae/tests/unit/ -v
+```
+
+### Testes de integração (com sistema real)
+
+```bash
+# desktop
+python -m pytest vtae/tests/integration/test_login_real.py -v -s
+
+# web
+python -m pytest vtae/tests/integration/test_msi3.py -v -s
+
+# todos
+python -m pytest vtae/tests/integration/ -v -s
+```
+
+### Via CLI
+
+```bash
+python -m vtae.cli.run run --all
 python -m vtae.cli.run run --module admissao
 python -m vtae.cli.run run --test login
-4. Via DSL (YAML)
-Crie um arquivo em tests_yaml/ com a seguinte estrutura:
-yaml# tests_yaml/login_admissao.yaml
-flow: admissao
-steps:
-  - action: login
-  - action: click
-    template: templates/sislab/admissao/btn_modulo.png
-  - action: wait
-    template: templates/sislab/admissao/tela_admissao.png
-  - action: screenshot
-    name: admissao/evidencia_01.png
+```
 
-FlowContext — conceito central
-O FlowContext é o objeto que circula por todos os flows. Em vez de passar runner, config, user, password separadamente em cada método, tudo fica encapsulado em um único contexto:
-pythonfrom vtae.runners.opencv_runner import OpenCVRunner
-from vtae.core.context import FlowContext
-from vtae.configs.sislab.login_config import LoginConfigSisLab
+---
+
+## Runners disponíveis
+
+### OpenCVRunner — desktop
+
+Usa visão computacional para encontrar e clicar em elementos na tela.
+O parâmetro `template` é um caminho para uma imagem `.png` recortada do elemento.
+
+```python
+from vtae.runners.opencv_runner import OpenCVRunner
 
 runner = OpenCVRunner(confidence=0.8)
-ctx = FlowContext(
-    runner=runner,
-    config=LoginConfigSisLab,
-    evidence_dir="evidence/",
-)
+ctx = FlowContext(runner=runner, config=LoginConfigSisLab)
+LoginFlow().execute(ctx, observer=observer)
+```
 
-# ctx.user      → "admin"  (vem do config)
-# ctx.password  → "123"
-# ctx.runner    → instância do OpenCVRunner
+**Templates** — salve os recortes em `templates/sistema/modulo/`:
 
-Capturar templates
-O OpenCVRunner localiza elementos na tela comparando com imagens de referência (templates). Para criar os templates:
-
-Abra o sistema alvo (ex: SisLab)
-Use a ferramenta de recorte — Win + Shift + S no Windows
-Recorte apenas o elemento: botão, campo, ícone — sem fundo desnecessário
-Salve como .png na pasta correta:
-
+```
 templates/
 └── sislab/
     └── login/
-        ├── btn_usuario.png
-        ├── btn_senha.png
-        └── btn_entrar.png
+        ├── campo_usuario.png   # recorte do campo usuário
+        ├── campo_senha.png     # recorte do campo senha
+        └── btn_entrar.png      # recorte do botão entrar
+```
 
-Dica: quanto menor e mais específico o recorte, menos falsos positivos.
+> **Dica:** recorte com bordas e contexto ao redor. Quanto mais único o recorte, menos falsos positivos.
 
+### PlaywrightRunner — web
 
-Convenção de IDs de steps
-PrefixoFlowL01, L02...LoginFlowA01, A02...AdmissaoFlowS01, S02...SuprimentosFlow
-Os IDs aparecem nos logs, nos nomes dos screenshots de evidência e nos relatórios de falha.
+Usa seletores CSS para interagir com sistemas no browser.
 
-Status das fases
-#FaseStatus1Consolidação (estrutura de pastas)✅ Concluída2Flows (Login, Admissão, Suprimentos)✅ Concluída3Robustez (retry, timeout, safe_click)🟡 Em andamento4Observabilidade (logs, evidências, métricas)🔜 Planejada5DSL — testes em YAML🟣 Estrutura criada6CLI — execução por terminal🟣 Estrutura criada7CI/CD — pipeline automático🔜 Planejada8Interface gráfica (opcional)🔜 Planejada
+```python
+from vtae.runners.playwright_runner import PlaywrightRunner
 
-Changelog
-v0.2.0
+runner = PlaywrightRunner(url="https://sistema.interno/login", headless=False)
+ctx = FlowContext(runner=runner, config=LoginConfigWeb)
+LoginFlowWeb().execute(ctx, observer=observer)
+```
 
-BaseRunner, FlowContext, StepResult, FlowResult
-LoginFlow, AdmissaoFlow, SuprimentosFlow com steps tipados
-OpenCVRunner — runner real com visão computacional
-DSL interpreter para testes em YAML
-CLI: vtae run --all / --module / --test
-32 testes unitários com runner mockado
-pyproject.toml, Makefile, CHANGELOG.md
+> **Oracle APEX:** para elementos problemáticos, combine Playwright (navegação) com OpenCV (cliques específicos).
 
-v0.1.0
+---
 
-Estrutura inicial de pastas
-LoginFlow, AdmissaoFlow, SuprimentosFlow (esqueletos)
-LoginConfigSisLab
+## Observabilidade
 
+Cada execução gera automaticamente três arquivos em `evidence/YYYY-MM-DD/nome_teste/`:
 
-Próximos passos
+| Arquivo | Conteúdo |
+|---|---|
+| `execution.log` | Log estruturado com timestamps |
+| `execution.json` | Dados estruturados de todos os steps |
+| `report.html` | Relatório visual com screenshots — abra no browser |
 
- Fase 3 — Robustez: implementar retry real no OpenCVRunner
- Fase 4 — Observabilidade: logs estruturados por step, métricas de execução
- Capturar templates reais do SisLab
- Criar primeiro teste de integração com sistema real
+O relatório HTML inclui métricas, barra de progresso, detalhamento por flow e screenshots clicáveis com lightbox.
+
+---
+
+## Dados dinâmicos com Faker
+
+Para evitar registros duplicados em testes de cadastro:
+
+```python
+from faker import Faker
+fake = Faker("pt_BR")
+
+dados = {
+    "sequencia": str(fake.random_int(min=100, max=9999)),
+    "codigo": fake.bothify(text="??##").upper(),
+    "descricao": f"TESTE VTAE {fake.bothify(text='????####').upper()}",
+}
+```
+
+---
+
+## FlowContext — conceito central
+
+Em vez de passar `runner`, `config`, `user`, `password` separadamente, tudo fica em um único contexto:
+
+```python
+ctx = FlowContext(
+    runner=runner,
+    config=LoginConfigSisLab,
+    evidence_dir=observer.evidence_dir,
+)
+
+# ctx.user       → vem do config automaticamente
+# ctx.password   → vem do config automaticamente
+# ctx.runner     → instância do runner
+# ctx.evidence_dir → onde salvar screenshots
+```
+
+---
+
+## Convenção de IDs de steps
+
+| Prefixo | Flow |
+|---|---|
+| `L01`, `L02`... | `LoginFlow` (desktop) |
+| `LW01`, `LW02`... | `LoginFlowWeb` |
+| `MW01`, `MW02`... | `LoginFlowMsi3` |
+| `A01`, `A02`... | `AdmissaoFlow` |
+| `S01`, `S02`... | `SuprimentosFlow` |
+| `FA01`, `FA02`... | `FrequenciaAplicacaoFlow` |
+
+---
+
+## Sistemas automatizados
+
+| Sistema | Tipo | Runner | Status |
+|---|---|---|---|
+| SisLab | Desktop | OpenCV | ✅ |
+| SI3 | Desktop | OpenCV | ✅ |
+| MSI3 | Web (Oracle APEX) | Playwright + OpenCV | ✅ |
+
+---
+
+## Status das fases
+
+| # | Fase | Status |
+|---|---|---|
+| 1 | Consolidação | ✅ |
+| 2 | Flows | ✅ |
+| 3 | Robustez (retry, timeout) | ✅ |
+| 4 | Observabilidade (logs, evidências, HTML) | ✅ |
+| 5 | DSL — testes em YAML | 🟣 estrutura criada |
+| 6 | CLI — execução por terminal | 🟣 estrutura criada |
+| 7 | CI/CD — pipeline automático | 🔜 |
+| 8 | Interface gráfica | 🔜 |
+
+---
+
+## Documentação
+
+- `VTAE_Manual.docx` — manual completo para criar novos testes
+- `CHANGELOG.md` — histórico de versões
+
+---
+
+## Changelog
+
+### v0.2.0
+- `OpenCVRunner` — runner desktop com visão computacional
+- `PlaywrightRunner` — runner web com browser maximizado
+- `ExecutionObserver` — logs, JSON e relatório HTML automático
+- `report_generator.py` — relatório HTML com screenshots e lightbox
+- `FrequenciaAplicacaoFlow` — fluxo completo MSI3 com Playwright + OpenCV
+- `LoginFlowMsi3` — login web Oracle APEX
+- Integração com **Faker** para dados únicos
+- 32 testes unitários passando
+
+### v0.1.0
+- Estrutura inicial de pastas
+- `LoginFlow`, `AdmissaoFlow`, `SuprimentosFlow` (esqueletos)
+- `LoginConfigSisLab`
+
+---
+
+## Próximos passos
+
+- [ ] Fase 5 — DSL: executar testes definidos em YAML
+- [ ] Fase 6 — CLI: `vtae run --all` funcional
+- [ ] Fase 7 — CI/CD: pipeline automático
+- [ ] Novos flows: `AdmissaoFlow` e `SuprimentosFlow` com templates reais

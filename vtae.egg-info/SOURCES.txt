@@ -17,6 +17,7 @@ vtae/configs/sislab/login_config.py
 vtae/core/__init__.py
 vtae/core/base_runner.py
 vtae/core/context.py
+vtae/core/observer.py
 vtae/core/result.py
 vtae/dsl/__init__.py
 vtae/dsl/interpreter.py

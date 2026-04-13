@@ -1,0 +1,77 @@
+08:56:43 [INFO ] Iniciando execução: test_cadastro_frequencia
+08:56:43 [INFO ] Evidências em: evidence\2026-04-13\test_cadastro_frequencia\
+08:56:43 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+08:56:44 [INFO ] [FA01] OK | 1463ms | screenshot: evidence\2026-04-13\msi3_login_session\FA01_sistema_pacientes.png
+08:56:44 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+08:56:46 [INFO ] [FA02] OK | 1448ms | screenshot: evidence\2026-04-13\msi3_login_session\FA02_apoio_assistencia.png
+08:56:46 [INFO ] [FA03] INICIANDO — clicar em Cadastros Básicos
+08:57:02 [INFO ] [FA03] OK | 16357ms | screenshot: evidence\2026-04-13\msi3_login_session\FA03_cadastros_basicos.png
+08:57:02 [INFO ] [FA04] INICIANDO — clicar em Frequência de Aplicação
+08:57:18 [INFO ] [FA04] OK | 15755ms | screenshot: evidence\2026-04-13\msi3_login_session\FA04_frequencia_aplicacao.png
+08:57:18 [INFO ] [FA05] INICIANDO — clicar em Novo Cadastro
+08:57:21 [INFO ] [FA05] OK | 2744ms | screenshot: evidence\2026-04-13\msi3_login_session\FA05_novo_cadastro.png
+08:57:21 [INFO ] [FA06] INICIANDO — preencher campos do formulário
+08:57:37 [INFO ] [FA06] OK | 16027ms | screenshot: evidence\2026-04-13\msi3_login_session\FA06_formulario.png
+08:57:37 [INFO ] [FA07] INICIANDO — preencher Horário Padrão
+08:57:46 [INFO ] [FA07] OK | 9164ms | screenshot: evidence\2026-04-13\msi3_login_session\FA07_horario_padrao.png
+08:57:46 [INFO ] [FA08] INICIANDO — clicar em Inserir
+08:57:48 [INFO ] [FA08] OK | 1695ms | screenshot: evidence\2026-04-13\msi3_login_session\FA08_inserir.png
+08:57:48 [INFO ] [FA10] INICIANDO — validar SF - SV FARMACIA na tabela do modal
+08:57:49 [INFO ] [FA10] OK | 1358ms | screenshot: evidence\2026-04-13\msi3_login_session\FA10_validacao.png
+08:57:49 [INFO ] [FA09] INICIANDO — clicar em Confirmar
+08:57:52 [INFO ] [FA09] OK | 2710ms | screenshot: evidence\2026-04-13\msi3_login_session\FA09_confirmado.png
+08:57:52 [INFO ] Flow FrequenciaAplicacaoFlow — PASSOU | 10/10 steps OK | 68721ms total
+08:57:52 [INFO ] Execução finalizada — PASSOU | 15/15 steps OK | 68.7s total
+08:57:52 [INFO ] Relatório JSON salvo em: evidence\2026-04-13\test_cadastro_frequencia\execution.json
+09:07:46 [INFO ] Iniciando execução: test_cadastro_frequencia
+09:07:46 [INFO ] Evidências em: evidence\2026-04-13\test_cadastro_frequencia\
+09:07:46 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+09:07:48 [INFO ] [FA01] OK | 1442ms | screenshot: evidence\2026-04-13\msi3_login_session\FA01_sistema_pacientes.png
+09:07:48 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+09:07:49 [INFO ] [FA02] OK | 1429ms | screenshot: evidence\2026-04-13\msi3_login_session\FA02_apoio_assistencia.png
+09:07:49 [INFO ] [FA03] INICIANDO — clicar em Cadastros Básicos
+09:08:05 [INFO ] [FA03] OK | 16358ms | screenshot: evidence\2026-04-13\msi3_login_session\FA03_cadastros_basicos.png
+09:08:05 [INFO ] [FA04] INICIANDO — clicar em Frequência de Aplicação
+09:08:21 [INFO ] [FA04] OK | 15743ms | screenshot: evidence\2026-04-13\msi3_login_session\FA04_frequencia_aplicacao.png
+09:08:21 [INFO ] [FA05] INICIANDO — clicar em Novo Cadastro
+09:08:24 [INFO ] [FA05] OK | 2781ms | screenshot: evidence\2026-04-13\msi3_login_session\FA05_novo_cadastro.png
+09:08:24 [INFO ] [FA06] INICIANDO — preencher campos do formulário
+09:08:40 [INFO ] [FA06] OK | 16099ms | screenshot: evidence\2026-04-13\msi3_login_session\FA06_formulario.png
+09:08:40 [INFO ] [FA07] INICIANDO — preencher Horário Padrão
+09:08:49 [INFO ] [FA07] OK | 9164ms | screenshot: evidence\2026-04-13\msi3_login_session\FA07_horario_padrao.png
+09:08:49 [INFO ] [FA08] INICIANDO — clicar em Inserir
+09:08:51 [INFO ] [FA08] OK | 1729ms | screenshot: evidence\2026-04-13\msi3_login_session\FA08_inserir.png
+09:08:51 [INFO ] [FA10] INICIANDO — validar SF - SV FARMACIA na tabela do modal
+09:08:52 [INFO ] [FA10] OK | 1348ms | screenshot: evidence\2026-04-13\msi3_login_session\FA10_validacao.png
+09:08:52 [INFO ] [FA09] INICIANDO — clicar em Confirmar
+09:08:55 [INFO ] [FA09] OK | 2707ms | screenshot: evidence\2026-04-13\msi3_login_session\FA09_confirmado.png
+09:08:55 [INFO ] Flow FrequenciaAplicacaoFlow — PASSOU | 10/10 steps OK | 68800ms total
+09:08:55 [INFO ] Execução finalizada — PASSOU | 15/15 steps OK | 68.8s total
+09:08:55 [INFO ] Relatório JSON salvo em: evidence\2026-04-13\test_cadastro_frequencia\execution.json
+09:08:55 [INFO ] Relatório HTML salvo em: evidence\2026-04-13\test_cadastro_frequencia\report.html
+09:12:08 [INFO ] Iniciando execução: test_cadastro_frequencia
+09:12:08 [INFO ] Evidências em: evidence\2026-04-13\test_cadastro_frequencia\
+09:12:08 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+09:12:09 [INFO ] [FA01] OK | 1492ms | screenshot: evidence\2026-04-13\msi3_login_session\FA01_sistema_pacientes.png
+09:12:09 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+09:12:11 [INFO ] [FA02] OK | 1477ms | screenshot: evidence\2026-04-13\msi3_login_session\FA02_apoio_assistencia.png
+09:12:11 [INFO ] [FA03] INICIANDO — clicar em Cadastros Básicos
+09:12:27 [INFO ] [FA03] OK | 16367ms | screenshot: evidence\2026-04-13\msi3_login_session\FA03_cadastros_basicos.png
+09:12:27 [INFO ] [FA04] INICIANDO — clicar em Frequência de Aplicação
+09:12:43 [INFO ] [FA04] OK | 15790ms | screenshot: evidence\2026-04-13\msi3_login_session\FA04_frequencia_aplicacao.png
+09:12:43 [INFO ] [FA05] INICIANDO — clicar em Novo Cadastro
+09:12:46 [INFO ] [FA05] OK | 2821ms | screenshot: evidence\2026-04-13\msi3_login_session\FA05_novo_cadastro.png
+09:12:46 [INFO ] [FA06] INICIANDO — preencher campos do formulário
+09:13:02 [INFO ] [FA06] OK | 16161ms | screenshot: evidence\2026-04-13\msi3_login_session\FA06_formulario.png
+09:13:02 [INFO ] [FA07] INICIANDO — preencher Horário Padrão
+09:13:11 [INFO ] [FA07] OK | 9119ms | screenshot: evidence\2026-04-13\msi3_login_session\FA07_horario_padrao.png
+09:13:11 [INFO ] [FA08] INICIANDO — clicar em Inserir
+09:13:13 [INFO ] [FA08] OK | 1712ms | screenshot: evidence\2026-04-13\msi3_login_session\FA08_inserir.png
+09:13:13 [INFO ] [FA10] INICIANDO — validar SF - SV FARMACIA na tabela do modal
+09:13:14 [INFO ] [FA10] OK | 1350ms | screenshot: evidence\2026-04-13\msi3_login_session\FA10_validacao.png
+09:13:14 [INFO ] [FA09] INICIANDO — clicar em Confirmar
+09:13:17 [INFO ] [FA09] OK | 2749ms | screenshot: evidence\2026-04-13\msi3_login_session\FA09_confirmado.png
+09:13:17 [INFO ] Flow FrequenciaAplicacaoFlow — PASSOU | 10/10 steps OK | 69040ms total
+09:13:17 [INFO ] Execução finalizada — PASSOU | 15/15 steps OK | 69.0s total
+09:13:17 [INFO ] Relatório JSON salvo em: evidence\2026-04-13\test_cadastro_frequencia\execution.json
+09:13:17 [INFO ] Relatório HTML salvo em: evidence\2026-04-13\test_cadastro_frequencia\report.html

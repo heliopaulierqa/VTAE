@@ -1,6 +1,7 @@
 """
 VTAE Observer — Fase 4: Observabilidade
 Responsável por logs estruturados, evidências organizadas e relatório de execução.
+Gera automaticamente execution.log, execution.json e report.html ao final.
 """
 
 import json
@@ -14,13 +15,13 @@ from vtae.core.result import FlowResult, StepResult
 class ExecutionObserver:
     """
     Observador de execução do VTAE.
-    Registra logs estruturados (.log + .json) e organiza evidências por data/teste.
+    Registra logs estruturados (.log + .json) e gera relatório HTML automático.
 
     Uso:
         observer = ExecutionObserver(test_name="test_login_real")
         ctx = FlowContext(runner=runner, config=config, evidence_dir=observer.evidence_dir)
         # ... executa os flows ...
-        observer.report(ctx)
+        observer.report(ctx)  # gera .log, .json e .html automaticamente
     """
 
     def __init__(self, test_name: str, base_dir: str = "evidence"):
@@ -35,6 +36,7 @@ class ExecutionObserver:
 
         self._log_path = os.path.join(self.evidence_dir, "execution.log")
         self._json_path = os.path.join(self.evidence_dir, "execution.json")
+        self._html_path = os.path.join(self.evidence_dir, "report.html")
 
         self._logger = self._setup_logger(time_str)
         self._logger.info(f"Iniciando execução: {test_name}")
@@ -45,14 +47,12 @@ class ExecutionObserver:
     # ──────────────────────────────────────────────
 
     def log_step_start(self, step_id: str, description: str = "") -> None:
-        """Registra o início de um step."""
         msg = f"[{step_id}] INICIANDO"
         if description:
             msg += f" — {description}"
         self._logger.info(msg)
 
     def log_step_result(self, step: StepResult) -> None:
-        """Registra o resultado de um step."""
         status = "OK" if step.success else "FALHOU"
         msg = f"[{step.step_id}] {status} | {step.duration_ms:.0f}ms"
         if step.screenshot_path:
@@ -66,7 +66,6 @@ class ExecutionObserver:
             self._logger.error(msg)
 
     def log_flow_result(self, result: FlowResult) -> None:
-        """Registra o resultado completo de um flow."""
         status = "PASSOU" if result.success else "FALHOU"
         self._logger.info(
             f"Flow {result.flow_name} — {status} | "
@@ -78,8 +77,12 @@ class ExecutionObserver:
 
     def report(self, ctx) -> str:
         """
-        Gera o relatório final (.log já escrito, salva .json).
-        Retorna o caminho do JSON gerado.
+        Gera o relatório final:
+          - execution.log  (já escrito durante a execução)
+          - execution.json (dados estruturados)
+          - report.html    (relatório visual para gestão)
+
+        Retorna o caminho do HTML gerado.
         """
         finished_at = datetime.now()
         duration_s = (finished_at - self.started_at).total_seconds()
@@ -96,7 +99,8 @@ class ExecutionObserver:
             f"{duration_s:.1f}s total"
         )
 
-        report = {
+        # ── JSON ──
+        report_data = {
             "test_name": self.test_name,
             "status": status,
             "started_at": self.started_at.isoformat(),
@@ -130,17 +134,26 @@ class ExecutionObserver:
         }
 
         with open(self._json_path, "w", encoding="utf-8") as f:
-            json.dump(report, f, ensure_ascii=False, indent=2)
+            json.dump(report_data, f, ensure_ascii=False, indent=2)
 
         self._logger.info(f"Relatório JSON salvo em: {self._json_path}")
-        return self._json_path
+
+        # ── HTML ── gerado automaticamente
+        try:
+            from vtae.core.report_generator import generate
+            html_path = generate(self._json_path, self._html_path)
+            self._logger.info(f"Relatório HTML salvo em: {html_path}")
+            print(f"\n📊 Relatório HTML: {html_path}\n")
+        except Exception as e:
+            self._logger.warning(f"Não foi possível gerar relatório HTML: {e}")
+
+        return self._html_path
 
     # ──────────────────────────────────────────────
     # Setup interno
     # ──────────────────────────────────────────────
 
     def _setup_logger(self, time_str: str) -> logging.Logger:
-        """Configura logger que escreve no arquivo .log e no terminal."""
         logger_name = f"vtae.{self.test_name}.{time_str}"
         logger = logging.getLogger(logger_name)
         logger.setLevel(logging.DEBUG)
@@ -151,13 +164,11 @@ class ExecutionObserver:
             datefmt="%H:%M:%S",
         )
 
-        # handler arquivo
         file_handler = logging.FileHandler(self._log_path, encoding="utf-8")
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
-        # handler terminal
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(formatter)

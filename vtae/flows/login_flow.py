@@ -34,7 +34,7 @@ class LoginFlow:
             observer.log_step_start(step_id, "clicar no campo usuário e digitar")
         start = time.monotonic()
         try:
-            ctx.runner.safe_click("templates/sislab/login/campo_usuario.png")
+            ctx.runner.safe_click("templates/si3/login/campo_usuario.png")  # ← aqui
             ctx.runner.type_text(ctx.user)
             screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}L01_usuario.png")
             step = StepResult(step_id=step_id, success=True,
@@ -54,7 +54,7 @@ class LoginFlow:
             observer.log_step_start(step_id, "clicar no campo senha e digitar")
         start = time.monotonic()
         try:
-            ctx.runner.safe_click("templates/sislab/login/campo_senha.png")
+            ctx.runner.safe_click("templates/si3/login/campo_senha.png")  # ← aqui
             ctx.runner.type_text(ctx.password)
             screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}L02_senha.png")
             step = StepResult(step_id=step_id, success=True,
@@ -74,7 +74,7 @@ class LoginFlow:
             observer.log_step_start(step_id, "clicar no botão Entrar")
         start = time.monotonic()
         try:
-            ctx.runner.safe_click("templates/sislab/login/btn_entrar.png")
+            ctx.runner.safe_click("templates/si3/login/btn_entrar.png")  # ← aqui
             screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}L03_entrar.png")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,

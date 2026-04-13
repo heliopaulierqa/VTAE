@@ -1,0 +1,12 @@
+# ── Desktop (OpenCVRunner) ──
+opencv-python
+pyautogui
+pillow
+numpy
+
+# ── Web (PlaywrightRunner) ──
+playwright
+
+# ── Testes ──
+pytest
+pytest-cov

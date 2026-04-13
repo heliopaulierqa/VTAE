@@ -1,0 +1,62 @@
+{
+  "test_name": "msi3_login_session",
+  "status": "PASSOU",
+  "started_at": "2026-04-13T09:11:58.526087",
+  "finished_at": "2026-04-13T09:12:08.256587",
+  "duration_seconds": 9.73,
+  "summary": {
+    "total_flows": 1,
+    "total_steps": 5,
+    "passed_steps": 5,
+    "failed_steps": 0
+  },
+  "flows": [
+    {
+      "flow_name": "LoginFlowMsi3",
+      "success": true,
+      "total_duration_ms": 7205.9,
+      "steps": [
+        {
+          "step_id": "MW01",
+          "success": true,
+          "duration_ms": 1206.9,
+          "screenshot": "evidence\\2026-04-13\\msi3_login_session\\MW01_pagina.png",
+          "error": null,
+          "timestamp": "2026-04-13T09:12:02.253692"
+        },
+        {
+          "step_id": "MW02",
+          "success": true,
+          "duration_ms": 715.9,
+          "screenshot": "evidence\\2026-04-13\\msi3_login_session\\MW02_usuario.png",
+          "error": null,
+          "timestamp": "2026-04-13T09:12:02.970245"
+        },
+        {
+          "step_id": "MW03",
+          "success": true,
+          "duration_ms": 727.6,
+          "screenshot": "evidence\\2026-04-13\\msi3_login_session\\MW03_senha.png",
+          "error": null,
+          "timestamp": "2026-04-13T09:12:03.698762"
+        },
+        {
+          "step_id": "MW04",
+          "success": true,
+          "duration_ms": 4454.7,
+          "screenshot": "evidence\\2026-04-13\\msi3_login_session\\MW04_submetido.png",
+          "error": null,
+          "timestamp": "2026-04-13T09:12:08.154281"
+        },
+        {
+          "step_id": "MW05",
+          "success": true,
+          "duration_ms": 100.8,
+          "screenshot": "evidence\\2026-04-13\\msi3_login_session\\MW05_principal.png",
+          "error": null,
+          "timestamp": "2026-04-13T09:12:08.255965"
+        }
+      ]
+    }
+  ]
+}

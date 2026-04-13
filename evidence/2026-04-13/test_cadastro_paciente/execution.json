@@ -1,0 +1,125 @@
+{
+  "test_name": "test_cadastro_paciente",
+  "status": "FALHOU",
+  "started_at": "2026-04-13T11:46:53.521817",
+  "finished_at": "2026-04-13T11:47:26.254890",
+  "duration_seconds": 32.73,
+  "summary": {
+    "total_flows": 2,
+    "total_steps": 12,
+    "passed_steps": 11,
+    "failed_steps": 1
+  },
+  "flows": [
+    {
+      "flow_name": "LoginFlow",
+      "success": true,
+      "total_duration_ms": 3927.4,
+      "steps": [
+        {
+          "step_id": "L01",
+          "success": true,
+          "duration_ms": 1616.7,
+          "screenshot": "evidence\\2026-04-13\\test_cadastro_paciente\\L01_usuario.png",
+          "error": null,
+          "timestamp": "2026-04-13T11:46:55.140285"
+        },
+        {
+          "step_id": "L02",
+          "success": true,
+          "duration_ms": 1554.2,
+          "screenshot": "evidence\\2026-04-13\\test_cadastro_paciente\\L02_senha.png",
+          "error": null,
+          "timestamp": "2026-04-13T11:46:56.695208"
+        },
+        {
+          "step_id": "L03",
+          "success": true,
+          "duration_ms": 756.5,
+          "screenshot": "evidence\\2026-04-13\\test_cadastro_paciente\\L03_entrar.png",
+          "error": null,
+          "timestamp": "2026-04-13T11:46:57.452320"
+        }
+      ]
+    },
+    {
+      "flow_name": "CadastroPacienteFlow",
+      "success": false,
+      "total_duration_ms": 23790.9,
+      "steps": [
+        {
+          "step_id": "CP01",
+          "success": true,
+          "duration_ms": 3693.8,
+          "screenshot": "evidence\\2026-04-13\\test_cadastro_paciente\\CP01_menu.png",
+          "error": null,
+          "timestamp": "2026-04-13T11:47:06.148431"
+        },
+        {
+          "step_id": "CP02",
+          "success": true,
+          "duration_ms": 4717.2,
+          "screenshot": "evidence\\2026-04-13\\test_cadastro_paciente\\CP02_pesquisa.png",
+          "error": null,
+          "timestamp": "2026-04-13T11:47:10.866479"
+        },
+        {
+          "step_id": "CP03",
+          "success": true,
+          "duration_ms": 2644.3,
+          "screenshot": "evidence\\2026-04-13\\test_cadastro_paciente\\CP03_novo.png",
+          "error": null,
+          "timestamp": "2026-04-13T11:47:13.511643"
+        },
+        {
+          "step_id": "CP04",
+          "success": true,
+          "duration_ms": 2200.5,
+          "screenshot": "evidence\\2026-04-13\\test_cadastro_paciente\\CP04_nome.png",
+          "error": null,
+          "timestamp": "2026-04-13T11:47:15.713066"
+        },
+        {
+          "step_id": "CP05",
+          "success": true,
+          "duration_ms": 3714.4,
+          "screenshot": "evidence\\2026-04-13\\test_cadastro_paciente\\CP05_data.png",
+          "error": null,
+          "timestamp": "2026-04-13T11:47:19.428432"
+        },
+        {
+          "step_id": "CP06",
+          "success": true,
+          "duration_ms": 2417.8,
+          "screenshot": "evidence\\2026-04-13\\test_cadastro_paciente\\CP06_mae.png",
+          "error": null,
+          "timestamp": "2026-04-13T11:47:21.847200"
+        },
+        {
+          "step_id": "CP07",
+          "success": true,
+          "duration_ms": 2281.6,
+          "screenshot": "evidence\\2026-04-13\\test_cadastro_paciente\\CP07_pai.png",
+          "error": null,
+          "timestamp": "2026-04-13T11:47:24.129637"
+        },
+        {
+          "step_id": "CP08",
+          "success": true,
+          "duration_ms": 2064.1,
+          "screenshot": "evidence\\2026-04-13\\test_cadastro_paciente\\CP08_cpf.png",
+          "error": null,
+          "timestamp": "2026-04-13T11:47:26.194766"
+        },
+        {
+          "step_id": "CP09",
+          "success": false,
+          "duration_ms": 57.3,
+          "screenshot": null,
+          "error": "Arquivo de template não encontrado: 'templates/si3/paciente/btn_salvar.png'\nVerifique se o recorte foi salvo na pasta correta.",
+          "timestamp": "2026-04-13T11:47:26.253198"
+        }
+      ]
+    }
+  ]
+}

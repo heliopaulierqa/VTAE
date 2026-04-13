@@ -1,47 +1,32 @@
-08:56:34 [INFO ] Iniciando execução: msi3_login_session
-08:56:34 [INFO ] Evidências em: evidence\2026-04-13\msi3_login_session\
-08:56:36 [INFO ] [MW01] INICIANDO — abrir página de login
-08:56:37 [INFO ] [MW01] OK | 1148ms | screenshot: evidence\2026-04-13\msi3_login_session\MW01_pagina.png
-08:56:37 [INFO ] [MW02] INICIANDO — preencher campo usuário
-08:56:38 [INFO ] [MW02] OK | 725ms | screenshot: evidence\2026-04-13\msi3_login_session\MW02_usuario.png
-08:56:38 [INFO ] [MW03] INICIANDO — preencher campo senha
-08:56:39 [INFO ] [MW03] OK | 702ms | screenshot: evidence\2026-04-13\msi3_login_session\MW03_senha.png
-08:56:39 [INFO ] [MW04] INICIANDO — submeter formulário de login
-08:56:43 [INFO ] [MW04] OK | 4316ms | screenshot: evidence\2026-04-13\msi3_login_session\MW04_submetido.png
-08:56:43 [INFO ] [MW05] INICIANDO — validar login bem-sucedido
-08:56:43 [INFO ] [MW05] OK | 98ms | screenshot: evidence\2026-04-13\msi3_login_session\MW05_principal.png
-08:56:43 [INFO ] Flow LoginFlowMsi3 — PASSOU | 5/5 steps OK | 6989ms total
-08:56:43 [INFO ] Execução finalizada — PASSOU | 5/5 steps OK | 9.4s total
-08:56:43 [INFO ] Relatório JSON salvo em: evidence\2026-04-13\msi3_login_session\execution.json
-09:07:36 [INFO ] Iniciando execução: msi3_login_session
-09:07:36 [INFO ] Evidências em: evidence\2026-04-13\msi3_login_session\
-09:07:39 [INFO ] [MW01] INICIANDO — abrir página de login
-09:07:40 [INFO ] [MW01] OK | 1455ms | screenshot: evidence\2026-04-13\msi3_login_session\MW01_pagina.png
-09:07:40 [INFO ] [MW02] INICIANDO — preencher campo usuário
-09:07:41 [INFO ] [MW02] OK | 741ms | screenshot: evidence\2026-04-13\msi3_login_session\MW02_usuario.png
-09:07:41 [INFO ] [MW03] INICIANDO — preencher campo senha
-09:07:42 [INFO ] [MW03] OK | 714ms | screenshot: evidence\2026-04-13\msi3_login_session\MW03_senha.png
-09:07:42 [INFO ] [MW04] INICIANDO — submeter formulário de login
-09:07:46 [INFO ] [MW04] OK | 4381ms | screenshot: evidence\2026-04-13\msi3_login_session\MW04_submetido.png
-09:07:46 [INFO ] [MW05] INICIANDO — validar login bem-sucedido
-09:07:46 [INFO ] [MW05] OK | 96ms | screenshot: evidence\2026-04-13\msi3_login_session\MW05_principal.png
-09:07:46 [INFO ] Flow LoginFlowMsi3 — PASSOU | 5/5 steps OK | 7387ms total
-09:07:46 [INFO ] Execução finalizada — PASSOU | 5/5 steps OK | 9.9s total
-09:07:46 [INFO ] Relatório JSON salvo em: evidence\2026-04-13\msi3_login_session\execution.json
-09:07:46 [INFO ] Relatório HTML salvo em: evidence\2026-04-13\msi3_login_session\report.html
-09:11:58 [INFO ] Iniciando execução: msi3_login_session
-09:11:58 [INFO ] Evidências em: evidence\2026-04-13\msi3_login_session\
-09:12:01 [INFO ] [MW01] INICIANDO — abrir página de login
-09:12:02 [INFO ] [MW01] OK | 1207ms | screenshot: evidence\2026-04-13\msi3_login_session\MW01_pagina.png
-09:12:02 [INFO ] [MW02] INICIANDO — preencher campo usuário
-09:12:02 [INFO ] [MW02] OK | 716ms | screenshot: evidence\2026-04-13\msi3_login_session\MW02_usuario.png
-09:12:02 [INFO ] [MW03] INICIANDO — preencher campo senha
-09:12:03 [INFO ] [MW03] OK | 728ms | screenshot: evidence\2026-04-13\msi3_login_session\MW03_senha.png
-09:12:03 [INFO ] [MW04] INICIANDO — submeter formulário de login
-09:12:08 [INFO ] [MW04] OK | 4455ms | screenshot: evidence\2026-04-13\msi3_login_session\MW04_submetido.png
-09:12:08 [INFO ] [MW05] INICIANDO — validar login bem-sucedido
-09:12:08 [INFO ] [MW05] OK | 101ms | screenshot: evidence\2026-04-13\msi3_login_session\MW05_principal.png
-09:12:08 [INFO ] Flow LoginFlowMsi3 — PASSOU | 5/5 steps OK | 7206ms total
-09:12:08 [INFO ] Execução finalizada — PASSOU | 5/5 steps OK | 9.7s total
-09:12:08 [INFO ] Relatório JSON salvo em: evidence\2026-04-13\msi3_login_session\execution.json
-09:12:08 [INFO ] Relatório HTML salvo em: evidence\2026-04-13\msi3_login_session\report.html
+09:32:23 [INFO ] Iniciando execução: msi3_login_session
+09:32:23 [INFO ] Evidências em: evidence\2026-04-13\msi3_login_session\
+09:32:26 [INFO ] [MW01] INICIANDO — abrir página de login
+09:32:27 [INFO ] [MW01] OK | 1192ms | screenshot: evidence\2026-04-13\msi3_login_session\MW01_pagina.png
+09:32:27 [INFO ] [MW02] INICIANDO — preencher campo usuário
+09:32:28 [INFO ] [MW02] OK | 756ms | screenshot: evidence\2026-04-13\msi3_login_session\MW02_usuario.png
+09:32:28 [INFO ] [MW03] INICIANDO — preencher campo senha
+09:32:29 [INFO ] [MW03] OK | 720ms | screenshot: evidence\2026-04-13\msi3_login_session\MW03_senha.png
+09:32:29 [INFO ] [MW04] INICIANDO — submeter formulário de login
+09:32:33 [INFO ] [MW04] OK | 4472ms | screenshot: evidence\2026-04-13\msi3_login_session\MW04_submetido.png
+09:32:33 [INFO ] [MW05] INICIANDO — validar login bem-sucedido
+09:32:33 [INFO ] [MW05] OK | 105ms | screenshot: evidence\2026-04-13\msi3_login_session\MW05_principal.png
+09:32:33 [INFO ] Flow LoginFlowMsi3 — PASSOU | 5/5 steps OK | 7245ms total
+09:32:33 [INFO ] Execução finalizada — PASSOU | 5/5 steps OK | 10.0s total
+09:32:33 [INFO ] Relatório JSON salvo em: evidence\2026-04-13\msi3_login_session\execution.json
+09:32:33 [INFO ] Relatório HTML salvo em: evidence\2026-04-13\msi3_login_session\report.html
+09:46:55 [INFO ] Iniciando execução: msi3_login_session
+09:46:55 [INFO ] Evidências em: evidence\2026-04-13\msi3_login_session\
+09:46:57 [INFO ] [MW01] INICIANDO — abrir página de login
+09:46:59 [INFO ] [MW01] OK | 1283ms | screenshot: evidence\2026-04-13\msi3_login_session\MW01_pagina.png
+09:46:59 [INFO ] [MW02] INICIANDO — preencher campo usuário
+09:46:59 [INFO ] [MW02] OK | 784ms | screenshot: evidence\2026-04-13\msi3_login_session\MW02_usuario.png
+09:46:59 [INFO ] [MW03] INICIANDO — preencher campo senha
+09:47:00 [INFO ] [MW03] OK | 726ms | screenshot: evidence\2026-04-13\msi3_login_session\MW03_senha.png
+09:47:00 [INFO ] [MW04] INICIANDO — submeter formulário de login
+09:47:04 [INFO ] [MW04] OK | 4348ms | screenshot: evidence\2026-04-13\msi3_login_session\MW04_submetido.png
+09:47:04 [INFO ] [MW05] INICIANDO — validar login bem-sucedido
+09:47:05 [INFO ] [MW05] OK | 96ms | screenshot: evidence\2026-04-13\msi3_login_session\MW05_principal.png
+09:47:05 [INFO ] Flow LoginFlowMsi3 — PASSOU | 5/5 steps OK | 7236ms total
+09:47:05 [INFO ] Execução finalizada — PASSOU | 5/5 steps OK | 9.8s total
+09:47:05 [INFO ] Relatório JSON salvo em: evidence\2026-04-13\msi3_login_session\execution.json
+09:47:05 [INFO ] Relatório HTML salvo em: evidence\2026-04-13\msi3_login_session\report.html

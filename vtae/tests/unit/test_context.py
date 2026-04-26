@@ -4,7 +4,7 @@ from vtae.core.result import FlowResult, StepResult
 
 def test_context_credenciais_via_config(ctx):
     assert ctx.user == "admin"
-    assert ctx.password == "123"
+    assert ctx.password == "admin123"  # valor real do MockConfig no conftest.py
 
 
 def test_context_credenciais_via_dict(mock_runner):

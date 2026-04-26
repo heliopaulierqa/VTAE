@@ -4,7 +4,7 @@ from vtae.flows.login_flow import LoginFlow
 def test_login_flow_retorna_resultado(ctx):
     result = LoginFlow().execute(ctx)
     assert result.flow_name == "LoginFlow"
-    assert len(result.steps) == 1
+    assert len(result.steps) == 3  # L01, L02, L03
 
 
 def test_login_flow_step_l01_sucesso(ctx):
@@ -17,12 +17,14 @@ def test_login_flow_step_l01_sucesso(ctx):
 
 def test_login_flow_captura_screenshot(ctx, mock_runner):
     LoginFlow().execute(ctx)
-    mock_runner.screenshot.assert_called_once()
+    # 3 steps → 3 screenshots (L01, L02, L03)
+    assert mock_runner.screenshot.call_count == 3
 
 
 def test_login_flow_usa_credenciais_do_contexto(ctx):
+    # credenciais vêm do MockConfig definido no conftest.py
     assert ctx.user == "admin"
-    assert ctx.password == "123"
+    assert ctx.password == "admin123"
 
 
 def test_login_flow_adiciona_resultado_ao_contexto(ctx):

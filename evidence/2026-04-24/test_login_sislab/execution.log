@@ -1,0 +1,58 @@
+20:44:38 [INFO ] Iniciando execução: test_login_sislab
+20:44:38 [INFO ] Evidências em: evidence\2026-04-24\test_login_sislab\
+20:44:38 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+20:44:40 [ERROR] [L01] FALHOU | 1548ms | erro: Elemento não encontrado após 3 tentativas: 'templates/sislab/login/campo_usuario.png'
+Verifique se o recorte foi salvo na pasta correta.
+20:44:40 [INFO ] Flow LoginFlowSisLab — FALHOU | 0/1 steps OK | 1548ms total
+20:44:40 [ERROR]   Step falhou: [L01] Elemento não encontrado após 3 tentativas: 'templates/sislab/login/campo_usuario.png'
+Verifique se o recorte foi salvo na pasta correta.
+20:44:40 [INFO ] Execução finalizada — FALHOU | 0/1 steps OK | 1.6s total
+20:44:40 [INFO ] Relatório JSON salvo em: evidence\2026-04-24\test_login_sislab\execution.json
+20:44:40 [INFO ] Relatório HTML salvo em: evidence\2026-04-24\test_login_sislab\report.html
+20:47:12 [INFO ] Iniciando execução: test_login_sislab
+20:47:12 [INFO ] Evidências em: evidence\2026-04-24\test_login_sislab\
+20:47:12 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+20:47:13 [ERROR] [L01] FALHOU | 1664ms | erro: Elemento não encontrado após 3 tentativas: 'templates/sislab/login/campo_usuario.png'
+Verifique se o recorte foi salvo na pasta correta.
+20:47:13 [INFO ] Flow LoginFlowSisLab — FALHOU | 0/1 steps OK | 1664ms total
+20:47:13 [ERROR]   Step falhou: [L01] Elemento não encontrado após 3 tentativas: 'templates/sislab/login/campo_usuario.png'
+Verifique se o recorte foi salvo na pasta correta.
+20:47:13 [INFO ] Execução finalizada — FALHOU | 0/1 steps OK | 1.7s total
+20:47:13 [INFO ] Relatório JSON salvo em: evidence\2026-04-24\test_login_sislab\execution.json
+20:47:14 [INFO ] Relatório HTML salvo em: evidence\2026-04-24\test_login_sislab\report.html
+21:42:06 [INFO ] Iniciando execução: test_login_sislab
+21:42:06 [INFO ] Evidências em: evidence\2026-04-24\test_login_sislab\
+21:42:06 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+21:42:08 [INFO ] [L01] OK | 1357ms | screenshot: evidence\2026-04-24\test_login_sislab\L01_usuario.png
+21:42:08 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+21:42:09 [INFO ] [L02] OK | 1217ms | screenshot: evidence\2026-04-24\test_login_sislab\L02_senha.png
+21:42:09 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+21:42:12 [INFO ] [L03] OK | 2838ms | screenshot: evidence\2026-04-24\test_login_sislab\L03_entrar.png
+21:42:12 [INFO ] Flow LoginFlowSisLab — PASSOU | 3/3 steps OK | 5413ms total
+21:42:12 [INFO ] Execução finalizada — PASSOU | 3/3 steps OK | 5.5s total
+21:42:12 [INFO ] Relatório JSON salvo em: evidence\2026-04-24\test_login_sislab\execution.json
+21:42:12 [INFO ] Relatório HTML salvo em: evidence\2026-04-24\test_login_sislab\report.html
+21:51:55 [INFO ] Iniciando execução: test_login_sislab
+21:51:55 [INFO ] Evidências em: evidence\2026-04-24\test_login_sislab\
+21:51:55 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+21:51:56 [INFO ] [L01] OK | 1390ms | screenshot: evidence\2026-04-24\test_login_sislab\L01_usuario.png
+21:51:56 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+21:51:57 [INFO ] [L02] OK | 1195ms | screenshot: evidence\2026-04-24\test_login_sislab\L02_senha.png
+21:51:57 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+21:52:00 [INFO ] [L03] OK | 2701ms | screenshot: evidence\2026-04-24\test_login_sislab\L03_entrar.png
+21:52:00 [INFO ] Flow LoginFlowSisLab — PASSOU | 3/3 steps OK | 5286ms total
+21:52:00 [INFO ] Execução finalizada — PASSOU | 3/3 steps OK | 5.3s total
+21:52:00 [INFO ] Relatório JSON salvo em: evidence\2026-04-24\test_login_sislab\execution.json
+21:52:00 [INFO ] Relatório HTML salvo em: evidence\2026-04-24\test_login_sislab\report.html
+22:37:31 [INFO ] Iniciando execução: test_login_sislab
+22:37:31 [INFO ] Evidências em: evidence\2026-04-24\test_login_sislab\
+22:37:31 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+22:37:34 [INFO ] [L01] OK | 2877ms | screenshot: evidence\2026-04-24\test_login_sislab\L01_usuario.png
+22:37:34 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+22:37:37 [INFO ] [L02] OK | 2503ms | screenshot: evidence\2026-04-24\test_login_sislab\L02_senha.png
+22:37:37 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+22:37:40 [INFO ] [L03] OK | 2981ms | screenshot: evidence\2026-04-24\test_login_sislab\L03_entrar.png
+22:37:40 [INFO ] Flow LoginFlowSisLab — PASSOU | 3/3 steps OK | 8361ms total
+22:37:40 [INFO ] Execução finalizada — PASSOU | 3/3 steps OK | 8.4s total
+22:37:40 [INFO ] Relatório JSON salvo em: evidence\2026-04-24\test_login_sislab\execution.json
+22:37:40 [INFO ] Relatório HTML salvo em: evidence\2026-04-24\test_login_sislab\report.html

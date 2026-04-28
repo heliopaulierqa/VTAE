@@ -1,22 +1,19 @@
+# vtae/flows/login_flow_msi3.py
 import time
 
 from vtae.core.context import FlowContext
 from vtae.core.result import FlowResult, StepResult
+from vtae.core.apex_helper import ApexHelper
 
 
 class LoginFlowMsi3:
     """
     Fluxo de login do MSI3 (versão web — Oracle APEX).
-    Baseado no código existente, adaptado para o padrão VTAE.
 
-    Reutilização em outros testes:
-        from vtae.flows.login_flow_msi3 import LoginFlowMsi3
-
-        def test_qualquer_coisa(page):
-            ctx = build_ctx(page)
-            LoginFlowMsi3().execute(ctx, observer=observer)
-            # a partir daqui o usuário já está logado
-            # continue com os próximos steps do seu teste
+    Melhorias com ApexHelper:
+        MW04 — verifica erro do APEX após submeter (credencial inválida
+                vira mensagem clara em vez de timeout de 15s)
+        MW05 — inspecionar_pagina no except para debug de falha no login
     """
 
     FLOW_NAME = "LoginFlowMsi3"
@@ -48,6 +45,7 @@ class LoginFlowMsi3:
             observer.log_step_start(step_id, "abrir página de login")
         start = time.monotonic()
         try:
+            # navigate() já chama networkidle internamente
             ctx.runner.navigate(ctx.config.URL)
             ctx.runner.wait_template(ctx.config.CAMPO_USUARIO, timeout=15.0)
             screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}MW01_pagina.png")
@@ -108,7 +106,7 @@ class LoginFlowMsi3:
             observer.log_step_start(step_id, "submeter formulário de login")
         start = time.monotonic()
         try:
-            # Tab x2 + Enter — mesma lógica do código original
+            # Tab x2 + Enter — mantém lógica original
             ctx.runner._page.keyboard.press("Tab")
             time.sleep(0.5)
             ctx.runner._page.keyboard.press("Tab")
@@ -116,6 +114,12 @@ class LoginFlowMsi3:
             ctx.runner._page.keyboard.press("Enter")
             time.sleep(1)
             ctx.runner._page.wait_for_load_state("networkidle")
+
+            # MELHORIA — detecta credencial inválida imediatamente
+            # antes: seguia para MW05 e dava timeout de 15s sem explicação
+            # depois: AssertionError com a mensagem real do APEX
+            ApexHelper.verificar_sem_erro(ctx.runner)
+
             screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}MW04_submetido.png")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,
@@ -148,6 +152,18 @@ class LoginFlowMsi3:
                               duration_ms=(time.monotonic() - start) * 1000,
                               screenshot_path=screenshot)
         except Exception as e:
+            # MELHORIA — snapshot do estado da página para debug
+            # antes: só tinha a mensagem de erro genérica
+            # depois: URL, título e erro do APEX no log
+            try:
+                info = ApexHelper.inspecionar_pagina(ctx.runner)
+                print(
+                    f"[MW05 debug] URL: {info['url']} | "
+                    f"Título: {info['titulo']} | "
+                    f"Erro APEX: {info['erro']}"
+                )
+            except Exception:
+                pass
             step = StepResult(step_id=step_id, success=False,
                               duration_ms=(time.monotonic() - start) * 1000,
                               error=str(e))

@@ -1,0 +1,233 @@
+13:24:31 [INFO ] Iniciando execução: test_cadastro_paciente
+13:24:31 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_paciente\
+13:24:33 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+13:24:34 [INFO ] [L01] OK | 1670ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L01_usuario.png
+13:24:34 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+13:24:36 [INFO ] [L02] OK | 1589ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L02_senha.png
+13:24:36 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+13:24:37 [INFO ] [L03] OK | 782ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L03_entrar.png
+13:24:37 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 4040ms total
+13:24:42 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+13:24:47 [INFO ] [CP01] OK | 5068ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP01_menu.png
+13:24:47 [INFO ] [CP02] INICIANDO — digitar nome e pesquisar
+13:24:52 [INFO ] [CP02] OK | 5256ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP02_pesquisa.png
+13:24:52 [INFO ] [CP03] INICIANDO — clicar em Novo
+13:24:55 [INFO ] [CP03] OK | 2686ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP03_novo.png
+13:24:55 [INFO ] [CP04] INICIANDO — preencher campo Nome
+13:24:58 [INFO ] [CP04] OK | 2743ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP04_nome.png
+13:24:58 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+13:25:01 [INFO ] [CP05] OK | 3699ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP05_data.png
+13:25:01 [INFO ] [CP06] INICIANDO — preencher campo Mãe
+13:25:04 [INFO ] [CP06] OK | 2421ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP06_mae.png
+13:25:04 [INFO ] [CP07] INICIANDO — preencher campo Pai
+13:25:06 [INFO ] [CP07] OK | 2264ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP07_pai.png
+13:25:06 [INFO ] [CP08] INICIANDO — preencher campo CPF (CIC)
+13:25:08 [INFO ] [CP08] OK | 2092ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP08_cpf.png
+13:25:08 [INFO ] [CP09] INICIANDO — salvar o cadastro
+13:25:08 [ERROR] [CP09] FALHOU | 58ms | erro: Arquivo de template não encontrado: 'templates/si3/paciente/btn_salvar.png'
+Verifique se o recorte foi salvo na pasta correta.
+13:25:08 [INFO ] Flow CadastroPacienteFlow — FALHOU | 8/9 steps OK | 26287ms total
+13:25:08 [ERROR]   Step falhou: [CP09] Arquivo de template não encontrado: 'templates/si3/paciente/btn_salvar.png'
+Verifique se o recorte foi salvo na pasta correta.
+13:25:08 [INFO ] Execução finalizada — FALHOU | 11/12 steps OK | 37.3s total
+13:25:08 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_paciente\execution.json
+13:25:08 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_paciente\report.html
+13:37:30 [INFO ] Iniciando execução: test_cadastro_paciente
+13:37:30 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_paciente\
+13:37:32 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+13:37:33 [INFO ] [L01] OK | 1608ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L01_usuario.png
+13:37:33 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+13:37:35 [INFO ] [L02] OK | 1615ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L02_senha.png
+13:37:35 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+13:37:36 [INFO ] [L03] OK | 803ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L03_entrar.png
+13:37:36 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 4026ms total
+13:37:41 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+13:37:45 [INFO ] [CP01] OK | 4453ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP01_menu.png
+13:37:45 [INFO ] [CP02] INICIANDO — digitar nome e pesquisar
+13:37:50 [INFO ] [CP02] OK | 4986ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP02_pesquisa.png
+13:37:50 [INFO ] [CP03] INICIANDO — clicar em Novo
+13:37:53 [INFO ] [CP03] OK | 2667ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP03_novo.png
+13:37:53 [INFO ] [CP04] INICIANDO — preencher campo Nome
+13:37:55 [INFO ] [CP04] OK | 2447ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP04_nome.png
+13:37:55 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+13:37:59 [INFO ] [CP05] OK | 3715ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP05_data.png
+13:37:59 [INFO ] [CP06] INICIANDO — preencher campo Mãe
+13:38:02 [INFO ] [CP06] OK | 2697ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP06_mae.png
+13:38:02 [INFO ] [CP07] INICIANDO — preencher campo Pai
+13:38:04 [INFO ] [CP07] OK | 2167ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP07_pai.png
+13:38:04 [INFO ] [CP08] INICIANDO — preencher campo CPF (CIC)
+13:38:06 [INFO ] [CP08] OK | 2070ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP08_cpf.png
+13:38:06 [INFO ] [CP09] INICIANDO — salvar o cadastro
+13:38:06 [ERROR] [CP09] FALHOU | 55ms | erro: Arquivo de template não encontrado: 'templates/si3/paciente/btn_salvar.png'
+Verifique se o recorte foi salvo na pasta correta.
+13:38:06 [INFO ] Flow CadastroPacienteFlow — FALHOU | 8/9 steps OK | 25257ms total
+13:38:06 [ERROR]   Step falhou: [CP09] Arquivo de template não encontrado: 'templates/si3/paciente/btn_salvar.png'
+Verifique se o recorte foi salvo na pasta correta.
+13:38:06 [INFO ] Execução finalizada — FALHOU | 11/12 steps OK | 36.3s total
+13:38:06 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_paciente\execution.json
+13:38:06 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_paciente\report.html
+14:26:31 [INFO ] Iniciando execução: test_cadastro_paciente
+14:26:31 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_paciente\
+14:26:33 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+14:26:34 [ERROR] [L01] FALHOU | 1645ms | erro: Elemento não encontrado após 3 tentativas: 'templates/si3/login/campo_usuario.png'
+Verifique se o recorte foi salvo na pasta correta.
+14:26:34 [INFO ] Flow LoginFlow — FALHOU | 0/1 steps OK | 1645ms total
+14:26:34 [ERROR]   Step falhou: [L01] Elemento não encontrado após 3 tentativas: 'templates/si3/login/campo_usuario.png'
+Verifique se o recorte foi salvo na pasta correta.
+14:26:44 [INFO ] Iniciando execução: test_cadastro_paciente
+14:26:44 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_paciente\
+14:26:46 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+14:26:48 [INFO ] [L01] OK | 1625ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L01_usuario.png
+14:26:48 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+14:26:49 [INFO ] [L02] OK | 1629ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L02_senha.png
+14:26:49 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+14:26:50 [INFO ] [L03] OK | 787ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L03_entrar.png
+14:26:50 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 4040ms total
+14:26:55 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+14:26:59 [INFO ] [CP01] OK | 3721ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP01_menu.png
+14:26:59 [INFO ] [CP02] INICIANDO — digitar nome e pesquisar
+14:27:04 [INFO ] [CP02] OK | 5129ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP02_pesquisa.png
+14:27:04 [INFO ] [CP03] INICIANDO — clicar em Novo
+14:27:07 [INFO ] [CP03] OK | 2656ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP03_novo.png
+14:27:07 [INFO ] [CP04] INICIANDO — preencher campo Nome
+14:27:09 [INFO ] [CP04] OK | 2620ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP04_nome.png
+14:27:09 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+14:27:13 [INFO ] [CP05] OK | 3704ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP05_data.png
+14:27:13 [INFO ] [CP06] INICIANDO — preencher campo Mãe
+14:27:15 [INFO ] [CP06] OK | 2455ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP06_mae.png
+14:27:15 [INFO ] [CP07] INICIANDO — preencher campo Pai
+14:27:18 [INFO ] [CP07] OK | 2493ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP07_pai.png
+14:27:18 [INFO ] [CP08] INICIANDO — preencher campo CPF (CIC)
+14:27:20 [INFO ] [CP08] OK | 2064ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP08_cpf.png
+14:27:20 [INFO ] [CP09] INICIANDO — salvar o cadastro
+14:27:20 [ERROR] [CP09] FALHOU | 45ms | erro: Arquivo de template não encontrado: 'templates/si3/paciente/btn_salvar.png'
+Verifique se o recorte foi salvo na pasta correta.
+14:27:20 [INFO ] Flow CadastroPacienteFlow — FALHOU | 8/9 steps OK | 24888ms total
+14:27:20 [ERROR]   Step falhou: [CP09] Arquivo de template não encontrado: 'templates/si3/paciente/btn_salvar.png'
+Verifique se o recorte foi salvo na pasta correta.
+14:27:20 [INFO ] Execução finalizada — FALHOU | 11/12 steps OK | 35.9s total
+14:27:20 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_paciente\execution.json
+14:27:20 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_paciente\report.html
+15:42:52 [INFO ] Iniciando execução: test_cadastro_paciente
+15:42:52 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_paciente\
+15:42:54 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+15:42:55 [INFO ] [L01] OK | 1621ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L01_usuario.png
+15:42:55 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+15:42:57 [INFO ] [L02] OK | 1605ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L02_senha.png
+15:42:57 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+15:42:58 [INFO ] [L03] OK | 774ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L03_entrar.png
+15:42:58 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 4001ms total
+15:43:03 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+15:43:07 [INFO ] [CP01] OK | 4424ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP01_menu.png
+15:43:07 [INFO ] [CP02] INICIANDO — digitar nome e pesquisar
+15:43:12 [INFO ] [CP02] OK | 4885ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP02_pesquisa.png
+15:43:12 [INFO ] [CP03] INICIANDO — clicar em Novo
+15:43:15 [INFO ] [CP03] OK | 2658ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP03_novo.png
+15:43:15 [INFO ] [CP04] INICIANDO — preencher campo Nome
+15:43:17 [INFO ] [CP04] OK | 2369ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP04_nome.png
+15:43:17 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+15:43:21 [INFO ] [CP05] OK | 3719ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP05_data.png
+15:43:21 [INFO ] [CP06] INICIANDO — preencher campo Mãe
+15:43:23 [INFO ] [CP06] OK | 2148ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP06_mae.png
+15:43:23 [INFO ] [CP07] INICIANDO — preencher campo Pai
+15:43:25 [INFO ] [CP07] OK | 2359ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP07_pai.png
+15:43:25 [INFO ] [CP08] INICIANDO — preencher campo CPF (CIC)
+15:43:27 [INFO ] [CP08] OK | 2143ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP08_cpf.png
+15:43:27 [INFO ] [CP09] INICIANDO — salvar o cadastro
+15:43:30 [INFO ] [CP09] OK | 2654ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP09_salvo.png
+15:43:30 [INFO ] Flow CadastroPacienteFlow — PASSOU | 9/9 steps OK | 27359ms total
+15:43:30 [INFO ] Execução finalizada — PASSOU | 12/12 steps OK | 38.4s total
+15:43:30 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_paciente\execution.json
+15:43:30 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_paciente\report.html
+15:47:05 [INFO ] Iniciando execução: test_cadastro_paciente
+15:47:05 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_paciente\
+15:47:07 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+15:47:08 [INFO ] [L01] OK | 1635ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L01_usuario.png
+15:47:08 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+15:47:10 [INFO ] [L02] OK | 1538ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L02_senha.png
+15:47:10 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+15:47:11 [INFO ] [L03] OK | 792ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L03_entrar.png
+15:47:11 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 3965ms total
+15:47:16 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+15:47:20 [INFO ] [CP01] OK | 4413ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP01_menu.png
+15:47:20 [INFO ] [CP02] INICIANDO — digitar nome e pesquisar
+15:47:25 [INFO ] [CP02] OK | 5103ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP02_pesquisa.png
+15:47:25 [INFO ] [CP03] INICIANDO — clicar em Novo
+15:47:28 [INFO ] [CP03] OK | 2652ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP03_novo.png
+15:47:28 [INFO ] [CP04] INICIANDO — preencher campo Nome
+15:47:31 [INFO ] [CP04] OK | 2612ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP04_nome.png
+15:47:31 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+15:47:34 [INFO ] [CP05] OK | 3760ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP05_data.png
+15:47:34 [INFO ] [CP06] INICIANDO — preencher campo Mãe
+15:47:37 [INFO ] [CP06] OK | 2484ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP06_mae.png
+15:47:37 [INFO ] [CP07] INICIANDO — preencher campo Pai
+15:47:39 [INFO ] [CP07] OK | 2236ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP07_pai.png
+15:47:39 [INFO ] [CP08] INICIANDO — preencher campo CPF (CIC)
+15:47:41 [INFO ] [CP08] OK | 2117ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP08_cpf.png
+15:47:41 [INFO ] [CP09] INICIANDO — salvar o cadastro
+15:47:44 [INFO ] [CP09] OK | 2668ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP09_salvo.png
+15:47:44 [INFO ] Flow CadastroPacienteFlow — PASSOU | 9/9 steps OK | 28044ms total
+15:47:44 [INFO ] Execução finalizada — PASSOU | 12/12 steps OK | 39.0s total
+15:47:44 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_paciente\execution.json
+15:47:44 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_paciente\report.html
+15:52:20 [INFO ] Iniciando execução: test_cadastro_paciente
+15:52:20 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_paciente\
+15:52:22 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+15:52:23 [INFO ] [L01] OK | 1613ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L01_usuario.png
+15:52:23 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+15:52:25 [INFO ] [L02] OK | 1591ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L02_senha.png
+15:52:25 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+15:52:25 [INFO ] [L03] OK | 766ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L03_entrar.png
+15:52:25 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 3970ms total
+15:52:30 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+15:52:34 [INFO ] [CP01] OK | 3692ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP01_menu.png
+15:52:34 [INFO ] [CP02] INICIANDO — digitar nome e pesquisar
+15:52:39 [INFO ] [CP02] OK | 4867ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP02_pesquisa.png
+15:52:39 [INFO ] [CP03] INICIANDO — clicar em Novo
+15:52:42 [INFO ] [CP03] OK | 2667ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP03_novo.png
+15:52:42 [INFO ] [CP04] INICIANDO — preencher campo Nome
+15:52:44 [INFO ] [CP04] OK | 2313ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP04_nome.png
+15:52:44 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+15:52:48 [INFO ] [CP05] OK | 3763ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP05_data.png
+15:52:48 [INFO ] [CP06] INICIANDO — preencher campo Mãe
+15:52:50 [INFO ] [CP06] OK | 2328ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP06_mae.png
+15:52:50 [INFO ] [CP07] INICIANDO — preencher campo Pai
+15:52:52 [INFO ] [CP07] OK | 2066ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP07_pai.png
+15:52:52 [INFO ] [CP08] INICIANDO — preencher campo CPF (CIC)
+15:52:54 [INFO ] [CP08] OK | 2036ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP08_cpf.png
+15:52:54 [INFO ] [CP09] INICIANDO — salvar o cadastro
+15:52:57 [INFO ] [CP09] OK | 2652ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP09_salvo.png
+15:52:57 [INFO ] Flow CadastroPacienteFlow — PASSOU | 9/9 steps OK | 26384ms total
+15:52:57 [INFO ] Execução finalizada — PASSOU | 12/12 steps OK | 37.4s total
+15:52:57 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_paciente\execution.json
+15:52:57 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_paciente\report.html
+15:59:02 [INFO ] Iniciando execução: test_cadastro_paciente
+15:59:02 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_paciente\
+15:59:04 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+15:59:05 [INFO ] [L01] OK | 1681ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L01_usuario.png
+15:59:05 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+15:59:07 [INFO ] [L02] OK | 1584ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L02_senha.png
+15:59:07 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+15:59:08 [INFO ] [L03] OK | 771ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\L03_entrar.png
+15:59:08 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 4037ms total
+15:59:13 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+15:59:14 [INFO ] [CP01] OK | 1556ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP01_menu.png
+15:59:14 [INFO ] [CP02] INICIANDO — pesquisar: VITOR GABRIEL GONÇALVES
+15:59:21 [INFO ] [CP02] OK | 6401ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP02_pesquisa.png
+15:59:21 [INFO ] [CP03] INICIANDO — clicar em Novo
+15:59:23 [INFO ] [CP03] OK | 1995ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP03_novo.png
+15:59:23 [INFO ] [CP04] INICIANDO — Nome Social nao informado — pulando
+15:59:23 [INFO ] [CP04] OK | 83ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP04_social.png
+15:59:23 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+15:59:27 [INFO ] [CP05] OK | 4300ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP05_data.png
+15:59:27 [INFO ] [CP06] INICIANDO — preencher Sexo: MASCULINO
+15:59:29 [INFO ] [CP06] OK | 2335ms | screenshot: evidence\2026-04-27\test_cadastro_paciente\CP06_sexo.png
+15:59:29 [INFO ] [CP07] INICIANDO — preencher Nacionalidade
+15:59:36 [ERROR] [CP07] FALHOU | 6251ms | erro: Elemento não encontrado após 3 tentativas: 'templates/si3/paciente/btn_ok.png'
+Verifique se o recorte foi salvo na pasta correta.
+15:59:36 [INFO ] Flow CadastroPacienteFlow — FALHOU | 6/7 steps OK | 22921ms total
+15:59:36 [ERROR]   Step falhou: [CP07] Elemento não encontrado após 3 tentativas: 'templates/si3/paciente/btn_ok.png'
+Verifique se o recorte foi salvo na pasta correta.
+15:59:36 [INFO ] Execução finalizada — FALHOU | 9/10 steps OK | 34.0s total
+15:59:36 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_paciente\execution.json
+15:59:36 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_paciente\report.html

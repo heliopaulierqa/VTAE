@@ -1,0 +1,481 @@
+07:51:16 [INFO ] Iniciando execução: test_cadastro_frequencia
+07:51:16 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+07:51:16 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+07:51:26 [ERROR] [FA01] FALHOU | 10123ms | erro: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("h3.t-Card-title").filter(has_text="Sistema de Pacientes")
+    - locator resolved to <h3 class="t-Card-title">Sistema de Pacientes</h3>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="ui-widget-overlay ui-front"></div> intercepts pointer events
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="ui-widget-overlay ui-front"></div> intercepts pointer events
+    - retrying click action
+      - waiting 100ms
+    19 × waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <div class="ui-widget-overlay ui-front"></div> intercepts pointer events
+     - retrying click action
+       - waiting 500ms
+
+07:51:26 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 0/1 steps OK | 10123ms total
+07:51:26 [ERROR]   Step falhou: [FA01] Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("h3.t-Card-title").filter(has_text="Sistema de Pacientes")
+    - locator resolved to <h3 class="t-Card-title">Sistema de Pacientes</h3>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="ui-widget-overlay ui-front"></div> intercepts pointer events
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="ui-widget-overlay ui-front"></div> intercepts pointer events
+    - retrying click action
+      - waiting 100ms
+    19 × waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <div class="ui-widget-overlay ui-front"></div> intercepts pointer events
+     - retrying click action
+       - waiting 500ms
+
+07:51:26 [INFO ] Execução finalizada — FALHOU | 5/6 steps OK | 10.1s total
+07:51:26 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+07:51:26 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+07:52:34 [INFO ] Iniciando execução: test_cadastro_frequencia
+07:52:34 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+07:52:34 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+07:52:36 [INFO ] [FA01] OK | 1476ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+07:52:36 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+07:52:37 [INFO ] [FA02] OK | 1472ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+07:52:37 [INFO ] [FA03] INICIANDO — clicar em Cadastros Básicos
+07:52:53 [INFO ] [FA03] OK | 16433ms | screenshot: evidence\2026-04-27\msi3_login_session\FA03_cadastros_basicos.png
+07:52:53 [INFO ] [FA04] INICIANDO — clicar em Frequência de Aplicação
+07:53:09 [INFO ] [FA04] OK | 15842ms | screenshot: evidence\2026-04-27\msi3_login_session\FA04_frequencia_aplicacao.png
+07:53:09 [INFO ] [FA05] INICIANDO — clicar em Novo Cadastro
+07:53:12 [INFO ] [FA05] OK | 2735ms | screenshot: evidence\2026-04-27\msi3_login_session\FA05_novo_cadastro.png
+07:53:12 [INFO ] [FA06] INICIANDO — preencher campos do formulário
+07:53:28 [INFO ] [FA06] OK | 16032ms | screenshot: evidence\2026-04-27\msi3_login_session\FA06_formulario.png
+07:53:28 [INFO ] [FA07] INICIANDO — preencher Horário Padrão
+07:53:37 [INFO ] [FA07] OK | 9218ms | screenshot: evidence\2026-04-27\msi3_login_session\FA07_horario_padrao.png
+07:53:37 [INFO ] [FA08] INICIANDO — clicar em Inserir
+07:53:39 [INFO ] [FA08] OK | 1708ms | screenshot: evidence\2026-04-27\msi3_login_session\FA08_inserir.png
+07:53:39 [INFO ] [FA10] INICIANDO — validar SF - SV FARMACIA na tabela do modal
+07:53:40 [INFO ] [FA10] OK | 1340ms | screenshot: evidence\2026-04-27\msi3_login_session\FA10_validacao.png
+07:53:40 [INFO ] [FA09] INICIANDO — clicar em Confirmar
+07:53:43 [INFO ] [FA09] OK | 2737ms | screenshot: evidence\2026-04-27\msi3_login_session\FA09_confirmado.png
+07:53:43 [INFO ] Flow FrequenciaAplicacaoFlow — PASSOU | 10/10 steps OK | 68992ms total
+07:53:43 [INFO ] Execução finalizada — PASSOU | 15/15 steps OK | 69.0s total
+07:53:43 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+07:53:43 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+07:57:42 [INFO ] Iniciando execução: test_cadastro_frequencia
+07:57:42 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+07:57:42 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+07:57:44 [INFO ] [FA01] OK | 1454ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+07:57:44 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+07:57:45 [INFO ] [FA02] OK | 1432ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+07:57:45 [INFO ] [FA03] INICIANDO — clicar em Cadastros Básicos
+07:58:01 [INFO ] [FA03] OK | 16370ms | screenshot: evidence\2026-04-27\msi3_login_session\FA03_cadastros_basicos.png
+07:58:01 [INFO ] [FA04] INICIANDO — clicar em Frequência de Aplicação
+07:58:17 [INFO ] [FA04] OK | 15745ms | screenshot: evidence\2026-04-27\msi3_login_session\FA04_frequencia_aplicacao.png
+07:58:17 [INFO ] [FA05] INICIANDO — clicar em Novo Cadastro
+07:58:20 [INFO ] [FA05] OK | 2742ms | screenshot: evidence\2026-04-27\msi3_login_session\FA05_novo_cadastro.png
+07:58:20 [INFO ] [FA06] INICIANDO — preencher campos do formulário
+07:58:36 [INFO ] [FA06] OK | 16124ms | screenshot: evidence\2026-04-27\msi3_login_session\FA06_formulario.png
+07:58:36 [INFO ] [FA07] INICIANDO — preencher Horário Padrão
+07:58:45 [INFO ] [FA07] OK | 9168ms | screenshot: evidence\2026-04-27\msi3_login_session\FA07_horario_padrao.png
+07:58:45 [INFO ] [FA08] INICIANDO — clicar em Inserir
+07:58:47 [INFO ] [FA08] OK | 1686ms | screenshot: evidence\2026-04-27\msi3_login_session\FA08_inserir.png
+07:58:47 [INFO ] [FA10] INICIANDO — validar SF - SV FARMACIA na tabela do modal
+07:58:48 [INFO ] [FA10] OK | 1301ms | screenshot: evidence\2026-04-27\msi3_login_session\FA10_validacao.png
+07:58:48 [INFO ] [FA09] INICIANDO — clicar em Confirmar
+07:58:51 [INFO ] [FA09] OK | 2692ms | screenshot: evidence\2026-04-27\msi3_login_session\FA09_confirmado.png
+07:58:51 [INFO ] Flow FrequenciaAplicacaoFlow — PASSOU | 10/10 steps OK | 68713ms total
+07:58:51 [INFO ] Execução finalizada — PASSOU | 15/15 steps OK | 68.7s total
+07:58:51 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+07:58:51 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+08:19:02 [INFO ] Iniciando execução: test_cadastro_frequencia
+08:19:02 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+08:19:02 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+08:19:04 [INFO ] [FA01] OK | 1419ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+08:19:04 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+08:19:05 [INFO ] [FA02] OK | 1415ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+08:19:05 [INFO ] [FA03] INICIANDO — clicar em Cadastros Básicos
+08:19:22 [INFO ] [FA03] OK | 16373ms | screenshot: evidence\2026-04-27\msi3_login_session\FA03_cadastros_basicos.png
+08:19:22 [INFO ] [FA04] INICIANDO — clicar em Frequência de Aplicação
+08:19:37 [INFO ] [FA04] OK | 15759ms | screenshot: evidence\2026-04-27\msi3_login_session\FA04_frequencia_aplicacao.png
+08:19:37 [INFO ] [FA05] INICIANDO — clicar em Novo Cadastro
+08:19:38 [INFO ] [FA05] OK | 769ms | screenshot: evidence\2026-04-27\msi3_login_session\FA05_novo_cadastro.png
+08:19:38 [INFO ] [FA06] INICIANDO — preencher campos do formulário
+08:19:54 [INFO ] [FA06] OK | 15782ms | screenshot: evidence\2026-04-27\msi3_login_session\FA06_formulario.png
+08:19:54 [INFO ] [FA07] INICIANDO — preencher Horário Padrão
+08:20:03 [INFO ] [FA07] OK | 9174ms | screenshot: evidence\2026-04-27\msi3_login_session\FA07_horario_padrao.png
+08:20:03 [INFO ] [FA08] INICIANDO — clicar em Inserir
+08:20:17 [INFO ] [FA08] OK | 13797ms | screenshot: evidence\2026-04-27\msi3_login_session\FA08_inserir.png
+08:20:17 [INFO ] [FA10] INICIANDO — validar SF - SV FARMACIA na tabela do modal
+08:20:18 [INFO ] [FA10] OK | 1322ms | screenshot: evidence\2026-04-27\msi3_login_session\FA10_validacao.png
+08:20:18 [INFO ] [FA09] INICIANDO — clicar em Confirmar
+08:20:36 [INFO ] [FA09] OK | 17740ms | screenshot: evidence\2026-04-27\msi3_login_session\FA09_confirmado.png
+08:20:36 [INFO ] Flow FrequenciaAplicacaoFlow — PASSOU | 10/10 steps OK | 93551ms total
+08:20:36 [INFO ] Execução finalizada — PASSOU | 15/15 steps OK | 93.6s total
+08:20:36 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+08:20:36 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+08:59:47 [INFO ] Iniciando execução: test_cadastro_frequencia
+08:59:47 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+08:59:47 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+08:59:49 [INFO ] [FA01] OK | 1477ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+08:59:49 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+08:59:50 [INFO ] [FA02] OK | 1464ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+08:59:50 [INFO ] [FA03] INICIANDO — clicar em Cadastros Básicos
+09:00:07 [INFO ] [FA03] OK | 16626ms | screenshot: evidence\2026-04-27\msi3_login_session\FA03_cadastros_basicos.png
+09:00:07 [INFO ] [FA04] INICIANDO — clicar em Frequência de Aplicação
+09:00:17 [ERROR] [FA04] FALHOU | 10120ms | erro: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("h3.t-Card-title").filter(has_text="Frequência de Aplicação")
+
+09:00:17 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 3/4 steps OK | 29687ms total
+09:00:17 [ERROR]   Step falhou: [FA04] Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("h3.t-Card-title").filter(has_text="Frequência de Aplicação")
+
+09:00:17 [INFO ] Execução finalizada — FALHOU | 8/9 steps OK | 29.7s total
+09:00:17 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+09:00:17 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+09:08:26 [INFO ] Iniciando execução: test_cadastro_frequencia
+09:08:26 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+09:08:26 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+09:08:28 [INFO ] [FA01] OK | 1487ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+09:08:28 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+09:08:29 [INFO ] [FA02] OK | 1461ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+09:08:29 [INFO ] [FA03] INICIANDO — clicar em Cadastros Básicos
+09:09:01 [ERROR] [FA03] FALHOU | 31422ms | erro: Locator.wait_for: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("h3.t-Card-title").filter(has_text="Frequência de Aplicação") to be visible
+
+09:09:01 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 2/3 steps OK | 34370ms total
+09:09:01 [ERROR]   Step falhou: [FA03] Locator.wait_for: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("h3.t-Card-title").filter(has_text="Frequência de Aplicação") to be visible
+
+09:09:01 [INFO ] Execução finalizada — FALHOU | 7/8 steps OK | 34.4s total
+09:09:01 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+09:09:01 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+09:09:35 [INFO ] Iniciando execução: test_cadastro_frequencia
+09:09:35 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+09:09:35 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+09:09:37 [INFO ] [FA01] OK | 1470ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+09:09:37 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+09:09:38 [INFO ] [FA02] OK | 1442ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+09:09:38 [INFO ] [FA03] INICIANDO — clicar em Cadastros Básicos
+09:10:10 [ERROR] [FA03] FALHOU | 31450ms | erro: Locator.wait_for: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("h3.t-Card-title").filter(has_text="Frequência de Aplicação") to be visible
+
+09:10:10 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 2/3 steps OK | 34362ms total
+09:10:10 [ERROR]   Step falhou: [FA03] Locator.wait_for: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("h3.t-Card-title").filter(has_text="Frequência de Aplicação") to be visible
+
+09:10:10 [INFO ] Execução finalizada — FALHOU | 7/8 steps OK | 34.4s total
+09:10:10 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+09:10:10 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+09:15:25 [INFO ] Iniciando execução: test_cadastro_frequencia
+09:15:25 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+09:15:25 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+09:15:26 [INFO ] [FA01] OK | 1549ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+09:15:26 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+09:15:28 [INFO ] [FA02] OK | 1538ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+09:15:28 [INFO ] [FA03] INICIANDO — clicar em Cadastros Básicos
+09:15:59 [ERROR] [FA03] FALHOU | 31440ms | erro: Page.wait_for_selector: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("ul.t-Cards li.t-Cards-item") to be visible
+
+09:15:59 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 2/3 steps OK | 34528ms total
+09:15:59 [ERROR]   Step falhou: [FA03] Page.wait_for_selector: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("ul.t-Cards li.t-Cards-item") to be visible
+
+09:15:59 [INFO ] Execução finalizada — FALHOU | 7/8 steps OK | 34.5s total
+09:15:59 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+09:15:59 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+09:20:21 [INFO ] Iniciando execução: test_cadastro_frequencia
+09:20:21 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+09:20:21 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+09:20:23 [INFO ] [FA01] OK | 1476ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+09:20:23 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+09:20:24 [INFO ] [FA02] OK | 1439ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+09:20:24 [INFO ] [FA03] INICIANDO — clicar em Cadastros Básicos
+09:20:24 [ERROR] [FA03] FALHOU | 4ms | erro: Page.evaluate: ReferenceError: navegaModulo is not defined
+    at eval (eval at evaluate (:290:30), <anonymous>:1:1)
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:290:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+09:20:24 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 2/3 steps OK | 2919ms total
+09:20:24 [ERROR]   Step falhou: [FA03] Page.evaluate: ReferenceError: navegaModulo is not defined
+    at eval (eval at evaluate (:290:30), <anonymous>:1:1)
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:290:30)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+09:20:24 [INFO ] Execução finalizada — FALHOU | 7/8 steps OK | 2.9s total
+09:20:24 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+09:20:24 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+09:26:53 [INFO ] Iniciando execução: test_cadastro_frequencia
+09:26:53 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+09:26:53 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+09:26:55 [INFO ] [FA01] OK | 1990ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+09:26:55 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+09:26:57 [INFO ] [FA02] OK | 1927ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+09:26:57 [INFO ] [FA04] INICIANDO — clicar em Frequência de Aplicação
+09:27:07 [ERROR] [FA04] FALHOU | 10116ms | erro: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("a[href*='navegaModulo(405)'], a[href*='modu_nr=405']").first
+
+09:27:07 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 2/3 steps OK | 14033ms total
+09:27:07 [ERROR]   Step falhou: [FA04] Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("a[href*='navegaModulo(405)'], a[href*='modu_nr=405']").first
+
+09:27:07 [INFO ] Execução finalizada — FALHOU | 7/8 steps OK | 14.0s total
+09:27:07 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+09:27:07 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+09:28:30 [INFO ] Iniciando execução: test_cadastro_frequencia
+09:28:30 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+09:28:30 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+09:28:32 [INFO ] [FA01] OK | 1975ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+09:28:32 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+09:28:34 [INFO ] [FA02] OK | 1863ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+09:28:34 [INFO ] [FA04] INICIANDO — clicar em Frequência de Aplicação
+09:28:44 [ERROR] [FA04] FALHOU | 10114ms | erro: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("a[href*='navegaModulo(405)'], a[href*='modu_nr=405']").first
+
+09:28:44 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 2/3 steps OK | 13953ms total
+09:28:44 [ERROR]   Step falhou: [FA04] Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("a[href*='navegaModulo(405)'], a[href*='modu_nr=405']").first
+
+09:28:44 [INFO ] Execução finalizada — FALHOU | 7/8 steps OK | 14.0s total
+09:28:44 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+09:28:44 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+09:44:07 [INFO ] Iniciando execução: test_cadastro_frequencia
+09:44:07 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+09:44:07 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+09:44:23 [ERROR] [FA01] FALHOU | 15929ms | erro: Page.wait_for_selector: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("h3.t-Card-title") to be visible
+
+09:44:23 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 0/1 steps OK | 15929ms total
+09:44:23 [ERROR]   Step falhou: [FA01] Page.wait_for_selector: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("h3.t-Card-title") to be visible
+
+09:44:23 [INFO ] Execução finalizada — FALHOU | 5/6 steps OK | 15.9s total
+09:44:23 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+09:44:23 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+09:44:56 [INFO ] Iniciando execução: test_cadastro_frequencia
+09:44:56 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+09:44:56 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+09:45:12 [ERROR] [FA01] FALHOU | 16051ms | erro: Page.wait_for_selector: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("h3.t-Card-title") to be visible
+
+09:45:12 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 0/1 steps OK | 16051ms total
+09:45:12 [ERROR]   Step falhou: [FA01] Page.wait_for_selector: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("h3.t-Card-title") to be visible
+
+09:45:12 [INFO ] Execução finalizada — FALHOU | 5/6 steps OK | 16.1s total
+09:45:12 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+09:45:13 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+09:50:57 [INFO ] Iniciando execução: test_cadastro_frequencia
+09:50:57 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+09:50:57 [INFO ] [FA01] INICIANDO — navegar para Frequencia de Aplicacao
+09:51:16 [INFO ] [FA01] OK | 19056ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_frequencia.png
+09:51:16 [INFO ] [FA05] INICIANDO — clicar em Novo Cadastro
+09:51:26 [ERROR] [FA05] FALHOU | 10118ms | erro: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("text=Novo Cadastro")
+
+09:51:26 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 1/2 steps OK | 29174ms total
+09:51:26 [ERROR]   Step falhou: [FA05] Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("text=Novo Cadastro")
+
+09:51:26 [INFO ] Execução finalizada — FALHOU | 6/7 steps OK | 29.2s total
+09:51:26 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+09:51:26 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+09:52:07 [INFO ] Iniciando execução: test_cadastro_frequencia
+09:52:07 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+09:52:07 [INFO ] [FA01] INICIANDO — navegar para Frequencia de Aplicacao
+09:52:26 [INFO ] [FA01] OK | 19025ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_frequencia.png
+09:52:26 [INFO ] [FA05] INICIANDO — clicar em Novo Cadastro
+09:52:36 [ERROR] [FA05] FALHOU | 10114ms | erro: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("text=Novo Cadastro")
+
+09:52:36 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 1/2 steps OK | 29139ms total
+09:52:36 [ERROR]   Step falhou: [FA05] Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("text=Novo Cadastro")
+
+09:52:36 [INFO ] Execução finalizada — FALHOU | 6/7 steps OK | 29.1s total
+09:52:36 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+09:52:36 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+09:56:14 [INFO ] Iniciando execução: test_cadastro_frequencia
+09:56:14 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+09:56:14 [INFO ] [FA01] INICIANDO — navegar para Frequencia de Aplicacao
+09:57:03 [ERROR] [FA01] FALHOU | 49250ms | erro: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("text=Novo Cadastro")
+
+09:57:03 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 0/1 steps OK | 49250ms total
+09:57:03 [ERROR]   Step falhou: [FA01] Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("text=Novo Cadastro")
+
+09:57:03 [INFO ] Execução finalizada — FALHOU | 5/6 steps OK | 49.3s total
+09:57:03 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+09:57:03 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+10:02:02 [INFO ] Iniciando execução: test_cadastro_frequencia
+10:02:02 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+10:02:02 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+10:02:37 [ERROR] [FA01] FALHOU | 35115ms | erro: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("a.t-Card-wrap[href*='modu_nr=402']").first to be visible
+
+10:02:37 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 0/1 steps OK | 35115ms total
+10:02:37 [ERROR]   Step falhou: [FA01] Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("a.t-Card-wrap[href*='modu_nr=402']").first to be visible
+
+10:02:37 [INFO ] Execução finalizada — FALHOU | 5/6 steps OK | 35.1s total
+10:02:37 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+10:02:37 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+10:03:04 [INFO ] Iniciando execução: test_cadastro_frequencia
+10:03:04 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+10:03:04 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+10:03:39 [ERROR] [FA01] FALHOU | 35108ms | erro: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("a.t-Card-wrap[href*='modu_nr=402']").first to be visible
+
+10:03:39 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 0/1 steps OK | 35108ms total
+10:03:39 [ERROR]   Step falhou: [FA01] Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("a.t-Card-wrap[href*='modu_nr=402']").first to be visible
+
+10:03:39 [INFO ] Execução finalizada — FALHOU | 5/6 steps OK | 35.1s total
+10:03:39 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+10:03:39 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+12:33:01 [INFO ] Iniciando execução: test_cadastro_frequencia
+12:33:01 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+12:33:01 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+12:33:02 [INFO ] [FA01] OK | 1575ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+12:33:02 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+12:33:04 [INFO ] [FA02] OK | 1481ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+12:33:04 [INFO ] [FA03] INICIANDO — clicar em Cadastros Básicos
+12:33:20 [INFO ] [FA03] OK | 16599ms | screenshot: evidence\2026-04-27\msi3_login_session\FA03_cadastros_basicos.png
+12:33:20 [INFO ] [FA04] INICIANDO — clicar em Frequência de Aplicação
+12:33:36 [INFO ] [FA04] OK | 15767ms | screenshot: evidence\2026-04-27\msi3_login_session\FA04_frequencia_aplicacao.png
+12:33:36 [INFO ] [FA05] INICIANDO — clicar em Novo Cadastro
+12:33:37 [INFO ] [FA05] OK | 811ms | screenshot: evidence\2026-04-27\msi3_login_session\FA05_novo_cadastro.png
+12:33:37 [INFO ] [FA06] INICIANDO — preencher campos do formulário
+12:33:53 [INFO ] [FA06] OK | 15938ms | screenshot: evidence\2026-04-27\msi3_login_session\FA06_formulario.png
+12:33:53 [INFO ] [FA07] INICIANDO — preencher Horário Padrão
+12:34:02 [INFO ] [FA07] OK | 9195ms | screenshot: evidence\2026-04-27\msi3_login_session\FA07_horario_padrao.png
+12:34:02 [INFO ] [FA08] INICIANDO — clicar em Inserir
+12:34:44 [INFO ] [FA08] OK | 41978ms | screenshot: evidence\2026-04-27\msi3_login_session\FA08_inserir.png
+12:34:44 [INFO ] [FA10] INICIANDO — validar SF - SV FARMACIA na tabela do modal
+12:34:45 [INFO ] [FA10] OK | 1343ms | screenshot: evidence\2026-04-27\msi3_login_session\FA10_validacao.png
+12:34:45 [INFO ] [FA09] INICIANDO — clicar em Confirmar e validar na grade
+12:35:01 [INFO ] [FA09] OK | 15732ms | screenshot: evidence\2026-04-27\msi3_login_session\FA09_confirmado.png
+12:35:01 [INFO ] Flow FrequenciaAplicacaoFlow — PASSOU | 10/10 steps OK | 120418ms total
+12:35:01 [INFO ] Execução finalizada — PASSOU | 15/15 steps OK | 120.4s total
+12:35:01 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+12:35:01 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+12:45:02 [INFO ] Iniciando execução: test_cadastro_frequencia
+12:45:02 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+12:45:02 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+12:45:05 [INFO ] [FA01] OK | 2089ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+12:45:05 [INFO ] [FA02] INICIANDO — clicar em Apoio a Assistencia
+12:45:06 [INFO ] [FA02] OK | 1950ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+12:45:06 [INFO ] [FA03] INICIANDO — clicar em Cadastros Basicos
+12:45:09 [INFO ] [FA03] OK | 3016ms | screenshot: evidence\2026-04-27\msi3_login_session\FA03_cadastros_basicos.png
+12:45:09 [INFO ] [FA04] INICIANDO — clicar em Frequencia de Aplicacao
+12:46:20 [ERROR] [FA04] FALHOU | 70421ms | erro: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("a[href*='p2_modu_nr=405'], a[href*='modu_nr=405']").first
+
+12:46:20 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 3/4 steps OK | 77476ms total
+12:46:20 [ERROR]   Step falhou: [FA04] Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("a[href*='p2_modu_nr=405'], a[href*='modu_nr=405']").first
+
+12:46:20 [INFO ] Execução finalizada — FALHOU | 8/9 steps OK | 77.5s total
+12:46:20 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+12:46:20 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+12:50:20 [INFO ] Iniciando execução: test_cadastro_frequencia
+12:50:20 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+12:50:20 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+12:50:22 [INFO ] [FA01] OK | 2189ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+12:50:22 [INFO ] [FA02] INICIANDO — clicar em Apoio a Assistencia
+12:50:24 [INFO ] [FA02] OK | 1883ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+12:50:24 [INFO ] [FA03] INICIANDO — clicar em Cadastros Basicos
+12:50:26 [INFO ] [FA03] OK | 2316ms | screenshot: evidence\2026-04-27\msi3_login_session\FA03_cadastros_basicos.png
+12:50:26 [INFO ] [FA04] INICIANDO — clicar em Frequencia de Aplicacao (OpenCV)
+12:50:48 [INFO ] [FA04] OK | 21819ms | screenshot: evidence\2026-04-27\msi3_login_session\FA04_frequencia.png
+12:50:48 [INFO ] [FA05] INICIANDO — clicar em Novo Cadastro
+12:50:58 [ERROR] [FA05] FALHOU | 10118ms | erro: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("text=Novo Cadastro")
+
+12:50:58 [INFO ] Flow FrequenciaAplicacaoFlow — FALHOU | 4/5 steps OK | 38325ms total
+12:50:58 [ERROR]   Step falhou: [FA05] Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("text=Novo Cadastro")
+
+12:50:58 [INFO ] Execução finalizada — FALHOU | 9/10 steps OK | 38.3s total
+12:50:58 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+12:50:58 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html
+12:52:00 [INFO ] Iniciando execução: test_cadastro_frequencia
+12:52:00 [INFO ] Evidências em: evidence\2026-04-27\test_cadastro_frequencia\
+12:52:00 [INFO ] [FA01] INICIANDO — clicar em Sistema de Pacientes
+12:52:01 [INFO ] [FA01] OK | 1527ms | screenshot: evidence\2026-04-27\msi3_login_session\FA01_sistema_pacientes.png
+12:52:01 [INFO ] [FA02] INICIANDO — clicar em Apoio à Assistência
+12:52:03 [INFO ] [FA02] OK | 1411ms | screenshot: evidence\2026-04-27\msi3_login_session\FA02_apoio_assistencia.png
+12:52:03 [INFO ] [FA03] INICIANDO — clicar em Cadastros Básicos
+12:52:20 [INFO ] [FA03] OK | 16857ms | screenshot: evidence\2026-04-27\msi3_login_session\FA03_cadastros_basicos.png
+12:52:20 [INFO ] [FA04] INICIANDO — clicar em Frequência de Aplicação
+12:52:35 [INFO ] [FA04] OK | 15714ms | screenshot: evidence\2026-04-27\msi3_login_session\FA04_frequencia_aplicacao.png
+12:52:35 [INFO ] [FA05] INICIANDO — clicar em Novo Cadastro
+12:52:36 [INFO ] [FA05] OK | 770ms | screenshot: evidence\2026-04-27\msi3_login_session\FA05_novo_cadastro.png
+12:52:36 [INFO ] [FA06] INICIANDO — preencher campos do formulário
+12:52:52 [INFO ] [FA06] OK | 15926ms | screenshot: evidence\2026-04-27\msi3_login_session\FA06_formulario.png
+12:52:52 [INFO ] [FA07] INICIANDO — preencher Horário Padrão
+12:53:01 [INFO ] [FA07] OK | 9217ms | screenshot: evidence\2026-04-27\msi3_login_session\FA07_horario_padrao.png
+12:53:01 [INFO ] [FA08] INICIANDO — clicar em Inserir
+12:53:43 [INFO ] [FA08] OK | 42007ms | screenshot: evidence\2026-04-27\msi3_login_session\FA08_inserir.png
+12:53:43 [INFO ] [FA10] INICIANDO — validar SF - SV FARMACIA na tabela do modal
+12:53:45 [INFO ] [FA10] OK | 1334ms | screenshot: evidence\2026-04-27\msi3_login_session\FA10_validacao.png
+12:53:45 [INFO ] [FA09] INICIANDO — clicar em Confirmar e validar na grade
+12:54:00 [INFO ] [FA09] OK | 15742ms | screenshot: evidence\2026-04-27\msi3_login_session\FA09_confirmado.png
+12:54:00 [INFO ] Flow FrequenciaAplicacaoFlow — PASSOU | 10/10 steps OK | 120505ms total
+12:54:00 [INFO ] Execução finalizada — PASSOU | 15/15 steps OK | 120.5s total
+12:54:00 [INFO ] Relatório JSON salvo em: evidence\2026-04-27\test_cadastro_frequencia\execution.json
+12:54:00 [INFO ] Relatório HTML salvo em: evidence\2026-04-27\test_cadastro_frequencia\report.html

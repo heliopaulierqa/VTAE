@@ -1,0 +1,149 @@
+{
+  "test_name": "test_cadastro_frequencia",
+  "status": "PASSOU",
+  "started_at": "2026-04-27T12:52:00.242846",
+  "finished_at": "2026-04-27T12:54:00.758936",
+  "duration_seconds": 120.52,
+  "summary": {
+    "total_flows": 2,
+    "total_steps": 15,
+    "passed_steps": 15,
+    "failed_steps": 0
+  },
+  "flows": [
+    {
+      "flow_name": "LoginFlowMsi3",
+      "success": true,
+      "total_duration_ms": 15420.3,
+      "steps": [
+        {
+          "step_id": "MW01",
+          "success": true,
+          "duration_ms": 1318.8,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\MW01_pagina.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:51:46.129261"
+        },
+        {
+          "step_id": "MW02",
+          "success": true,
+          "duration_ms": 767.2,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\MW02_usuario.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:51:46.897622"
+        },
+        {
+          "step_id": "MW03",
+          "success": true,
+          "duration_ms": 719.6,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\MW03_senha.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:51:47.618083"
+        },
+        {
+          "step_id": "MW04",
+          "success": true,
+          "duration_ms": 12517.5,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\MW04_submetido.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:52:00.136526"
+        },
+        {
+          "step_id": "MW05",
+          "success": true,
+          "duration_ms": 97.2,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\MW05_principal.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:52:00.234505"
+        }
+      ]
+    },
+    {
+      "flow_name": "FrequenciaAplicacaoFlow",
+      "success": true,
+      "total_duration_ms": 120505.3,
+      "steps": [
+        {
+          "step_id": "FA01",
+          "success": true,
+          "duration_ms": 1526.6,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\FA01_sistema_pacientes.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:52:01.771335"
+        },
+        {
+          "step_id": "FA02",
+          "success": true,
+          "duration_ms": 1411.3,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\FA02_apoio_assistencia.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:52:03.183486"
+        },
+        {
+          "step_id": "FA03",
+          "success": true,
+          "duration_ms": 16856.9,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\FA03_cadastros_basicos.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:52:20.041272"
+        },
+        {
+          "step_id": "FA04",
+          "success": true,
+          "duration_ms": 15714.5,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\FA04_frequencia_aplicacao.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:52:35.756664"
+        },
+        {
+          "step_id": "FA05",
+          "success": true,
+          "duration_ms": 769.8,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\FA05_novo_cadastro.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:52:36.527333"
+        },
+        {
+          "step_id": "FA06",
+          "success": true,
+          "duration_ms": 15925.8,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\FA06_formulario.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:52:52.453939"
+        },
+        {
+          "step_id": "FA07",
+          "success": true,
+          "duration_ms": 9216.9,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\FA07_horario_padrao.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:53:01.671745"
+        },
+        {
+          "step_id": "FA08",
+          "success": true,
+          "duration_ms": 42007.4,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\FA08_inserir.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:53:43.680226"
+        },
+        {
+          "step_id": "FA10",
+          "success": true,
+          "duration_ms": 1334.1,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\FA10_validacao.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:53:45.015066"
+        },
+        {
+          "step_id": "FA09",
+          "success": true,
+          "duration_ms": 15742.0,
+          "screenshot": "evidence\\2026-04-27\\msi3_login_session\\FA09_confirmado.png",
+          "error": null,
+          "timestamp": "2026-04-27T12:54:00.758031"
+        }
+      ]
+    }
+  ]
+}

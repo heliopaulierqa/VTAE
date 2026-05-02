@@ -52,7 +52,7 @@ class CadastroFuncionarioFlowSislab:
     _COORD_BTN_SALVAR       = (85,  148)
 
     # Região da grade — linha abaixo do cabeçalho
-    _REGIAO_GRADE = (0, 620, 1366, 660)
+    _REGIAO_GRADE = (0, 615, 1366, 760)
 
     # Posição do Cargo no dropdown (0 = selecione, 1 = ANALISYTA DE QA, 2 = ANALISTA DE RH)
     # Posição do Departamento (0 = selecione, 1 = TECNOLOGIA DA INFOMAÇÃO, 2 = ADMINISTRAÇÃO)
@@ -99,8 +99,9 @@ class CadastroFuncionarioFlowSislab:
         """Tenta OpenCV; usa coordenadas fixas como fallback."""
         encontrou = ctx.runner.click_template(template, threshold=threshold)
         if not encontrou:
-            print(f"[fallback] '{template}' — coords {coords}")
-        time.sleep(0.3)
+            time.sleep(0.3)
+            return
+        print(f"[fallback] '{template}' — coords {coords}")        
         pyautogui.click(coords[0], coords[1])
         time.sleep(0.5)
 

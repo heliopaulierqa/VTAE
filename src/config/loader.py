@@ -64,7 +64,7 @@ class ConfigLoader:
 
     @classmethod
     def carregar(cls, sistema: str,
-                 ambiente: str = "dev",
+                 ambiente: str = None,
                  configs_dir: Path = None) -> SystemConfig:
         """
         Carrega a configuração de um sistema para um ambiente específico.
@@ -84,6 +84,11 @@ class ConfigLoader:
             config = ConfigLoader.carregar("sislab")
             config = ConfigLoader.carregar("msi3", ambiente="homologacao")
         """
+
+        # resolve ambiente: parâmetro > VTAE_ENV > "dev"  ← 2. adicionar estas 3 linhas
+        if ambiente is None:
+            ambiente = os.environ.get("VTAE_ENV", "dev")
+            
         base_dir = configs_dir or cls._CONFIGS_DIR
         config_path = base_dir / sistema / "config.yaml"
 

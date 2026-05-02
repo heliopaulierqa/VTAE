@@ -10,3 +10,6 @@ playwright
 # ── Testes ──
 pytest
 pytest-cov
+
+# ── YAML ──
+pyyaml>=6.0

@@ -1,0 +1,56 @@
+sistema: sislab
+tipo: desktop
+runner: opencv
+
+ambientes:
+  dev:
+    url: http://127.0.0.1:5000
+    headless: false
+    confidence: 0.8
+    timeout: 30.0
+  homologacao:
+    url: http://sislab.hom.interno
+    headless: true
+    confidence: 0.8
+    timeout: 60.0
+  producao:
+    url: http://sislab.prod.interno
+    headless: true
+    confidence: 0.85
+    timeout: 60.0
+
+credenciais:
+  usuario: ${SISLAB_USER:-admin}
+  senha: ${SISLAB_PASS:-admin}
+
+flows:
+  - login
+  - cadastro_funcionario
+
+dados_faker:
+  - campo: nome
+    tipo: faker
+    metodo: name
+    transformacao: upper
+    locale: pt_BR
+
+  - campo: cpf
+    tipo: faker
+    metodo: cpf
+    transformacao: sem_pontuacao
+
+  - campo: cargo
+    tipo: fixo
+    valor: "ANALISTA DE RH"
+
+  - campo: departamento
+    tipo: fixo
+    valor: "ADMINISTRAÇÃO"
+
+  - campo: salario
+    tipo: fixo
+    valor: "5000"
+
+  - campo: admissao
+    tipo: fixo
+    valor: "01/15/1990"

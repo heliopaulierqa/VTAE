@@ -1,0 +1,12 @@
+# Credenciais
+vtae/configs/**/.env
+.env
+
+# Evidências de execução
+evidence/
+runs/
+
+# Cache Python
+__pycache__/
+*.pyc
+.pytest_cache/

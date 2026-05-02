@@ -1,0 +1,452 @@
+07:42:10 [INFO ] Iniciando execução: test_cadastro_paciente
+07:42:10 [INFO ] Evidências em: evidence\2026-04-29\test_cadastro_paciente\
+07:42:12 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+07:42:14 [INFO ] [L01] OK | 1739ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L01_usuario.png
+07:42:14 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+07:42:16 [INFO ] [L02] OK | 1550ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L02_senha.png
+07:42:16 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+07:42:16 [INFO ] [L03] OK | 797ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L03_entrar.png
+07:42:16 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 4086ms total
+07:42:21 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+07:44:38 [INFO ] Iniciando execução: test_cadastro_paciente
+07:44:38 [INFO ] Evidências em: evidence\2026-04-29\test_cadastro_paciente\
+07:44:40 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+07:44:42 [INFO ] [L01] OK | 1684ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L01_usuario.png
+07:44:42 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+07:44:44 [INFO ] [L02] OK | 1571ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L02_senha.png
+07:44:44 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+07:44:44 [INFO ] [L03] OK | 764ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L03_entrar.png
+07:44:44 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 4019ms total
+07:44:49 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+07:46:15 [INFO ] Iniciando execução: test_cadastro_paciente
+07:46:15 [INFO ] Evidências em: evidence\2026-04-29\test_cadastro_paciente\
+07:46:17 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+07:46:19 [INFO ] [L01] OK | 1616ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L01_usuario.png
+07:46:19 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+07:46:20 [INFO ] [L02] OK | 1563ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L02_senha.png
+07:46:20 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+07:46:21 [INFO ] [L03] OK | 750ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L03_entrar.png
+07:46:21 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 3929ms total
+07:46:26 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+07:46:27 [INFO ] [CP01] OK | 823ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP01_menu.png
+07:46:27 [INFO ] [CP02] INICIANDO — pesquisar: JULIANA PEREIRA
+07:46:33 [INFO ] [CP02] OK | 6014ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP02_pesquisa.png
+07:46:33 [INFO ] [CP03] INICIANDO — clicar em Novo
+07:46:36 [INFO ] [CP03] OK | 2895ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP03_novo.png
+07:46:36 [INFO ] [CP04] INICIANDO — Nome Social: JULIANA PEREIRA
+07:46:38 [INFO ] [CP04] OK | 2257ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP04_social.png
+07:46:38 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+07:46:40 [INFO ] [CP05] OK | 2550ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP05_data.png
+07:46:40 [INFO ] [CP06] INICIANDO — preencher Sexo: M
+07:46:41 [INFO ] [CP06] OK | 1062ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP06_sexo.png
+07:46:41 [INFO ] [CP07] INICIANDO — preencher Nacionalidade
+07:46:50 [INFO ] [CP07] OK | 8462ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP07_nacion.png
+07:46:50 [INFO ] [CP08] INICIANDO — preencher Mae
+07:46:52 [INFO ] [CP08] OK | 2017ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP08_mae.png
+07:46:52 [INFO ] [CP09] INICIANDO — preencher Pai
+07:46:54 [INFO ] [CP09] OK | 1800ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP09_pai.png
+07:46:54 [INFO ] [CP10] INICIANDO — preencher Cor/Etnia
+07:46:55 [INFO ] [CP10] OK | 1425ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP10_cor.png
+07:46:55 [INFO ] [CP11] INICIANDO — preencher CPF (CIC)
+07:46:57 [INFO ] [CP11] OK | 1502ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP11_cpf.png
+07:46:57 [INFO ] [CP12] INICIANDO — salvar cadastro
+07:47:00 [INFO ] [CP12] OK | 3348ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP12_salvo.png
+07:47:00 [INFO ] [CP13] INICIANDO — gerar matricula e verificar via OCR
+07:47:03 [INFO ] [CP13] OK | 2515ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP13_matricula.png
+07:47:03 [INFO ] [CP14] INICIANDO — sair para o Menu Principal
+07:47:07 [INFO ] [CP14] OK | 4528ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP14_menu.png
+07:47:07 [INFO ] Flow CadastroPacienteFlow — PASSOU | 14/14 steps OK | 41199ms total
+07:47:07 [INFO ] Execução finalizada — PASSOU | 17/17 steps OK | 52.2s total
+07:47:07 [INFO ] Relatório JSON salvo em: evidence\2026-04-29\test_cadastro_paciente\execution.json
+07:47:07 [INFO ] Relatório HTML salvo em: evidence\2026-04-29\test_cadastro_paciente\report.html
+07:47:07 [INFO ] Iniciando execução: test_cadastro_paciente
+07:47:07 [INFO ] Evidências em: evidence\2026-04-29\test_cadastro_paciente\
+07:47:09 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+07:47:11 [INFO ] [L01] OK | 1583ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L01_usuario.png
+07:47:11 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+07:47:12 [INFO ] [L02] OK | 1543ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L02_senha.png
+07:47:12 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+07:47:13 [INFO ] [L03] OK | 755ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L03_entrar.png
+07:47:13 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 3881ms total
+07:47:18 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+07:47:19 [INFO ] [CP01] OK | 847ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP01_menu.png
+07:47:19 [INFO ] [CP02] INICIANDO — pesquisar: BRYAN LOPES
+07:47:25 [INFO ] [CP02] OK | 5742ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP02_pesquisa.png
+07:47:25 [INFO ] [CP03] INICIANDO — clicar em Novo
+07:47:28 [INFO ] [CP03] OK | 2854ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP03_novo.png
+07:47:28 [INFO ] [CP04] INICIANDO — Nome Social: BRYAN LOPES
+07:47:30 [INFO ] [CP04] OK | 2029ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP04_social.png
+07:47:30 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+07:47:32 [INFO ] [CP05] OK | 2516ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP05_data.png
+07:47:32 [INFO ] [CP06] INICIANDO — preencher Sexo: M
+07:47:33 [INFO ] [CP06] OK | 1058ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP06_sexo.png
+07:47:33 [INFO ] [CP07] INICIANDO — preencher Nacionalidade
+07:47:42 [INFO ] [CP07] OK | 8523ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP07_nacion.png
+07:47:42 [INFO ] [CP08] INICIANDO — preencher Mae
+07:47:43 [INFO ] [CP08] OK | 1670ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP08_mae.png
+07:47:43 [INFO ] [CP09] INICIANDO — preencher Pai
+07:47:45 [INFO ] [CP09] OK | 2014ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP09_pai.png
+07:47:45 [INFO ] [CP10] INICIANDO — preencher Cor/Etnia
+07:47:47 [INFO ] [CP10] OK | 1408ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP10_cor.png
+07:47:47 [INFO ] [CP11] INICIANDO — preencher CPF (CIC)
+07:47:48 [INFO ] [CP11] OK | 1476ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP11_cpf.png
+07:47:48 [INFO ] [CP12] INICIANDO — salvar cadastro
+07:47:52 [INFO ] [CP12] OK | 3379ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP12_salvo.png
+07:47:52 [INFO ] [CP13] INICIANDO — gerar matricula e verificar via OCR
+07:47:54 [INFO ] [CP13] OK | 2406ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP13_matricula.png
+07:47:54 [INFO ] [CP14] INICIANDO — sair para o Menu Principal
+07:47:59 [INFO ] [CP14] OK | 4541ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP14_menu.png
+07:47:59 [INFO ] Flow CadastroPacienteFlow — PASSOU | 14/14 steps OK | 40462ms total
+07:47:59 [INFO ] Execução finalizada — PASSOU | 17/17 steps OK | 51.4s total
+07:47:59 [INFO ] Relatório JSON salvo em: evidence\2026-04-29\test_cadastro_paciente\execution.json
+07:47:59 [INFO ] Relatório HTML salvo em: evidence\2026-04-29\test_cadastro_paciente\report.html
+07:47:59 [INFO ] Iniciando execução: test_cadastro_paciente
+07:47:59 [INFO ] Evidências em: evidence\2026-04-29\test_cadastro_paciente\
+07:48:01 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+07:48:02 [INFO ] [L01] OK | 1566ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L01_usuario.png
+07:48:02 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+07:48:04 [INFO ] [L02] OK | 1540ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L02_senha.png
+07:48:04 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+07:48:05 [INFO ] [L03] OK | 752ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L03_entrar.png
+07:48:05 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 3858ms total
+07:48:10 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+07:48:10 [INFO ] [CP01] OK | 833ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP01_menu.png
+07:48:10 [INFO ] [CP02] INICIANDO — pesquisar: ÍSIS CARVALHO
+07:48:16 [INFO ] [CP02] OK | 5910ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP02_pesquisa.png
+07:48:16 [INFO ] [CP03] INICIANDO — clicar em Novo
+07:48:19 [INFO ] [CP03] OK | 2862ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP03_novo.png
+07:48:19 [INFO ] [CP04] INICIANDO — Nome Social: ÍSIS CARVALHO
+07:48:21 [INFO ] [CP04] OK | 2184ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP04_social.png
+07:48:21 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+07:48:24 [INFO ] [CP05] OK | 2528ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP05_data.png
+07:48:24 [INFO ] [CP06] INICIANDO — preencher Sexo: M
+07:48:25 [INFO ] [CP06] OK | 1082ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP06_sexo.png
+07:48:25 [INFO ] [CP07] INICIANDO — preencher Nacionalidade
+07:48:33 [INFO ] [CP07] OK | 8418ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP07_nacion.png
+07:48:33 [INFO ] [CP08] INICIANDO — preencher Mae
+07:48:35 [INFO ] [CP08] OK | 1750ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP08_mae.png
+07:48:35 [INFO ] [CP09] INICIANDO — preencher Pai
+07:48:37 [INFO ] [CP09] OK | 1852ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP09_pai.png
+07:48:37 [INFO ] [CP10] INICIANDO — preencher Cor/Etnia
+07:48:38 [INFO ] [CP10] OK | 1376ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP10_cor.png
+07:48:38 [INFO ] [CP11] INICIANDO — preencher CPF (CIC)
+07:48:40 [INFO ] [CP11] OK | 1477ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP11_cpf.png
+07:48:40 [INFO ] [CP12] INICIANDO — salvar cadastro
+07:48:43 [INFO ] [CP12] OK | 3377ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP12_salvo.png
+07:48:43 [INFO ] [CP13] INICIANDO — gerar matricula e verificar via OCR
+07:48:46 [INFO ] [CP13] OK | 2412ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP13_matricula.png
+07:48:46 [INFO ] [CP14] INICIANDO — sair para o Menu Principal
+07:48:50 [INFO ] [CP14] OK | 4540ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP14_menu.png
+07:48:50 [INFO ] Flow CadastroPacienteFlow — PASSOU | 14/14 steps OK | 40602ms total
+07:48:50 [INFO ] Execução finalizada — PASSOU | 17/17 steps OK | 51.5s total
+07:48:50 [INFO ] Relatório JSON salvo em: evidence\2026-04-29\test_cadastro_paciente\execution.json
+07:48:50 [INFO ] Relatório HTML salvo em: evidence\2026-04-29\test_cadastro_paciente\report.html
+07:57:36 [INFO ] Iniciando execução: test_cadastro_paciente
+07:57:36 [INFO ] Evidências em: evidence\2026-04-29\test_cadastro_paciente\
+07:57:38 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+07:57:40 [INFO ] [L01] OK | 1624ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L01_usuario.png
+07:57:40 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+07:57:41 [INFO ] [L02] OK | 1563ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L02_senha.png
+07:57:41 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+07:57:42 [INFO ] [L03] OK | 774ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L03_entrar.png
+07:57:42 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 3962ms total
+07:57:47 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+07:57:48 [INFO ] [CP01] OK | 813ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP01_menu.png
+07:57:48 [INFO ] [CP02] INICIANDO — pesquisar: SRA. EMANUELLA SIQUEIRA
+07:57:54 [INFO ] [CP02] OK | 6506ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP02_pesquisa.png
+07:57:54 [INFO ] [CP03] INICIANDO — clicar em Novo
+07:57:57 [INFO ] [CP03] OK | 2868ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP03_novo.png
+07:57:57 [INFO ] [CP04] INICIANDO — Nome Social: SRA. EMANUELLA SIQUEIRA
+07:58:00 [INFO ] [CP04] OK | 2706ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP04_social.png
+07:58:00 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+07:58:02 [INFO ] [CP05] OK | 2514ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP05_data.png
+07:58:02 [INFO ] [CP06] INICIANDO — preencher Sexo: M
+07:58:04 [INFO ] [CP06] OK | 1046ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP06_sexo.png
+07:58:04 [INFO ] [CP07] INICIANDO — preencher Nacionalidade
+07:58:12 [INFO ] [CP07] OK | 8463ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP07_nacion.png
+07:58:12 [INFO ] [CP08] INICIANDO — preencher Mae
+07:58:14 [INFO ] [CP08] OK | 1833ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP08_mae.png
+07:58:14 [INFO ] [CP09] INICIANDO — preencher Pai
+07:58:16 [INFO ] [CP09] OK | 2087ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP09_pai.png
+07:58:16 [INFO ] [CP10] INICIANDO — preencher Cor/Etnia
+07:58:17 [INFO ] [CP10] OK | 1403ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP10_cor.png
+07:58:17 [INFO ] [CP11] INICIANDO — preencher CPF (CIC)
+07:58:19 [INFO ] [CP11] OK | 1473ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP11_cpf.png
+07:58:19 [INFO ] [CP12] INICIANDO — salvar cadastro
+07:58:22 [INFO ] [CP12] OK | 3382ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP12_salvo.png
+07:58:22 [INFO ] [CP13] INICIANDO — gerar matricula e verificar via OCR
+07:58:25 [INFO ] [CP13] OK | 2437ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP13_matricula.png
+07:58:25 [INFO ] [CP14] INICIANDO — sair para o Menu Principal
+07:58:29 [INFO ] [CP14] OK | 4533ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP14_menu.png
+07:58:29 [INFO ] Flow CadastroPacienteFlow — PASSOU | 14/14 steps OK | 42064ms total
+07:58:29 [INFO ] Execução finalizada — PASSOU | 17/17 steps OK | 53.0s total
+07:58:29 [INFO ] Relatório JSON salvo em: evidence\2026-04-29\test_cadastro_paciente\execution.json
+07:58:29 [INFO ] Relatório HTML salvo em: evidence\2026-04-29\test_cadastro_paciente\report.html
+07:58:29 [INFO ] Iniciando execução: test_cadastro_paciente
+07:58:29 [INFO ] Evidências em: evidence\2026-04-29\test_cadastro_paciente\
+07:58:31 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+07:58:33 [INFO ] [L01] OK | 1597ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L01_usuario.png
+07:58:33 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+07:58:34 [INFO ] [L02] OK | 1560ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L02_senha.png
+07:58:34 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+07:58:35 [INFO ] [L03] OK | 756ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L03_entrar.png
+07:58:35 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 3914ms total
+07:58:40 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+07:58:41 [INFO ] [CP01] OK | 852ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP01_menu.png
+07:58:41 [INFO ] [CP02] INICIANDO — pesquisar: MATHIAS DA PAZ
+07:58:47 [INFO ] [CP02] OK | 5958ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP02_pesquisa.png
+07:58:47 [INFO ] [CP03] INICIANDO — clicar em Novo
+07:58:50 [INFO ] [CP03] OK | 2849ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP03_novo.png
+07:58:50 [INFO ] [CP04] INICIANDO — Nome Social: MATHIAS DA PAZ
+07:58:52 [INFO ] [CP04] OK | 2199ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP04_social.png
+07:58:52 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+07:58:55 [INFO ] [CP05] OK | 2494ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP05_data.png
+07:58:55 [INFO ] [CP06] INICIANDO — preencher Sexo: M
+07:58:56 [INFO ] [CP06] OK | 1041ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP06_sexo.png
+07:58:56 [INFO ] [CP07] INICIANDO — preencher Nacionalidade
+07:59:04 [INFO ] [CP07] OK | 8446ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP07_nacion.png
+07:59:04 [INFO ] [CP08] INICIANDO — preencher Mae
+07:59:06 [INFO ] [CP08] OK | 1813ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP08_mae.png
+07:59:06 [INFO ] [CP09] INICIANDO — preencher Pai
+07:59:08 [INFO ] [CP09] OK | 1814ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP09_pai.png
+07:59:08 [INFO ] [CP10] INICIANDO — preencher Cor/Etnia
+07:59:09 [INFO ] [CP10] OK | 1398ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP10_cor.png
+07:59:09 [INFO ] [CP11] INICIANDO — preencher CPF (CIC)
+07:59:11 [INFO ] [CP11] OK | 1466ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP11_cpf.png
+07:59:11 [INFO ] [CP12] INICIANDO — salvar cadastro
+07:59:14 [INFO ] [CP12] OK | 3346ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP12_salvo.png
+07:59:14 [INFO ] [CP13] INICIANDO — gerar matricula e verificar via OCR
+07:59:16 [INFO ] [CP13] OK | 2414ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP13_matricula.png
+07:59:16 [INFO ] [CP14] INICIANDO — sair para o Menu Principal
+07:59:21 [INFO ] [CP14] OK | 4565ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP14_menu.png
+07:59:21 [INFO ] Flow CadastroPacienteFlow — PASSOU | 14/14 steps OK | 40656ms total
+07:59:21 [INFO ] Execução finalizada — PASSOU | 17/17 steps OK | 51.6s total
+07:59:21 [INFO ] Relatório JSON salvo em: evidence\2026-04-29\test_cadastro_paciente\execution.json
+07:59:21 [INFO ] Relatório HTML salvo em: evidence\2026-04-29\test_cadastro_paciente\report.html
+07:59:21 [INFO ] Iniciando execução: test_cadastro_paciente
+07:59:21 [INFO ] Evidências em: evidence\2026-04-29\test_cadastro_paciente\
+07:59:23 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+07:59:25 [INFO ] [L01] OK | 1557ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L01_usuario.png
+07:59:25 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+07:59:26 [INFO ] [L02] OK | 1544ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L02_senha.png
+07:59:26 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+07:59:27 [INFO ] [L03] OK | 779ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L03_entrar.png
+07:59:27 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 3879ms total
+07:59:32 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+07:59:33 [INFO ] [CP01] OK | 845ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP01_menu.png
+07:59:33 [INFO ] [CP02] INICIANDO — pesquisar: SR. LUCAS GABRIEL PORTO
+07:59:39 [INFO ] [CP02] OK | 6461ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP02_pesquisa.png
+07:59:39 [INFO ] [CP03] INICIANDO — clicar em Novo
+07:59:42 [INFO ] [CP03] OK | 2862ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP03_novo.png
+07:59:42 [INFO ] [CP04] INICIANDO — Nome Social: SR. LUCAS GABRIEL PORTO
+07:59:45 [INFO ] [CP04] OK | 2700ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP04_social.png
+07:59:45 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+07:59:47 [INFO ] [CP05] OK | 2502ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP05_data.png
+07:59:47 [INFO ] [CP06] INICIANDO — preencher Sexo: M
+07:59:48 [INFO ] [CP06] OK | 1051ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP06_sexo.png
+07:59:48 [INFO ] [CP07] INICIANDO — preencher Nacionalidade
+07:59:57 [INFO ] [CP07] OK | 8528ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP07_nacion.png
+07:59:57 [INFO ] [CP08] INICIANDO — preencher Mae
+07:59:59 [INFO ] [CP08] OK | 1695ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP08_mae.png
+07:59:59 [INFO ] [CP09] INICIANDO — preencher Pai
+08:00:00 [INFO ] [CP09] OK | 1519ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP09_pai.png
+08:00:00 [INFO ] [CP10] INICIANDO — preencher Cor/Etnia
+08:00:01 [INFO ] [CP10] OK | 1403ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP10_cor.png
+08:00:01 [INFO ] [CP11] INICIANDO — preencher CPF (CIC)
+08:00:03 [INFO ] [CP11] OK | 1479ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP11_cpf.png
+08:00:03 [INFO ] [CP12] INICIANDO — salvar cadastro
+08:00:06 [INFO ] [CP12] OK | 3371ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP12_salvo.png
+08:00:06 [INFO ] [CP13] INICIANDO — gerar matricula e verificar via OCR
+08:00:09 [INFO ] [CP13] OK | 2417ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP13_matricula.png
+08:00:09 [INFO ] [CP14] INICIANDO — sair para o Menu Principal
+08:00:13 [INFO ] [CP14] OK | 4532ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP14_menu.png
+08:00:13 [INFO ] Flow CadastroPacienteFlow — PASSOU | 14/14 steps OK | 41364ms total
+08:00:13 [INFO ] Execução finalizada — PASSOU | 17/17 steps OK | 52.3s total
+08:00:13 [INFO ] Relatório JSON salvo em: evidence\2026-04-29\test_cadastro_paciente\execution.json
+08:00:13 [INFO ] Relatório HTML salvo em: evidence\2026-04-29\test_cadastro_paciente\report.html
+08:00:13 [INFO ] Iniciando execução: test_cadastro_paciente
+08:00:13 [INFO ] Evidências em: evidence\2026-04-29\test_cadastro_paciente\
+08:00:15 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+08:00:17 [INFO ] [L01] OK | 1551ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L01_usuario.png
+08:00:17 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+08:00:18 [INFO ] [L02] OK | 1533ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L02_senha.png
+08:00:18 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+08:00:19 [INFO ] [L03] OK | 746ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L03_entrar.png
+08:00:19 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 3830ms total
+08:00:24 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+08:00:25 [INFO ] [CP01] OK | 833ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP01_menu.png
+08:00:25 [INFO ] [CP02] INICIANDO — pesquisar: SRTA. HADASSA LOPES
+08:00:31 [INFO ] [CP02] OK | 6260ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP02_pesquisa.png
+08:00:31 [INFO ] [CP03] INICIANDO — clicar em Novo
+08:00:34 [INFO ] [CP03] OK | 2881ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP03_novo.png
+08:00:34 [INFO ] [CP04] INICIANDO — Nome Social: SRTA. HADASSA LOPES
+08:00:37 [INFO ] [CP04] OK | 2469ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP04_social.png
+08:00:37 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+08:00:39 [INFO ] [CP05] OK | 2512ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP05_data.png
+08:00:39 [INFO ] [CP06] INICIANDO — preencher Sexo: M
+08:00:40 [INFO ] [CP06] OK | 1055ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP06_sexo.png
+08:00:40 [INFO ] [CP07] INICIANDO — preencher Nacionalidade
+08:00:49 [INFO ] [CP07] OK | 8480ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP07_nacion.png
+08:00:49 [INFO ] [CP08] INICIANDO — preencher Mae
+08:00:50 [INFO ] [CP08] OK | 1618ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP08_mae.png
+08:00:50 [INFO ] [CP09] INICIANDO — preencher Pai
+08:00:52 [INFO ] [CP09] OK | 1766ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP09_pai.png
+08:00:52 [INFO ] [CP10] INICIANDO — preencher Cor/Etnia
+08:00:53 [INFO ] [CP10] OK | 1384ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP10_cor.png
+08:00:53 [INFO ] [CP11] INICIANDO — preencher CPF (CIC)
+08:00:55 [INFO ] [CP11] OK | 1464ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP11_cpf.png
+08:00:55 [INFO ] [CP12] INICIANDO — salvar cadastro
+08:00:58 [INFO ] [CP12] OK | 3378ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP12_salvo.png
+08:00:58 [INFO ] [CP13] INICIANDO — gerar matricula e verificar via OCR
+08:01:01 [INFO ] [CP13] OK | 2409ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP13_matricula.png
+08:01:01 [INFO ] [CP14] INICIANDO — sair para o Menu Principal
+08:01:05 [INFO ] [CP14] OK | 4544ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP14_menu.png
+08:01:05 [INFO ] Flow CadastroPacienteFlow — PASSOU | 14/14 steps OK | 41054ms total
+08:01:05 [INFO ] Execução finalizada — PASSOU | 17/17 steps OK | 51.9s total
+08:01:05 [INFO ] Relatório JSON salvo em: evidence\2026-04-29\test_cadastro_paciente\execution.json
+08:01:05 [INFO ] Relatório HTML salvo em: evidence\2026-04-29\test_cadastro_paciente\report.html
+08:01:05 [INFO ] Iniciando execução: test_cadastro_paciente
+08:01:05 [INFO ] Evidências em: evidence\2026-04-29\test_cadastro_paciente\
+08:01:07 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+08:01:09 [INFO ] [L01] OK | 1559ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L01_usuario.png
+08:01:09 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+08:01:10 [INFO ] [L02] OK | 1555ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L02_senha.png
+08:01:10 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+08:01:11 [INFO ] [L03] OK | 766ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L03_entrar.png
+08:01:11 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 3880ms total
+08:01:16 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+08:01:17 [INFO ] [CP01] OK | 849ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP01_menu.png
+08:01:17 [INFO ] [CP02] INICIANDO — pesquisar: ANDRÉ PINTO
+08:01:23 [INFO ] [CP02] OK | 5768ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP02_pesquisa.png
+08:01:23 [INFO ] [CP03] INICIANDO — clicar em Novo
+08:01:26 [INFO ] [CP03] OK | 2823ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP03_novo.png
+08:01:26 [INFO ] [CP04] INICIANDO — Nome Social: ANDRÉ PINTO
+08:01:28 [INFO ] [CP04] OK | 2029ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP04_social.png
+08:01:28 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+08:01:30 [INFO ] [CP05] OK | 2515ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP05_data.png
+08:01:30 [INFO ] [CP06] INICIANDO — preencher Sexo: M
+08:01:31 [INFO ] [CP06] OK | 1059ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP06_sexo.png
+08:01:31 [INFO ] [CP07] INICIANDO — preencher Nacionalidade
+08:01:40 [INFO ] [CP07] OK | 8474ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP07_nacion.png
+08:01:40 [INFO ] [CP08] INICIANDO — preencher Mae
+08:01:41 [INFO ] [CP08] OK | 1593ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP08_mae.png
+08:01:41 [INFO ] [CP09] INICIANDO — preencher Pai
+08:01:44 [INFO ] [CP09] OK | 2176ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP09_pai.png
+08:01:44 [INFO ] [CP10] INICIANDO — preencher Cor/Etnia
+08:01:45 [INFO ] [CP10] OK | 1379ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP10_cor.png
+08:01:45 [INFO ] [CP11] INICIANDO — preencher CPF (CIC)
+08:01:46 [INFO ] [CP11] OK | 1496ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP11_cpf.png
+08:01:46 [INFO ] [CP12] INICIANDO — salvar cadastro
+08:01:50 [INFO ] [CP12] OK | 3352ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP12_salvo.png
+08:01:50 [INFO ] [CP13] INICIANDO — gerar matricula e verificar via OCR
+08:01:52 [INFO ] [CP13] OK | 2407ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP13_matricula.png
+08:01:52 [INFO ] [CP14] INICIANDO — sair para o Menu Principal
+08:01:57 [INFO ] [CP14] OK | 4526ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP14_menu.png
+08:01:57 [INFO ] Flow CadastroPacienteFlow — PASSOU | 14/14 steps OK | 40446ms total
+08:01:57 [INFO ] Execução finalizada — PASSOU | 17/17 steps OK | 51.4s total
+08:01:57 [INFO ] Relatório JSON salvo em: evidence\2026-04-29\test_cadastro_paciente\execution.json
+08:01:57 [INFO ] Relatório HTML salvo em: evidence\2026-04-29\test_cadastro_paciente\report.html
+08:28:54 [INFO ] Iniciando execução: test_cadastro_paciente
+08:28:54 [INFO ] Evidências em: evidence\2026-04-29\test_cadastro_paciente\
+08:28:56 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+08:28:58 [INFO ] [L01] OK | 1665ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L01_usuario.png
+08:28:58 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+08:28:59 [INFO ] [L02] OK | 1561ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L02_senha.png
+08:28:59 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+08:29:00 [INFO ] [L03] OK | 759ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L03_entrar.png
+08:29:00 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 3985ms total
+08:29:05 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+08:29:06 [INFO ] [CP01] OK | 869ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP01_menu.png
+08:29:06 [INFO ] [CP02] INICIANDO — pesquisar: DAVI LUCAS CORREIA
+08:29:12 [INFO ] [CP02] OK | 6204ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP02_pesquisa.png
+08:29:12 [INFO ] [CP03] INICIANDO — clicar em Novo
+08:29:15 [INFO ] [CP03] OK | 2456ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP03_novo.png
+08:29:15 [INFO ] [CP04] INICIANDO — Nome Social: DAVI LUCAS CORREIA
+08:29:17 [INFO ] [CP04] OK | 2404ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP04_social.png
+08:29:17 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+08:29:20 [INFO ] [CP05] OK | 2532ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP05_data.png
+08:29:20 [INFO ] [CP06] INICIANDO — preencher Sexo: M
+08:29:21 [INFO ] [CP06] OK | 1059ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP06_sexo.png
+08:29:21 [INFO ] [CP07] INICIANDO — preencher Nacionalidade
+08:29:44 [INFO ] Iniciando execução: test_cadastro_paciente
+08:29:44 [INFO ] Evidências em: evidence\2026-04-29\test_cadastro_paciente\
+08:29:46 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+08:29:47 [INFO ] [L01] OK | 1622ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L01_usuario.png
+08:29:47 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+08:29:49 [INFO ] [L02] OK | 1586ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L02_senha.png
+08:29:49 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+08:29:50 [INFO ] [L03] OK | 791ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L03_entrar.png
+08:29:50 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 3999ms total
+08:29:55 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+08:29:55 [INFO ] [CP01] OK | 859ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP01_menu.png
+08:29:55 [INFO ] [CP02] INICIANDO — pesquisar: SR. DANIEL FARIAS
+08:30:02 [INFO ] [CP02] OK | 6137ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP02_pesquisa.png
+08:30:02 [INFO ] [CP03] INICIANDO — clicar em Novo
+08:30:04 [INFO ] [CP03] OK | 2859ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP03_novo.png
+08:30:04 [INFO ] [CP04] INICIANDO — Nome Social: SR. DANIEL FARIAS
+08:30:07 [INFO ] [CP04] OK | 2359ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP04_social.png
+08:30:07 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+08:30:09 [INFO ] [CP05] OK | 2522ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP05_data.png
+08:30:09 [INFO ] [CP06] INICIANDO — preencher Sexo: M
+08:30:10 [INFO ] [CP06] OK | 1049ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP06_sexo.png
+08:30:10 [INFO ] [CP07] INICIANDO — preencher Nacionalidade
+08:30:19 [INFO ] [CP07] OK | 8438ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP07_nacion.png
+08:30:19 [INFO ] [CP08] INICIANDO — preencher Mae
+08:30:20 [INFO ] [CP08] OK | 1535ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP08_mae.png
+08:30:20 [INFO ] [CP09] INICIANDO — preencher Pai
+08:30:22 [INFO ] [CP09] OK | 1632ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP09_pai.png
+08:30:22 [INFO ] [CP10] INICIANDO — preencher Cor/Etnia
+08:30:23 [INFO ] [CP10] OK | 1384ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP10_cor.png
+08:30:23 [INFO ] [CP11] INICIANDO — preencher CPF (CIC)
+08:30:25 [INFO ] [CP11] OK | 1492ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP11_cpf.png
+08:30:25 [INFO ] [CP12] INICIANDO — salvar cadastro
+08:30:28 [INFO ] [CP12] OK | 3365ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP12_salvo.png
+08:30:28 [INFO ] [CP13] INICIANDO — gerar matricula e verificar via OCR
+08:30:31 [INFO ] [CP13] OK | 2437ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP13_matricula.png
+08:30:31 [INFO ] [CP14] INICIANDO — sair para o Menu Principal
+08:30:35 [INFO ] [CP14] OK | 4538ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP14_menu.png
+08:30:35 [INFO ] Flow CadastroPacienteFlow — PASSOU | 14/14 steps OK | 40608ms total
+08:30:35 [INFO ] Execução finalizada — PASSOU | 17/17 steps OK | 51.6s total
+08:30:35 [INFO ] Relatório JSON salvo em: evidence\2026-04-29\test_cadastro_paciente\execution.json
+08:30:35 [INFO ] Relatório HTML salvo em: evidence\2026-04-29\test_cadastro_paciente\report.html
+08:30:35 [INFO ] Iniciando execução: test_cadastro_paciente
+08:30:35 [INFO ] Evidências em: evidence\2026-04-29\test_cadastro_paciente\
+08:30:37 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+08:30:39 [INFO ] [L01] OK | 1564ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L01_usuario.png
+08:30:39 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+08:30:40 [INFO ] [L02] OK | 1533ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L02_senha.png
+08:30:40 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+08:30:41 [INFO ] [L03] OK | 753ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\L03_entrar.png
+08:30:41 [INFO ] Flow LoginFlow — PASSOU | 3/3 steps OK | 3850ms total
+08:30:46 [INFO ] [CP01] INICIANDO — duplo clique em Cadastro de Pacientes
+08:30:47 [INFO ] [CP01] OK | 833ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP01_menu.png
+08:30:47 [INFO ] [CP02] INICIANDO — pesquisar: SR. DOM SOUZA
+08:30:53 [INFO ] [CP02] OK | 5903ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP02_pesquisa.png
+08:30:53 [INFO ] [CP03] INICIANDO — clicar em Novo
+08:30:56 [INFO ] [CP03] OK | 2851ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP03_novo.png
+08:30:56 [INFO ] [CP04] INICIANDO — Nome Social: SR. DOM SOUZA
+08:30:58 [INFO ] [CP04] OK | 2169ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP04_social.png
+08:30:58 [INFO ] [CP05] INICIANDO — preencher Data de Nascimento e Hora
+08:31:00 [INFO ] [CP05] OK | 2511ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP05_data.png
+08:31:00 [INFO ] [CP06] INICIANDO — preencher Sexo: M
+08:31:01 [INFO ] [CP06] OK | 1052ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP06_sexo.png
+08:31:01 [INFO ] [CP07] INICIANDO — preencher Nacionalidade
+08:31:10 [INFO ] [CP07] OK | 8521ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP07_nacion.png
+08:31:10 [INFO ] [CP08] INICIANDO — preencher Mae
+08:31:12 [INFO ] [CP08] OK | 1596ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP08_mae.png
+08:31:12 [INFO ] [CP09] INICIANDO — preencher Pai
+08:31:13 [INFO ] [CP09] OK | 1705ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP09_pai.png
+08:31:13 [INFO ] [CP10] INICIANDO — preencher Cor/Etnia
+08:31:15 [INFO ] [CP10] OK | 1371ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP10_cor.png
+08:31:15 [INFO ] [CP11] INICIANDO — preencher CPF (CIC)
+08:31:16 [INFO ] [CP11] OK | 1466ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP11_cpf.png
+08:31:16 [INFO ] [CP12] INICIANDO — salvar cadastro
+08:31:20 [INFO ] [CP12] OK | 3413ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP12_salvo.png
+08:31:20 [INFO ] [CP13] INICIANDO — gerar matricula e verificar via OCR
+08:31:22 [INFO ] [CP13] OK | 2413ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP13_matricula.png
+08:31:22 [INFO ] [CP14] INICIANDO — sair para o Menu Principal
+08:31:26 [INFO ] [CP14] OK | 4532ms | screenshot: evidence\2026-04-29\test_cadastro_paciente\CP14_menu.png
+08:31:26 [INFO ] Flow CadastroPacienteFlow — PASSOU | 14/14 steps OK | 40338ms total
+08:31:26 [INFO ] Execução finalizada — PASSOU | 17/17 steps OK | 51.2s total
+08:31:26 [INFO ] Relatório JSON salvo em: evidence\2026-04-29\test_cadastro_paciente\execution.json
+08:31:27 [INFO ] Relatório HTML salvo em: evidence\2026-04-29\test_cadastro_paciente\report.html

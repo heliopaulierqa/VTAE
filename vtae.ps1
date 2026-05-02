@@ -1,0 +1,1 @@
+python -m src.cli.run @argsadmin123

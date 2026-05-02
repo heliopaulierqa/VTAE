@@ -93,10 +93,12 @@ class CredenciaisConfig:
 
 # Transformações disponíveis para campos Faker
 TransformacaoTipo = Literal[
+    "sem_prefixo_upper",  # remove prefixo e converte para maiúsculas
     "sem_pontuacao",    # remove . e - (ex: CPF "123.456.789-00" → "12345678900")
     "upper",            # maiúsculas
     "lower",            # minúsculas
     "truncar_50",       # limita a 50 caracteres
+    "sem_prefixo",      # remove Dr., Dra., Sr., Sra., Prof. etc.
 ]
 
 @dataclass
@@ -253,4 +255,10 @@ class SystemConfig:
             return valor.lower()
         if transformacao == "truncar_50":
             return valor[:50]
-        return valor
+        if transformacao == "sem_prefixo_upper":
+            import re
+            return re.sub(
+                r'^(Dr\.|Dra\.|Sr\.|Sra\.|Prof\.|Profª\.|Prof°\.|Mr\.|Mrs\.|Ms\.)\s*',
+                '', valor
+            ).strip()
+        return valor.upper()

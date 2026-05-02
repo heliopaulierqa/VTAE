@@ -1,6 +1,11 @@
 README.md
 pyproject.toml
 src/__init__.py
+src/cli/__init__.py
+src/cli/run.py
+src/config/__init__.py
+src/config/loader.py
+src/config/schema.py
 src/core/__init__.py
 src/core/context.py
 src/core/result.py
@@ -18,6 +23,7 @@ src/runners/base_runner.py
 src/runners/opencv_runner.py
 src/runners/playwright_runner.py
 src/vision/__init__.py
+src/vision/ocr.py
 src/vision/ocr_helper.py
 src/vision/template.py
 vtae/__init__.py
@@ -61,6 +67,7 @@ vtae/flows/cadastro_paciente_flow.py
 vtae/flows/frequencia_aplicacao_flow.py
 vtae/flows/login_flow.py
 vtae/flows/login_flow_msi3.py
+vtae/flows/login_flow_sislab.py
 vtae/flows/suprimentos_flow.py
 vtae/legacy/__init__.py
 vtae/legacy/login.py
@@ -84,6 +91,7 @@ vtae/tests/integration/si3/test_login_real.py
 vtae/tests/integration/sislab/__init__.py
 vtae/tests/integration/sislab/test_cadastro_funcionario_sislab.py
 vtae/tests/integration/sislab/test_login_sislab.py
+vtae/tests/integration/sislab/bkp/test_cadastro_funcionario_sislab.py
 vtae/tests/unit/__init__.py
 vtae/tests/unit/test_admissao_flow.py
 vtae/tests/unit/test_context.py

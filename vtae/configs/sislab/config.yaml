@@ -31,7 +31,7 @@ dados_faker:
   - campo: nome
     tipo: faker
     metodo: name
-    transformacao: upper
+    transformacao: sem_prefixo_upper
     locale: pt_BR
 
   - campo: cpf

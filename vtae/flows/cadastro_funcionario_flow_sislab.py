@@ -8,37 +8,56 @@ from vtae.core.result import FlowResult, StepResult
 
 class CadastroFuncionarioFlowSislab:
     """
-    Flow de cadastro de funcionário no SisLab (Oracle Forms desktop).
+    Flow de cadastro de funcionário no SisLab (simulação Oracle Forms desktop).
 
-    Pré-condição: usuário já está logado e o Menu Principal está visível.
+    Pré-condição: usuário já está logado e a tela de Cadastro de Funcionários
+    está visível em http://127.0.0.1:5000/funcionarios/
+
+    Estratégia de preenchimento — padrão Oracle Forms:
+        Após clicar em Novo, o foco vai automaticamente para o campo Nome.
+        A navegação entre campos é feita via Tab — sem cliques intermediários.
+        Isso é o comportamento real do Oracle Forms e do SisLab.
 
     Passos:
-        CF01 — Clicar em Funcionários (menu Cadastros)
-        CF02 — Clicar no botão Novo
-        CF03 — Preencher Nome
-        CF04 — Preencher CPF
-        CF05 — Preencher Cargo
-        CF06 — Preencher Salário
-        CF07 — Preencher Data de Admissão
-        CF08 — Clicar em Salvar
-        CF09 — Verificar nome na grade via OCR
+        CF01 — Clica em Funcionários no menu principal
+        CF02 — Clica em Novo (foco vai para Nome automaticamente)
+        CF03 — Digita Nome (Tab para avançar)
+        CF04 — Digita CPF (Tab para avançar)
+        CF05 — Tab até Cargo + seleciona com seta
+        CF06 — Tab até Departamento + seleciona com seta
+        CF07 — Tab até Salário + digita
+        CF08 — Tab até Admissão + digita
+        CF09 — Clica em Salvar
+        CF10 — Verifica nome na grade via OCR
+
+    Templates em templates/sislab/funcionario/:
+        btn_novo.png
+        btn_salvar.png
+        campo_nome.png
+        tela_cadastro_funcionario.png
+
+    Templates em templates/sislab/menu/:
+        menu_principal.png
+        btn_funcionarios.png
     """
 
     FLOW_NAME = "CadastroFuncionarioFlowSislab"
 
-    # Coordenadas de fallback — capture com scripts/posicao_mouse.py
-    _COORD_MENU_FUNCIONARIOS = (130, 185)
-    _COORD_BTN_NOVO          = (55,  68)
-    _COORD_CAMPO_NOME        = (370, 160)
-    _COORD_CAMPO_CPF         = (370, 183)
-    _COORD_CAMPO_CARGO       = (370, 206)
-    _COORD_CAMPO_SALARIO     = (370, 229)
-    _COORD_CAMPO_ADMISSAO    = (370, 252)
-    _COORD_BTN_SALVAR        = (110, 68)
+    # ------------------------------------------------------------------
+    # Coordenadas — usadas apenas para Novo e Salvar (botões)
+    # Os campos são preenchidos via Tab — sem coordenadas
+    # ------------------------------------------------------------------
+    _COORD_BTN_FUNCIONARIOS = (79,  233)
+    _COORD_BTN_NOVO         = (25,  146)
+    _COORD_BTN_SALVAR       = (85,  148)
 
-    # Região da grade (x1, y1, x2, y2) — ajuste para o ambiente
-    # Recorta só a tabela de resultados, descartando o formulário acima
-    _REGIAO_GRADE = (0, 320, 950, 620)
+    # Região da grade — linha abaixo do cabeçalho
+    _REGIAO_GRADE = (0, 620, 1366, 660)
+
+    # Posição do Cargo no dropdown (0 = selecione, 1 = ANALISYTA DE QA, 2 = ANALISTA DE RH)
+    # Posição do Departamento (0 = selecione, 1 = TECNOLOGIA DA INFOMAÇÃO, 2 = ADMINISTRAÇÃO)
+    _CARGO_POSICAO = 2
+    _DEPTO_POSICAO = 2
 
     # ------------------------------------------------------------------ #
     #  Ponto de entrada                                                    #
@@ -52,7 +71,8 @@ class CadastroFuncionarioFlowSislab:
             self._step_clicar_novo,
             self._step_preencher_nome,
             self._step_preencher_cpf,
-            self._step_preencher_cargo,
+            self._step_selecionar_cargo,
+            self._step_selecionar_departamento,
             self._step_preencher_salario,
             self._step_preencher_admissao,
             self._step_salvar,
@@ -71,7 +91,7 @@ class CadastroFuncionarioFlowSislab:
         return result
 
     # ------------------------------------------------------------------ #
-    #  Helpers internos                                                    #
+    #  Helper — clicar com fallback                                        #
     # ------------------------------------------------------------------ #
 
     def _clicar(self, ctx: FlowContext, template: str, coords: tuple,
@@ -79,27 +99,19 @@ class CadastroFuncionarioFlowSislab:
         """Tenta OpenCV; usa coordenadas fixas como fallback."""
         encontrou = ctx.runner.click_template(template, threshold=threshold)
         if not encontrou:
-            print(f"[fallback] template não encontrado — usando coordenadas {coords}")
+            print(f"[fallback] '{template}' — coords {coords}")
         time.sleep(0.3)
         pyautogui.click(coords[0], coords[1])
-        time.sleep(0.3)
-
-    def _preencher_campo(self, ctx: FlowContext, template: str, coords: tuple,
-                         valor: str, threshold: float = 0.7):
-        """Clica no campo (OpenCV ou fallback) e digita o valor."""
-        self._clicar(ctx, template, coords, threshold)
-        pyautogui.hotkey("ctrl", "a")
-        ctx.runner.type_text(valor)
-        time.sleep(0.2)
+        time.sleep(0.5)
 
     # ------------------------------------------------------------------ #
-    #  Steps                                                               #
+    #  Steps de navegação                                                  #
     # ------------------------------------------------------------------ #
 
     def _step_abrir_funcionarios(self, ctx: FlowContext, observer=None) -> StepResult:
         step_id = "CF01"
         if observer:
-            observer.log_step_start(step_id, "Clicar em Funcionários no menu Cadastros")
+            observer.log_step_start(step_id, "clicar em Funcionários no menu principal")
         start = time.monotonic()
         try:
             ctx.runner.wait_template(
@@ -108,12 +120,12 @@ class CadastroFuncionarioFlowSislab:
             )
             self._clicar(ctx,
                 "templates/sislab/menu/btn_funcionarios.png",
-                self._COORD_MENU_FUNCIONARIOS)
+                self._COORD_BTN_FUNCIONARIOS)
             ctx.runner.wait_template(
                 "templates/sislab/funcionario/tela_cadastro_funcionario.png",
                 timeout=10.0, threshold=0.7,
             )
-            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}{step_id}.png")
+            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}CF01.png")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,
                               screenshot_path=screenshot)
@@ -121,22 +133,26 @@ class CadastroFuncionarioFlowSislab:
             step = StepResult(step_id=step_id, success=False,
                               duration_ms=(time.monotonic() - start) * 1000,
                               error=str(e))
-        finally:
-            if observer:
-                observer.log_step_result(step)
+        if observer:
+            observer.log_step_result(step)
         return step
 
     def _step_clicar_novo(self, ctx: FlowContext, observer=None) -> StepResult:
         step_id = "CF02"
         if observer:
-            observer.log_step_start(step_id, "Clicar no botão Novo")
+            observer.log_step_start(step_id, "clicar em Novo — foco vai para Nome")
         start = time.monotonic()
         try:
             self._clicar(ctx,
                 "templates/sislab/funcionario/btn_novo.png",
                 self._COORD_BTN_NOVO)
+            # aguarda campo Nome ficar amarelo (estado ativo após Novo)
+            ctx.runner.wait_template(
+                "templates/sislab/funcionario/campo_nome.png",
+                timeout=10.0, threshold=0.7,
+            )
             time.sleep(0.5)
-            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}{step_id}.png")
+            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}CF02.png")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,
                               screenshot_path=screenshot)
@@ -144,22 +160,31 @@ class CadastroFuncionarioFlowSislab:
             step = StepResult(step_id=step_id, success=False,
                               duration_ms=(time.monotonic() - start) * 1000,
                               error=str(e))
-        finally:
-            if observer:
-                observer.log_step_result(step)
+        if observer:
+            observer.log_step_result(step)
         return step
 
+    # ------------------------------------------------------------------ #
+    #  Steps de preenchimento — navegação por Tab                          #
+    # ------------------------------------------------------------------ #
+
     def _step_preencher_nome(self, ctx: FlowContext, observer=None) -> StepResult:
+        """
+        Foco já está no Nome após clicar em Novo.
+        Digita diretamente e avança com Tab.
+        """
         step_id = "CF03"
         nome = ctx.config.DADOS["nome"]
         if observer:
             observer.log_step_start(step_id, f"Preencher Nome: {nome}")
         start = time.monotonic()
         try:
-            self._preencher_campo(ctx,
-                "templates/sislab/funcionario/campo_nome.png",
-                self._COORD_CAMPO_NOME, nome)
-            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}{step_id}.png")
+            # foco já está no campo Nome — digita direto
+            ctx.runner.type_text(nome)
+            time.sleep(0.3)
+            pyautogui.press("tab")  # avança para CPF
+            time.sleep(0.3)
+            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}CF03.png")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,
                               screenshot_path=screenshot)
@@ -167,21 +192,26 @@ class CadastroFuncionarioFlowSislab:
             step = StepResult(step_id=step_id, success=False,
                               duration_ms=(time.monotonic() - start) * 1000,
                               error=str(e))
-        finally:
-            if observer:
-                observer.log_step_result(step)
+        if observer:
+            observer.log_step_result(step)
         return step
 
     def _step_preencher_cpf(self, ctx: FlowContext, observer=None) -> StepResult:
+        """Foco está no CPF após Tab do Nome."""
         step_id = "CF04"
         if observer:
             observer.log_step_start(step_id, "Preencher CPF")
         start = time.monotonic()
         try:
-            self._preencher_campo(ctx,
-                "templates/sislab/funcionario/campo_cpf.png",
-                self._COORD_CAMPO_CPF, ctx.config.DADOS["cpf"])
-            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}{step_id}.png")
+            ctx.runner.type_text(ctx.config.DADOS["cpf"])
+            time.sleep(0.3)
+            pyautogui.press("tab")  # avança para E-mail
+            time.sleep(0.3)
+            pyautogui.press("tab")  # avança para Telefone
+            time.sleep(0.3)
+            pyautogui.press("tab")  # avança para Cargo
+            time.sleep(0.3)
+            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}CF04.png")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,
                               screenshot_path=screenshot)
@@ -189,21 +219,28 @@ class CadastroFuncionarioFlowSislab:
             step = StepResult(step_id=step_id, success=False,
                               duration_ms=(time.monotonic() - start) * 1000,
                               error=str(e))
-        finally:
-            if observer:
-                observer.log_step_result(step)
+        if observer:
+            observer.log_step_result(step)
         return step
 
-    def _step_preencher_cargo(self, ctx: FlowContext, observer=None) -> StepResult:
+    def _step_selecionar_cargo(self, ctx: FlowContext, observer=None) -> StepResult:
+        """
+        Foco está no dropdown Cargo.
+        Navega pelas opções com seta para baixo.
+        _CARGO_POSICAO = 2 → ANALISTA DE RH (0=selecione, 1=ANALISYTA DE QA, 2=ANALISTA DE RH)
+        """
         step_id = "CF05"
+        cargo = ctx.config.DADOS["cargo"]
         if observer:
-            observer.log_step_start(step_id, "Preencher Cargo")
+            observer.log_step_start(step_id, f"Selecionar Cargo: {cargo}")
         start = time.monotonic()
         try:
-            self._preencher_campo(ctx,
-                "templates/sislab/funcionario/campo_cargo.png",
-                self._COORD_CAMPO_CARGO, ctx.config.DADOS["cargo"])
-            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}{step_id}.png")
+            for _ in range(self._CARGO_POSICAO):
+                pyautogui.press("down")
+                time.sleep(0.2)
+            pyautogui.press("tab")  # avança para Departamento
+            time.sleep(0.3)
+            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}CF05.png")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,
                               screenshot_path=screenshot)
@@ -211,21 +248,50 @@ class CadastroFuncionarioFlowSislab:
             step = StepResult(step_id=step_id, success=False,
                               duration_ms=(time.monotonic() - start) * 1000,
                               error=str(e))
-        finally:
-            if observer:
-                observer.log_step_result(step)
+        if observer:
+            observer.log_step_result(step)
+        return step
+
+    def _step_selecionar_departamento(self, ctx: FlowContext, observer=None) -> StepResult:
+        """
+        Foco está no dropdown Departamento.
+        _DEPTO_POSICAO = 2 → ADMINISTRAÇÃO (0=selecione, 1=TECNOLOGIA DA INFOMAÇÃO, 2=ADMINISTRAÇÃO)
+        """
+        step_id = "CF06"
+        depto = ctx.config.DADOS["departamento"]
+        if observer:
+            observer.log_step_start(step_id, f"Selecionar Departamento: {depto}")
+        start = time.monotonic()
+        try:
+            for _ in range(self._DEPTO_POSICAO):
+                pyautogui.press("down")
+                time.sleep(0.2)
+            pyautogui.press("tab")  # avança para Salário
+            time.sleep(0.3)
+            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}CF06.png")
+            step = StepResult(step_id=step_id, success=True,
+                              duration_ms=(time.monotonic() - start) * 1000,
+                              screenshot_path=screenshot)
+        except Exception as e:
+            step = StepResult(step_id=step_id, success=False,
+                              duration_ms=(time.monotonic() - start) * 1000,
+                              error=str(e))
+        if observer:
+            observer.log_step_result(step)
         return step
 
     def _step_preencher_salario(self, ctx: FlowContext, observer=None) -> StepResult:
-        step_id = "CF06"
+        """Foco está no campo Salário após Tab do Departamento."""
+        step_id = "CF07"
         if observer:
             observer.log_step_start(step_id, "Preencher Salário")
         start = time.monotonic()
         try:
-            self._preencher_campo(ctx,
-                "templates/sislab/funcionario/campo_salario.png",
-                self._COORD_CAMPO_SALARIO, ctx.config.DADOS["salario"])
-            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}{step_id}.png")
+            ctx.runner.type_text(ctx.config.DADOS["salario"])
+            time.sleep(0.3)
+            pyautogui.press("tab")  # avança para Admissão
+            time.sleep(0.3)
+            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}CF07.png")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,
                               screenshot_path=screenshot)
@@ -233,21 +299,20 @@ class CadastroFuncionarioFlowSislab:
             step = StepResult(step_id=step_id, success=False,
                               duration_ms=(time.monotonic() - start) * 1000,
                               error=str(e))
-        finally:
-            if observer:
-                observer.log_step_result(step)
+        if observer:
+            observer.log_step_result(step)
         return step
 
     def _step_preencher_admissao(self, ctx: FlowContext, observer=None) -> StepResult:
-        step_id = "CF07"
+        """Foco está no campo Admissão após Tab do Salário."""
+        step_id = "CF08"
         if observer:
             observer.log_step_start(step_id, "Preencher Data de Admissão")
         start = time.monotonic()
         try:
-            self._preencher_campo(ctx,
-                "templates/sislab/funcionario/campo_admissao.png",
-                self._COORD_CAMPO_ADMISSAO, ctx.config.DADOS["admissao"])
-            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}{step_id}.png")
+            ctx.runner.type_text(ctx.config.DADOS["admissao"])
+            time.sleep(0.3)
+            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}CF08.png")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,
                               screenshot_path=screenshot)
@@ -255,22 +320,36 @@ class CadastroFuncionarioFlowSislab:
             step = StepResult(step_id=step_id, success=False,
                               duration_ms=(time.monotonic() - start) * 1000,
                               error=str(e))
-        finally:
-            if observer:
-                observer.log_step_result(step)
+        if observer:
+            observer.log_step_result(step)
         return step
 
     def _step_salvar(self, ctx: FlowContext, observer=None) -> StepResult:
-        step_id = "CF08"
+        """
+        Clica em Salvar e valida a mensagem de sucesso via template matching.
+        Template: templates/sislab/funcionario/msg_sucesso.png
+        """
+        step_id = "CF09"
         if observer:
-            observer.log_step_start(step_id, "Clicar em Salvar")
+            observer.log_step_start(step_id, "Clicar em Salvar e validar mensagem")
         start = time.monotonic()
         try:
             self._clicar(ctx,
                 "templates/sislab/funcionario/btn_salvar.png",
                 self._COORD_BTN_SALVAR)
-            time.sleep(1.0)  # aguarda resposta do Oracle Forms
-            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}{step_id}.png")
+
+            # valida mensagem de sucesso — mais confiável que OCR para confirmar save
+            sucesso = ctx.runner.wait_template(
+                "templates/sislab/funcionario/msg_sucesso.png",
+                timeout=10.0, threshold=0.7,
+            )
+            if not sucesso:
+                raise AssertionError(
+                    "Mensagem 'Funcionário salvo com sucesso' não apareceu.\n"
+                    "Verifique se o formulário foi preenchido corretamente."
+                )
+
+            screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}CF09.png")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,
                               screenshot_path=screenshot)
@@ -278,33 +357,24 @@ class CadastroFuncionarioFlowSislab:
             step = StepResult(step_id=step_id, success=False,
                               duration_ms=(time.monotonic() - start) * 1000,
                               error=str(e))
-        finally:
-            if observer:
-                observer.log_step_result(step)
+        if observer:
+            observer.log_step_result(step)
         return step
 
     def _step_verificar_salvo_ocr(self, ctx: FlowContext, observer=None) -> StepResult:
         """
-        Verifica que o funcionário aparece na grade após salvar.
+        Verifica que o funcionário aparece na grade após salvar via OCR.
+        A grade fica na parte inferior da mesma tela de cadastro.
 
-        Por que OCR aqui:
-            O Oracle Forms renderiza a grade como interface nativa — não é HTML
-            acessível via seletor CSS, e o OpenCV com template não serve porque
-            o conteúdo da linha muda a cada execução (Faker gera dados únicos).
-            O OCR é a única forma de ler o texto da grade e confirmar o registro.
-
-        Estratégia de busca:
-            Verifica token a token do nome (ignorando partículas com <= 3 chars)
-            para tolerar pequenos erros de reconhecimento do Tesseract.
+        Se o OCR falhar: abra CF10_ocr_debug.png e ajuste _REGIAO_GRADE.
         """
-        step_id = "CF09"
+        step_id = "CF10"
         if observer:
             observer.log_step_start(step_id, "Verificar nome na grade via OCR")
         start = time.monotonic()
         try:
-            time.sleep(0.8)  # aguarda grade atualizar após salvar
-
-            screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}{step_id}.png")
+            time.sleep(0.8)
+            screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}CF10.png")
 
             nome_esperado = ctx.config.DADOS["nome"].upper()
             encontrado, token = OcrHelper.contem_qualquer_token(
@@ -314,17 +384,17 @@ class CadastroFuncionarioFlowSislab:
             )
 
             if not encontrado:
-                # salva imagem de debug para facilitar ajuste da _REGIAO_GRADE
                 OcrHelper.salvar_debug(screenshot_path, self._REGIAO_GRADE,
-                                       f"{ctx.evidence_dir}{step_id}_ocr_debug.png")
+                                       f"{ctx.evidence_dir}CF10_ocr_debug.png")
                 texto_lido = OcrHelper.ler_regiao(screenshot_path, self._REGIAO_GRADE)
                 raise AssertionError(
                     f"Nome '{nome_esperado}' não encontrado na grade.\n"
                     f"Texto lido pelo OCR:\n{texto_lido}\n"
-                    f"Veja o debug em: {ctx.evidence_dir}{step_id}_ocr_debug.png"
+                    f"Veja o debug em: {ctx.evidence_dir}CF10_ocr_debug.png\n"
+                    f"Ajuste _REGIAO_GRADE = (x1, y1, x2, y2) conforme o screenshot."
                 )
 
-            print(f"[CF09] OCR confirmou token '{token}' do nome '{nome_esperado}' na grade.")
+            print(f"[CF10] OCR confirmou '{token}' do nome '{nome_esperado}' na grade.")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,
                               screenshot_path=screenshot_path)
@@ -332,7 +402,6 @@ class CadastroFuncionarioFlowSislab:
             step = StepResult(step_id=step_id, success=False,
                               duration_ms=(time.monotonic() - start) * 1000,
                               error=str(e))
-        finally:
-            if observer:
-                observer.log_step_result(step)
+        if observer:
+            observer.log_step_result(step)
         return step

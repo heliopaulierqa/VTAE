@@ -1,0 +1,125 @@
+{
+  "test_name": "test_cadastro_funcionario_sislab",
+  "status": "FALHOU",
+  "started_at": "2026-05-02T12:36:53.594164",
+  "finished_at": "2026-05-02T12:37:21.192135",
+  "duration_seconds": 27.6,
+  "summary": {
+    "total_flows": 2,
+    "total_steps": 12,
+    "passed_steps": 11,
+    "failed_steps": 1
+  },
+  "flows": [
+    {
+      "flow_name": "LoginFlowSisLab",
+      "success": true,
+      "total_duration_ms": 2869.7,
+      "steps": [
+        {
+          "step_id": "L01",
+          "success": true,
+          "duration_ms": 1026.0,
+          "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\L01_usuario.png",
+          "error": null,
+          "timestamp": "2026-05-02T12:36:54.621647"
+        },
+        {
+          "step_id": "L02",
+          "success": true,
+          "duration_ms": 1157.1,
+          "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\L02_senha.png",
+          "error": null,
+          "timestamp": "2026-05-02T12:36:55.779523"
+        },
+        {
+          "step_id": "L03",
+          "success": true,
+          "duration_ms": 686.6,
+          "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\L03_entrar.png",
+          "error": null,
+          "timestamp": "2026-05-02T12:36:56.466886"
+        }
+      ]
+    },
+    {
+      "flow_name": "CadastroFuncionarioFlowSislab",
+      "success": false,
+      "total_duration_ms": 24713.9,
+      "steps": [
+        {
+          "step_id": "CF01",
+          "success": true,
+          "duration_ms": 1971.4,
+          "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF01.png",
+          "error": null,
+          "timestamp": "2026-05-02T12:36:58.439392"
+        },
+        {
+          "step_id": "CF02",
+          "success": true,
+          "duration_ms": 2318.7,
+          "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF02.png",
+          "error": null,
+          "timestamp": "2026-05-02T12:37:00.758872"
+        },
+        {
+          "step_id": "CF03",
+          "success": true,
+          "duration_ms": 1738.8,
+          "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF03.png",
+          "error": null,
+          "timestamp": "2026-05-02T12:37:02.498505"
+        },
+        {
+          "step_id": "CF04",
+          "success": true,
+          "duration_ms": 2288.8,
+          "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF04.png",
+          "error": null,
+          "timestamp": "2026-05-02T12:37:04.788013"
+        },
+        {
+          "step_id": "CF05",
+          "success": true,
+          "duration_ms": 1113.4,
+          "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF05.png",
+          "error": null,
+          "timestamp": "2026-05-02T12:37:05.902151"
+        },
+        {
+          "step_id": "CF06",
+          "success": true,
+          "duration_ms": 1120.8,
+          "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF06.png",
+          "error": null,
+          "timestamp": "2026-05-02T12:37:07.024128"
+        },
+        {
+          "step_id": "CF07",
+          "success": true,
+          "duration_ms": 1101.2,
+          "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF07.png",
+          "error": null,
+          "timestamp": "2026-05-02T12:37:08.126290"
+        },
+        {
+          "step_id": "CF08",
+          "success": true,
+          "duration_ms": 1004.5,
+          "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF08.png",
+          "error": null,
+          "timestamp": "2026-05-02T12:37:09.131459"
+        },
+        {
+          "step_id": "CF09",
+          "success": false,
+          "duration_ms": 12056.3,
+          "screenshot": null,
+          "error": "Mensagem 'Funcionário salvo com sucesso' não apareceu.\nVerifique se o formulário foi preenchido corretamente.",
+          "timestamp": "2026-05-02T12:37:21.188469"
+        }
+      ]
+    }
+  ]
+}

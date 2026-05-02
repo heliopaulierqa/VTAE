@@ -1,0 +1,53 @@
+sistema: msi3
+tipo: web
+runner: playwright
+
+ambientes:
+  dev:
+    url: https://msi3.dev.interno/apex
+    headless: false
+    slow_mo: 100
+    confidence: 0.7
+    timeout: 30.0
+  homologacao:
+    url: https://msi3.hom.interno/apex
+    headless: true
+    slow_mo: 50
+    confidence: 0.7
+    timeout: 60.0
+  producao:
+    url: https://msi3.prod.interno/apex
+    headless: true
+    slow_mo: 50
+    confidence: 0.75
+    timeout: 60.0
+
+credenciais:
+  usuario: ${MSI3_USER:-admin}
+  senha: ${MSI3_PASS:-admin}
+
+flows:
+  - login
+  - frequencia_aplicacao
+  - tipo_anestesia
+
+dados_faker:
+  - campo: sequencia
+    tipo: fixo
+    valor: "001"
+
+  - campo: codigo
+    tipo: faker
+    metodo: bothify
+    transformacao: upper
+
+  - campo: descricao
+    tipo: faker
+    metodo: bothify
+    transformacao: upper
+
+  - campo: tipo_anestesia
+    tipo: random
+    opcoes:
+      - "Geral"
+      - "Regional"

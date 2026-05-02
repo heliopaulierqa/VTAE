@@ -13,18 +13,17 @@ Execução:
 from vtae.runners.opencv_runner import OpenCVRunner
 from vtae.core.context import FlowContext
 from vtae.core.observer import ExecutionObserver
+from vtae.configs.sislab.cadastro_funcionario_config import CadastroFuncionarioConfigSislab
 from vtae.flows.login_flow_sislab import LoginFlowSisLab
 from vtae.flows.cadastro_funcionario_flow_sislab import CadastroFuncionarioFlowSislab
-from src.config import ConfigLoader
 
 
 def test_cadastro_funcionario_sislab():
-    config   = ConfigLoader.carregar("sislab")
     observer = ExecutionObserver(test_name="test_cadastro_funcionario_sislab")
-    runner   = OpenCVRunner(confidence=config.confidence)
+    runner   = OpenCVRunner(confidence=0.8)
     ctx      = FlowContext(
         runner=runner,
-        config=config,
+        config=CadastroFuncionarioConfigSislab,
         evidence_dir=observer.evidence_dir,
     )
 
@@ -42,5 +41,5 @@ def test_cadastro_funcionario_sislab():
     assert result.success, (
         f"Cadastro de funcionário falhou.\n"
         f"Steps com erro: {result.failed_steps}\n"
-        f"Dados usados: {config.DADOS}"
+        f"Dados usados: {CadastroFuncionarioConfigSislab.DADOS}"
     )

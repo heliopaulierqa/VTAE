@@ -1,123 +1,131 @@
 {
   "test_name": "test_cadastro_funcionario_sislab",
-  "status": "FALHOU",
-  "started_at": "2026-05-02T12:36:53.594164",
-  "finished_at": "2026-05-02T12:37:21.192135",
-  "duration_seconds": 27.6,
+  "status": "PASSOU",
+  "started_at": "2026-05-02T15:20:11.628214",
+  "finished_at": "2026-05-02T15:20:39.621850",
+  "duration_seconds": 27.99,
   "summary": {
     "total_flows": 2,
-    "total_steps": 12,
-    "passed_steps": 11,
-    "failed_steps": 1
+    "total_steps": 13,
+    "passed_steps": 13,
+    "failed_steps": 0
   },
   "flows": [
     {
       "flow_name": "LoginFlowSisLab",
       "success": true,
-      "total_duration_ms": 2869.7,
+      "total_duration_ms": 3149.4,
       "steps": [
         {
           "step_id": "L01",
           "success": true,
-          "duration_ms": 1026.0,
+          "duration_ms": 1279.7,
           "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\L01_usuario.png",
           "error": null,
-          "timestamp": "2026-05-02T12:36:54.621647"
+          "timestamp": "2026-05-02T15:20:12.939987"
         },
         {
           "step_id": "L02",
           "success": true,
-          "duration_ms": 1157.1,
+          "duration_ms": 1194.5,
           "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\L02_senha.png",
           "error": null,
-          "timestamp": "2026-05-02T12:36:55.779523"
+          "timestamp": "2026-05-02T15:20:14.135133"
         },
         {
           "step_id": "L03",
           "success": true,
-          "duration_ms": 686.6,
+          "duration_ms": 675.3,
           "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\L03_entrar.png",
           "error": null,
-          "timestamp": "2026-05-02T12:36:56.466886"
+          "timestamp": "2026-05-02T15:20:14.811209"
         }
       ]
     },
     {
       "flow_name": "CadastroFuncionarioFlowSislab",
-      "success": false,
-      "total_duration_ms": 24713.9,
+      "success": true,
+      "total_duration_ms": 24651.0,
       "steps": [
         {
           "step_id": "CF01",
           "success": true,
-          "duration_ms": 1971.4,
+          "duration_ms": 2663.2,
           "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF01.png",
           "error": null,
-          "timestamp": "2026-05-02T12:36:58.439392"
+          "timestamp": "2026-05-02T15:20:17.475430"
         },
         {
           "step_id": "CF02",
           "success": true,
-          "duration_ms": 2318.7,
+          "duration_ms": 2352.6,
           "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF02.png",
           "error": null,
-          "timestamp": "2026-05-02T12:37:00.758872"
+          "timestamp": "2026-05-02T15:20:19.828838"
         },
         {
           "step_id": "CF03",
           "success": true,
-          "duration_ms": 1738.8,
+          "duration_ms": 1622.3,
           "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF03.png",
           "error": null,
-          "timestamp": "2026-05-02T12:37:02.498505"
+          "timestamp": "2026-05-02T15:20:21.602246"
         },
         {
           "step_id": "CF04",
           "success": true,
-          "duration_ms": 2288.8,
+          "duration_ms": 2250.6,
           "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF04.png",
           "error": null,
-          "timestamp": "2026-05-02T12:37:04.788013"
+          "timestamp": "2026-05-02T15:20:23.853640"
         },
         {
           "step_id": "CF05",
           "success": true,
-          "duration_ms": 1113.4,
+          "duration_ms": 1123.7,
           "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF05.png",
           "error": null,
-          "timestamp": "2026-05-02T12:37:05.902151"
+          "timestamp": "2026-05-02T15:20:24.978101"
         },
         {
           "step_id": "CF06",
           "success": true,
-          "duration_ms": 1120.8,
+          "duration_ms": 1133.9,
           "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF06.png",
           "error": null,
-          "timestamp": "2026-05-02T12:37:07.024128"
+          "timestamp": "2026-05-02T15:20:26.112581"
         },
         {
           "step_id": "CF07",
           "success": true,
-          "duration_ms": 1101.2,
+          "duration_ms": 1097.1,
           "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF07.png",
           "error": null,
-          "timestamp": "2026-05-02T12:37:08.126290"
+          "timestamp": "2026-05-02T15:20:27.210309"
         },
         {
           "step_id": "CF08",
           "success": true,
-          "duration_ms": 1004.5,
+          "duration_ms": 1022.6,
           "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF08.png",
           "error": null,
-          "timestamp": "2026-05-02T12:37:09.131459"
+          "timestamp": "2026-05-02T15:20:28.233650"
         },
         {
           "step_id": "CF09",
-          "success": false,
-          "duration_ms": 12056.3,
-          "screenshot": null,
-          "error": "Mensagem 'Funcionário salvo com sucesso' não apareceu.\nVerifique se o formulário foi preenchido corretamente.",
-          "timestamp": "2026-05-02T12:37:21.188469"
+          "success": true,
+          "duration_ms": 5797.1,
+          "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF09.png",
+          "error": null,
+          "timestamp": "2026-05-02T15:20:34.031555"
+        },
+        {
+          "step_id": "CF10",
+          "success": true,
+          "duration_ms": 5587.9,
+          "screenshot": "evidence\\2026-05-02\\test_cadastro_funcionario_sislab\\CF10.png",
+          "error": null,
+          "timestamp": "2026-05-02T15:20:39.620150"
         }
       ]
     }

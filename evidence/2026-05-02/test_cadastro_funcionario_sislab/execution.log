@@ -902,3 +902,94 @@ Verifique se o formulário foi preenchido corretamente.
 12:37:21 [INFO ] Execução finalizada — FALHOU | 11/12 steps OK | 27.6s total
 12:37:21 [INFO ] Relatório JSON salvo em: evidence\2026-05-02\test_cadastro_funcionario_sislab\execution.json
 12:37:21 [INFO ] Relatório HTML salvo em: evidence\2026-05-02\test_cadastro_funcionario_sislab\report.html
+14:57:58 [INFO ] Iniciando execução: test_cadastro_funcionario_sislab
+14:57:58 [INFO ] Evidências em: evidence\2026-05-02\test_cadastro_funcionario_sislab\
+14:57:58 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+14:58:00 [INFO ] [L01] OK | 2020ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\L01_usuario.png
+14:58:00 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+14:58:01 [INFO ] [L02] OK | 1070ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\L02_senha.png
+14:58:01 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+14:58:02 [INFO ] [L03] OK | 779ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\L03_entrar.png
+14:58:02 [INFO ] Flow LoginFlowSisLab — PASSOU | 3/3 steps OK | 3868ms total
+14:58:02 [INFO ] [CF01] INICIANDO — clicar em Funcionários no menu principal
+14:58:09 [INFO ] [CF01] OK | 7413ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF01.png
+14:58:09 [INFO ] [CF02] INICIANDO — clicar em Novo — foco vai para Nome
+15:05:05 [INFO ] Iniciando execução: test_cadastro_funcionario_sislab
+15:05:05 [INFO ] Evidências em: evidence\2026-05-02\test_cadastro_funcionario_sislab\
+15:05:05 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+15:05:07 [INFO ] [L01] OK | 1445ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\L01_usuario.png
+15:05:07 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+15:05:08 [INFO ] [L02] OK | 1076ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\L02_senha.png
+15:05:08 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+15:05:08 [INFO ] [L03] OK | 720ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\L03_entrar.png
+15:05:08 [INFO ] Flow LoginFlowSisLab — PASSOU | 3/3 steps OK | 3241ms total
+15:05:08 [INFO ] [CF01] INICIANDO — clicar em Funcionários no menu principal
+15:05:17 [INFO ] [CF01] OK | 8640ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF01.png
+15:05:17 [INFO ] [CF02] INICIANDO — clicar em Novo — foco vai para Nome
+15:12:24 [INFO ] Iniciando execução: test_cadastro_funcionario_sislab
+15:12:24 [INFO ] Evidências em: evidence\2026-05-02\test_cadastro_funcionario_sislab\
+15:12:24 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+15:12:26 [INFO ] [L01] OK | 1858ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\L01_usuario.png
+15:12:26 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+15:12:27 [INFO ] [L02] OK | 1430ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\L02_senha.png
+15:12:27 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+15:12:28 [INFO ] [L03] OK | 804ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\L03_entrar.png
+15:12:28 [INFO ] Flow LoginFlowSisLab — PASSOU | 3/3 steps OK | 4093ms total
+15:12:28 [INFO ] [CF01] INICIANDO — clicar em Funcionários no menu principal
+15:12:35 [INFO ] [CF01] OK | 7159ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF01.png
+15:12:35 [INFO ] [CF02] INICIANDO — clicar em Novo — foco vai para Nome
+15:12:43 [INFO ] [CF02] OK | 7589ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF02.png
+15:12:44 [INFO ] [CF03] INICIANDO — Preencher Nome: IAN DA MATA
+15:12:45 [INFO ] [CF03] OK | 1490ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF03.png
+15:12:45 [INFO ] [CF04] INICIANDO — Preencher CPF
+15:12:48 [INFO ] [CF04] OK | 2353ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF04.png
+15:12:48 [INFO ] [CF05] INICIANDO — Selecionar Cargo: ANALISTA DE RH
+15:12:49 [INFO ] [CF05] OK | 1157ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF05.png
+15:12:49 [INFO ] [CF06] INICIANDO — Selecionar Departamento: ADMINISTRAÇÃO
+15:12:50 [INFO ] [CF06] OK | 1145ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF06.png
+15:12:50 [INFO ] [CF07] INICIANDO — Preencher Salário
+15:12:51 [INFO ] [CF07] OK | 1195ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF07.png
+15:12:51 [INFO ] [CF08] INICIANDO — Preencher Data de Admissão
+15:12:52 [INFO ] [CF08] OK | 1175ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF08.png
+15:12:52 [INFO ] [CF09] INICIANDO — Clicar em Salvar e validar mensagem
+15:13:07 [ERROR] [CF09] FALHOU | 14917ms | erro: Mensagem 'Funcionário salvo com sucesso' não apareceu.
+Verifique se o formulário foi preenchido corretamente.
+15:13:07 [INFO ] Flow CadastroFuncionarioFlowSislab — FALHOU | 8/9 steps OK | 38181ms total
+15:13:07 [ERROR]   Step falhou: [CF09] Mensagem 'Funcionário salvo com sucesso' não apareceu.
+Verifique se o formulário foi preenchido corretamente.
+15:13:07 [INFO ] Execução finalizada — FALHOU | 11/12 steps OK | 43.4s total
+15:13:08 [INFO ] Relatório JSON salvo em: evidence\2026-05-02\test_cadastro_funcionario_sislab\execution.json
+15:13:12 [INFO ] Relatório HTML salvo em: evidence\2026-05-02\test_cadastro_funcionario_sislab\report.html
+15:20:11 [INFO ] Iniciando execução: test_cadastro_funcionario_sislab
+15:20:11 [INFO ] Evidências em: evidence\2026-05-02\test_cadastro_funcionario_sislab\
+15:20:11 [INFO ] [L01] INICIANDO — clicar no campo usuário e digitar
+15:20:12 [INFO ] [L01] OK | 1280ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\L01_usuario.png
+15:20:12 [INFO ] [L02] INICIANDO — clicar no campo senha e digitar
+15:20:14 [INFO ] [L02] OK | 1194ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\L02_senha.png
+15:20:14 [INFO ] [L03] INICIANDO — clicar no botão Entrar
+15:20:14 [INFO ] [L03] OK | 675ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\L03_entrar.png
+15:20:14 [INFO ] Flow LoginFlowSisLab — PASSOU | 3/3 steps OK | 3149ms total
+15:20:14 [INFO ] [CF01] INICIANDO — clicar em Funcionários no menu principal
+15:20:17 [INFO ] [CF01] OK | 2663ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF01.png
+15:20:17 [INFO ] [CF02] INICIANDO — clicar em Novo — foco vai para Nome
+15:20:19 [INFO ] [CF02] OK | 2353ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF02.png
+15:20:19 [INFO ] [CF03] INICIANDO — Preencher Nome: ISABEL RIBEIRO
+15:20:21 [INFO ] [CF03] OK | 1622ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF03.png
+15:20:21 [INFO ] [CF04] INICIANDO — Preencher CPF
+15:20:23 [INFO ] [CF04] OK | 2251ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF04.png
+15:20:23 [INFO ] [CF05] INICIANDO — Selecionar Cargo: ANALISTA DE RH
+15:20:24 [INFO ] [CF05] OK | 1124ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF05.png
+15:20:24 [INFO ] [CF06] INICIANDO — Selecionar Departamento: ADMINISTRAÇÃO
+15:20:26 [INFO ] [CF06] OK | 1134ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF06.png
+15:20:26 [INFO ] [CF07] INICIANDO — Preencher Salário
+15:20:27 [INFO ] [CF07] OK | 1097ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF07.png
+15:20:27 [INFO ] [CF08] INICIANDO — Preencher Data de Admissão
+15:20:28 [INFO ] [CF08] OK | 1023ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF08.png
+15:20:28 [INFO ] [CF09] INICIANDO — Clicar em Salvar e validar mensagem
+15:20:34 [INFO ] [CF09] OK | 5797ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF09.png
+15:20:34 [INFO ] [CF10] INICIANDO — Verificar nome na grade via OCR
+15:20:39 [INFO ] [CF10] OK | 5588ms | screenshot: evidence\2026-05-02\test_cadastro_funcionario_sislab\CF10.png
+15:20:39 [INFO ] Flow CadastroFuncionarioFlowSislab — PASSOU | 10/10 steps OK | 24651ms total
+15:20:39 [INFO ] Execução finalizada — PASSOU | 13/13 steps OK | 28.0s total
+15:20:39 [INFO ] Relatório JSON salvo em: evidence\2026-05-02\test_cadastro_funcionario_sislab\execution.json
+15:20:40 [INFO ] Relatório HTML salvo em: evidence\2026-05-02\test_cadastro_funcionario_sislab\report.html

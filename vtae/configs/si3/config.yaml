@@ -1,0 +1,83 @@
+sistema: si3
+tipo: desktop
+runner: opencv
+
+ambientes:
+  dev:
+    url: ""
+    headless: false
+    confidence: 0.7
+    timeout: 30.0
+  homologacao:
+    url: ""
+    headless: false
+    confidence: 0.7
+    timeout: 60.0
+  producao:
+    url: ""
+    headless: false
+    confidence: 0.75
+    timeout: 60.0
+
+credenciais:
+  usuario: ${SI3_USER:-admin}
+  senha: ${SI3_PASS:-admin}
+
+flows:
+  - login
+  - cadastro_paciente
+
+dados_faker:
+  - campo: nome
+    tipo: faker
+    metodo: name
+    transformacao: upper
+    locale: pt_BR
+
+  - campo: nome_social
+    tipo: fixo
+    valor: ""
+
+  - campo: data_nascimento
+    tipo: fixo
+    valor: "01/15/1990"
+
+  - campo: hora
+    tipo: fixo
+    valor: "00:00"
+
+  - campo: sexo
+    tipo: random
+    opcoes:
+      - "M"
+      - "F"
+
+  - campo: nacionalidade
+    tipo: fixo
+    valor: "BRASILEIRA"
+
+  - campo: mae
+    tipo: faker
+    metodo: name
+    transformacao: upper
+    locale: pt_BR
+
+  - campo: pai
+    tipo: faker
+    metodo: name
+    transformacao: upper
+    locale: pt_BR
+
+  - campo: cor_etnia
+    tipo: random
+    opcoes:
+      - "PARDA"
+      - "BRANCA"
+      - "PRETA"
+      - "AMARELA"
+      - "INDIGENA"
+
+  - campo: cpf
+    tipo: faker
+    metodo: cpf
+    transformacao: sem_pontuacao

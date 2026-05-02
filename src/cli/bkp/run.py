@@ -5,19 +5,28 @@ Uso:
     vtae run --module sislab
     vtae run --module sislab --env homologacao
     vtae run --test cadastro_funcionario
+    vtae run --test cadastro_funcionario --env producao
     vtae run --all
     vtae run --all --env homologacao
     vtae systems
     vtae systems --sistema sislab
+
+O ambiente padrão é sempre "dev" se não especificado.
+O ambiente é passado via variável de ambiente VTAE_ENV para os testes,
+que o ConfigLoader lê automaticamente.
 """
 
 import argparse
 import os
 import sys
 import subprocess
-from datetime import datetime
 from pathlib import Path
 
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Mapa de módulos → arquivos de teste
+# Atualizar ao adicionar novos sistemas ou flows.
+# ──────────────────────────────────────────────────────────────────────────────
 
 MODULOS: dict[str, list[str]] = {
     "sislab": [
@@ -33,6 +42,7 @@ MODULOS: dict[str, list[str]] = {
     ],
 }
 
+# Mapa de nome curto → arquivo de teste (para --test)
 TESTES: dict[str, str] = {
     "cadastro_funcionario":  "vtae/tests/integration/sislab/test_cadastro_funcionario_sislab.py",
     "cadastro_paciente":     "vtae/tests/integration/si3/test_cadastro_paciente_si3.py",
@@ -43,6 +53,10 @@ TESTES: dict[str, str] = {
 
 AMBIENTES_VALIDOS = {"dev", "homologacao", "producao"}
 
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Entrypoint
+# ──────────────────────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(
@@ -62,16 +76,50 @@ Exemplos:
 
     sub = parser.add_subparsers(dest="command", metavar="comando")
 
+    # ── vtae run ──────────────────────────────────────────────────────────────
     run_parser = sub.add_parser("run", help="Executa testes de integração")
     run_group = run_parser.add_mutually_exclusive_group(required=True)
-    run_group.add_argument("--all", action="store_true", help="Executa todos os testes")
-    run_group.add_argument("--module", choices=MODULOS.keys(), metavar="SISTEMA")
-    run_group.add_argument("--test", choices=TESTES.keys(), metavar="TESTE")
-    run_parser.add_argument("--env", choices=AMBIENTES_VALIDOS, default="dev", metavar="AMBIENTE")
+    run_group.add_argument(
+        "--all",
+        action="store_true",
+        help="Executa todos os testes de integração",
+    )
+    run_group.add_argument(
+        "--module",
+        choices=MODULOS.keys(),
+        metavar="SISTEMA",
+        help=f"Executa todos os testes de um sistema. Opções: {', '.join(MODULOS.keys())}",
+    )
+    run_group.add_argument(
+        "--test",
+        choices=TESTES.keys(),
+        metavar="TESTE",
+        help=f"Executa um teste específico. Opções: {', '.join(TESTES.keys())}",
+    )
+    run_parser.add_argument(
+        "--env",
+        choices=AMBIENTES_VALIDOS,
+        default="dev",
+        metavar="AMBIENTE",
+        help="Ambiente de execução: dev (padrão), homologacao, producao",
+    )
+    run_parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        default=True,
+        help="Saída detalhada (padrão: ativado)",
+    )
 
+    # ── vtae systems ──────────────────────────────────────────────────────────
     sys_parser = sub.add_parser("systems", help="Lista sistemas e ambientes disponíveis")
-    sys_parser.add_argument("--sistema", choices=MODULOS.keys(), metavar="SISTEMA")
+    sys_parser.add_argument(
+        "--sistema",
+        choices=MODULOS.keys(),
+        metavar="SISTEMA",
+        help="Lista ambientes de um sistema específico",
+    )
 
+    # ── parse ─────────────────────────────────────────────────────────────────
     args = parser.parse_args()
 
     if args.command is None:
@@ -84,24 +132,29 @@ Exemplos:
         _cmd_systems(args)
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Comandos
+# ──────────────────────────────────────────────────────────────────────────────
+
 def _cmd_run(args):
+    """Executa testes via pytest, injetando VTAE_ENV no ambiente."""
+
     env = args.env
 
+    # monta lista de arquivos de teste
     if args.all:
         arquivos = [f for files in MODULOS.values() for f in files]
-        descricao = "todos os módulos"
-        titulo = "Execução Completa"
+        descricao = f"todos os módulos"
     elif args.module:
         arquivos = MODULOS[args.module]
         descricao = f"módulo '{args.module}'"
-        titulo = f"Módulo {args.module.upper()}"
     else:
         arquivos = [TESTES[args.test]]
         descricao = f"teste '{args.test}'"
-        titulo = args.test.replace("_", " ").title()
 
+    # filtra só os arquivos que existem
     existentes = [f for f in arquivos if Path(f).exists()]
-    faltando   = [f for f in arquivos if not Path(f).exists()]
+    faltando = [f for f in arquivos if not Path(f).exists()]
 
     if faltando:
         print(f"[VTAE] Aviso — arquivos não encontrados (serão ignorados):")
@@ -112,8 +165,10 @@ def _cmd_run(args):
         print(f"[VTAE] Nenhum arquivo de teste encontrado para {descricao}.")
         sys.exit(1)
 
+    # monta o comando pytest
     cmd = [sys.executable, "-m", "pytest", "-v", "-s"] + existentes
 
+    # injeta o ambiente via variável de ambiente
     processo_env = os.environ.copy()
     processo_env["VTAE_ENV"] = env
 
@@ -129,9 +184,6 @@ def _cmd_run(args):
 
     resultado = subprocess.run(cmd, env=processo_env)
 
-    # ── relatório unificado ───────────────────────────────────────────────────
-    _gerar_summary(existentes, env, titulo, resultado.returncode)
-
     print(f"\n{'='*60}")
     if resultado.returncode == 0:
         print(f"  ✅ PASSOU — {descricao} [{env}]")
@@ -142,49 +194,16 @@ def _cmd_run(args):
     sys.exit(resultado.returncode)
 
 
-def _gerar_summary(arquivos: list[str], env: str,
-                   titulo: str, returncode: int):
-    """Coleta os execution.json gerados e produz o summary.html."""
-    try:
-        from src.cli.summary import generate_summary
-
-        hoje = datetime.now().strftime("%Y-%m-%d")
-        json_paths = []
-
-        for arq in arquivos:
-            # deriva o nome do teste a partir do arquivo
-            test_name = Path(arq).stem
-            json_path = Path(f"evidence/{hoje}/{test_name}/execution.json")
-            if json_path.exists():
-                json_paths.append(str(json_path))
-
-        if not json_paths:
-            return
-
-        # salva o summary na pasta de evidências do dia
-        summary_dir  = f"evidence/{hoje}/summary"
-        summary_path = f"{summary_dir}/{titulo.lower().replace(' ', '_')}_{env}.html"
-
-        path = generate_summary(
-            json_paths=json_paths,
-            output_path=summary_path,
-            titulo=titulo,
-            ambiente=env,
-        )
-
-        if path:
-            print(f"\n📊 Relatório unificado: {path}")
-
-    except Exception as e:
-        print(f"[VTAE] Aviso — não foi possível gerar o relatório unificado: {e}")
-
-
 def _cmd_systems(args):
+    """Lista sistemas e ambientes disponíveis."""
+
     if args.sistema:
+        # lista ambientes de um sistema específico
         try:
             from src.config import ConfigLoader
             ambientes = ConfigLoader.listar_ambientes(
-                args.sistema, configs_dir=Path("vtae/configs")
+                args.sistema,
+                configs_dir=Path("vtae/configs")
             )
             print(f"\nSistema '{args.sistema}' — ambientes disponíveis:")
             for amb in ambientes:
@@ -195,9 +214,12 @@ def _cmd_systems(args):
             print(f"[VTAE] Erro ao listar ambientes de '{args.sistema}': {e}")
             sys.exit(1)
     else:
+        # lista todos os sistemas
         try:
             from src.config import ConfigLoader
-            sistemas = ConfigLoader.listar_sistemas(configs_dir=Path("vtae/configs"))
+            sistemas = ConfigLoader.listar_sistemas(
+                configs_dir=Path("vtae/configs")
+            )
         except Exception:
             sistemas = list(MODULOS.keys())
 
@@ -209,7 +231,7 @@ def _cmd_systems(args):
         print()
         print("Use 'vtae systems --sistema <nome>' para ver os ambientes.")
         print()
-
+     
 
 if __name__ == "__main__":
     main()

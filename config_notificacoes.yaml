@@ -1,0 +1,20 @@
+# Adicionar ao final de vtae/configs/sislab/config.yaml
+# (e também ao si3/config.yaml e msi3/config.yaml se quiser)
+
+notificacoes:
+  email:
+    # lista de destinatários padrão — usados pelo envio automático
+    # vtae run --module sislab envia automaticamente para esses e-mails
+    destinatarios_padrao:
+      - gestor@incor.org.br
+      # - equipe@incor.org.br
+
+    # template do assunto — variáveis disponíveis:
+    #   {status}  → ✅ PASSOU ou ❌ FALHOU
+    #   {modulo}  → SISLAB
+    #   {data}    → 03/05/2026
+    assunto: "VTAE — {status} | {modulo} | {data}"
+
+    # true  = só envia quando há falha (útil para não encher caixa de entrada)
+    # false = sempre envia (padrão)
+    somente_em_falha: false

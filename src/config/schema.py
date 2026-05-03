@@ -27,6 +27,7 @@ Exemplo de config.yaml:
       - campo: nome
         tipo: faker
         metodo: name
+        transformacao: sem_prefixo_upper
       - campo: cpf
         tipo: faker
         metodo: cpf
@@ -51,10 +52,10 @@ class AmbienteConfig:
     Contém apenas o que muda entre ambientes — principalmente a URL.
     """
     url: str
-    timeout: float = 30.0          # timeout padrão em segundos
-    headless: bool = False         # False = browser visível (dev), True = CI/CD
-    slow_mo: int = 100             # delay entre ações em ms (Playwright)
-    confidence: float = 0.8        # threshold padrão de template matching (OpenCV)
+    timeout: float = 30.0
+    headless: bool = False
+    slow_mo: int = 100
+    confidence: float = 0.8
 
     def __post_init__(self):
         if not self.url:
@@ -91,15 +92,15 @@ class CredenciaisConfig:
 # Dados Faker
 # ──────────────────────────────────────────────────────────────────────────────
 
-# Transformações disponíveis para campos Faker
 TransformacaoTipo = Literal[
-    "sem_prefixo_upper",  # remove prefixo e converte para maiúsculas
-    "sem_pontuacao",    # remove . e - (ex: CPF "123.456.789-00" → "12345678900")
-    "upper",            # maiúsculas
-    "lower",            # minúsculas
-    "truncar_50",       # limita a 50 caracteres
-    "sem_prefixo",      # remove Dr., Dra., Sr., Sra., Prof. etc.
+    "sem_pontuacao",      # remove . e - (ex: CPF "123.456.789-00" → "12345678900")
+    "upper",              # maiúsculas
+    "lower",              # minúsculas
+    "truncar_50",         # limita a 50 caracteres
+    "sem_prefixo",        # remove Dr., Dra., Sr., Sra., Prof. etc.
+    "sem_prefixo_upper",  # remove prefixo E converte para maiúsculas
 ]
+
 
 @dataclass
 class DadoFakerConfig:
@@ -109,7 +110,7 @@ class DadoFakerConfig:
     Tipos:
         faker  — usa método do Faker (ex: fake.name(), fake.cpf())
         fixo   — valor literal fixo (ex: "ANALISTA DE RH")
-        random — valor aleatório de uma lista (ex: ["ANALISTA DE RH", "ANALISYTA DE QA"])
+        random — valor aleatório de uma lista
     """
     campo: str
     tipo: Literal["faker", "fixo", "random"]
@@ -149,16 +150,7 @@ class SystemConfig:
     """
     Configuração completa de um sistema — resultado do ConfigLoader.
 
-    Usado pelos flows exatamente como os *_config.py antigos:
-        config.user         → usuário resolvido
-        config.password     → senha resolvida
-        config.url          → URL do ambiente ativo
-        config.DADOS        → dict gerado pelo Faker
-        config.runner       → "opencv" ou "playwright"
-        config.tipo         → "desktop", "web" ou "api"
-
-    A propriedade USER e PASSWORD existem para compatibilidade com o FlowContext
-    que acessa ctx.config.USER e ctx.config.PASSWORD.
+    Compatível com FlowContext — expõe USER, PASSWORD, url, confidence, DADOS.
     """
     sistema: str
     tipo: Literal["desktop", "web", "api"]
@@ -174,32 +166,26 @@ class SystemConfig:
 
     @property
     def USER(self) -> str:
-        """Compatibilidade com ctx.config.USER."""
         return self.credenciais.usuario
 
     @property
     def PASSWORD(self) -> str:
-        """Compatibilidade com ctx.config.PASSWORD."""
         return self.credenciais.senha
 
     @property
     def url(self) -> str:
-        """URL do ambiente ativo."""
         return self.ambiente.url
 
     @property
     def confidence(self) -> float:
-        """Threshold de template matching do ambiente ativo."""
         return self.ambiente.confidence
 
     @property
     def headless(self) -> bool:
-        """Modo headless do ambiente ativo (Playwright)."""
         return self.ambiente.headless
 
     @property
     def timeout(self) -> float:
-        """Timeout padrão do ambiente ativo."""
         return self.ambiente.timeout
 
     # ── Dados dinâmicos ──────────────────────────────────────────────────────
@@ -209,14 +195,13 @@ class SystemConfig:
         """
         Gera e retorna os dados dinâmicos conforme o schema.
         Cache por instância — mesmos dados durante toda a execução do flow.
-        Para forçar novos dados: config.resetar_dados()
         """
         if self._dados_cache is None:
             self._dados_cache = self._gerar_dados()
         return self._dados_cache
 
     def resetar_dados(self) -> None:
-        """Limpa o cache de dados — próximo acesso a DADOS gera novos valores."""
+        """Limpa o cache — próximo acesso a DADOS gera novos valores."""
         self._dados_cache = None
 
     def _gerar_dados(self) -> dict:
@@ -247,18 +232,32 @@ class SystemConfig:
         """Aplica a transformação ao valor gerado pelo Faker."""
         if transformacao is None:
             return valor
+
         if transformacao == "sem_pontuacao":
             return valor.replace(".", "").replace("-", "").replace("/", "")
+
         if transformacao == "upper":
             return valor.upper()
+
         if transformacao == "lower":
             return valor.lower()
+
         if transformacao == "truncar_50":
             return valor[:50]
-        if transformacao == "sem_prefixo_upper":
+
+        if transformacao == "sem_prefixo":
             import re
             return re.sub(
                 r'^(Dr\.|Dra\.|Sr\.|Sra\.|Prof\.|Profª\.|Prof°\.|Mr\.|Mrs\.|Ms\.)\s*',
                 '', valor
             ).strip()
-        return valor.upper()
+
+        if transformacao == "sem_prefixo_upper":
+            import re
+            valor = re.sub(
+                r'^(Dr\.|Dra\.|Sr\.|Sra\.|Prof\.|Profª\.|Prof°\.|Mr\.|Mrs\.|Ms\.)\s*',
+                '', valor
+            ).strip()
+            return valor.upper()  # remove prefixo E converte para maiúsculas
+
+        return valor

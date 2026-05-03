@@ -1,329 +1,283 @@
 # VTAE — Visual Test Automation Engine
 
-> Framework híbrido de automação inteligente baseado em Visão Computacional + IA
+> Framework híbrido de automação de testes baseado em Visão Computacional + IA
 > para sistemas web modernos, legados desktop e ambientes híbridos.
 
 ![Python](https://img.shields.io/badge/Python-3.13%2B-blue)
-![Versão](https://img.shields.io/badge/versão-0.3.1-purple)
-![Testes Unitários](https://img.shields.io/badge/testes%20unitários-32%20passando-green)
-![SI3](https://img.shields.io/badge/SI3%20CadastroPaciente-14%2F14%20✅-brightgreen)
-![MSI3](https://img.shields.io/badge/MSI3%20FrequenciaAplicacao-10%2B%20execuções%20✅-brightgreen)
+![Versão](https://img.shields.io/badge/versão-0.4.3-purple)
+![Testes](https://img.shields.io/badge/testes-70%20unitários-green)
+![Cobertura](https://img.shields.io/badge/cobertura%20vision-89%25-brightgreen)
+![Fase](https://img.shields.io/badge/fase%203-concluída-brightgreen)
+![Sistemas](https://img.shields.io/badge/sistemas-3%20automatizados-blue)
+
+---
+
+## Por que VTAE?
+
+A maioria das ferramentas de automação resolve apenas parte do problema. O VTAE resolve tudo.
+
+| Cenário | Selenium / Playwright | PyAutoGUI | **VTAE** |
+|---|---|---|---|
+| Oracle APEX (web moderno) | ✅ | ❌ | ✅ |
+| Oracle Forms (desktop legado) | ❌ | ⚠️ frágil | ✅ robusto |
+| Canvas / iframe sem DOM | ❌ | ❌ | ✅ OpenCV |
+| Template falha por zoom/DPI | ❌ falha | ❌ falha | ✅ multi-scale |
+| Template com contraste diferente | ❌ falha | ❌ falha | ✅ heurísticas |
+| Múltiplos ambientes (dev/hom/prod) | configuração manual | não suporta | ✅ YAML nativo |
+| Relatório visual com evidências | plugin externo | não suporta | ✅ HTML nativo |
+| Detecção de componentes por imagem | não suporta | básico | ✅ TemplateMatcher |
+
+**O diferencial real:** o VTAE combina Playwright para HTML e OpenCV para o resto — no mesmo flow, de forma transparente. É o único framework que automatiza Oracle Forms, Oracle APEX e sistemas híbridos com a mesma base de código.
+
+---
+
+## Casos reais automatizados
+
+### InCor — Instituto do Coração
+
+**CadastroPacienteFlow — SI3 (Oracle Forms)**
+Automatiza o cadastro completo de pacientes no sistema hospitalar legado SI3: nome, data de nascimento, CPF, filiação, cor/etnia, nacionalidade e geração de matrícula via OCR. 14 steps, validado em produção.
+
+**CadastroFuncionarioFlow — SisLab (Oracle Forms)**
+Cadastro end-to-end de funcionários no SisLab: login, preenchimento de dados pessoais e contratuais, seleção de cargo/departamento por dropdown, salvamento e verificação na grade via OCR. 10 steps, validado em produção.
+
+**TipoAnestesiaFlow — MSI3 (Oracle APEX)**
+Navegação por 4 níveis de menus do MSI3 — combinando Playwright para sidebar e OpenCV para cards sem href CSS — até o formulário de cadastro de tipo de anestesia em iframe de dialog. 9 steps, validado em produção.
+
+**FrequenciaAplicacaoFlow — MSI3 (Oracle APEX)**
+Cadastro de frequência de aplicação com preenchimento de 8 campos em iframe APEX. Validado em 10+ execuções consecutivas sem falha.
 
 ---
 
 ## O que é o VTAE
 
-O VTAE é um framework híbrido de automação de testes que combina visão computacional,
-controle de browser e OCR para interagir com qualquer sistema — como um usuário humano faria.
-Ele localiza elementos por imagem, seletor CSS ou leitura de texto, executa ações e captura
-evidências automaticamente em cada etapa.
-
-**O diferencial:** onde ferramentas puramente web (Playwright, Cypress, Selenium) não chegam,
-o VTAE chega. E onde ferramentas puramente desktop falham em aplicações web modernas,
-o VTAE também resolve.
-
-Ideal para:
-- Sistemas legados desktop sem API de automação (Oracle Forms, Citrix, VDI)
-- Sistemas web complexos como Oracle APEX
-- Ambientes híbridos onde Playwright e OpenCV precisam trabalhar juntos
+Framework híbrido de automação de testes que combina visão computacional, controle de browser e OCR para interagir com qualquer sistema — como um usuário humano faria. Ele localiza elementos por imagem, seletor CSS ou leitura de texto, executa ações e captura evidências automaticamente em cada etapa.
 
 ---
 
 ## Instalação
 
 ```bash
-# dependências
 pip install -r requirements.txt
-
-# instalar o projeto
 pip install -e .
-
-# instalar o browser (só na primeira vez)
 playwright install chromium
 
 # OCR — Tesseract (Windows)
-# Baixar em: https://github.com/UB-Mannheim/tesseract/wiki
+# Baixar: https://github.com/UB-Mannheim/tesseract/wiki
 # Marcar "Portuguese" durante a instalação
-# Verificar instalação:
-python -c "from vtae.core.ocr_helper import OcrHelper; OcrHelper.verificar_instalacao()"
-
-# pytest-repeat — para rodar o mesmo teste N vezes
-pip install pytest-repeat
+python -c "from src.vision.ocr import OcrHelper; OcrHelper.verificar_instalacao()"
 ```
 
-> **Windows (PowerShell):** use `$env:PYTHONPATH="."` no lugar de `PYTHONPATH=.`
+> **Windows:** após `pip install -e .` o comando `vtae` fica disponível no PATH.
+
+---
+
+## CLI — Como usar
+
+```bash
+# listar sistemas disponíveis
+vtae systems
+
+# listar ambientes de um sistema
+vtae systems --sistema sislab
+
+# executar módulo completo (dev por padrão)
+vtae run --module sislab
+vtae run --module msi3
+
+# executar em ambiente específico
+vtae run --module sislab --env homologacao
+vtae run --module sislab --env producao
+
+# executar teste específico
+vtae run --test cadastro_funcionario
+vtae run --test tipo_anestesia --env homologacao
+
+# re-executar testes que falharam automaticamente
+vtae run --module sislab --retry 2
+
+# executar tudo
+vtae run --all
+vtae run --all --env homologacao
+
+# limpar evidências antigas
+vtae clean --days 7
+vtae clean --days 30 --dry-run
+```
+
+Ao final de cada execução, relatório unificado salvo em:
+```
+evidence/YYYY-MM-DD/summary/<modulo>_<ambiente>.html
+```
 
 ---
 
 ## Estrutura do projeto
 
 ```
-vtae/
-├── core/
-│   ├── base_runner.py       # contrato abstrato do runner
-│   ├── context.py           # FlowContext — contexto compartilhado
-│   ├── result.py            # StepResult e FlowResult
-│   ├── observer.py          # logs, evidências e relatório HTML
-│   ├── report_generator.py  # gerador de relatório HTML
-│   ├── ocr_helper.py        # OCR centralizado (Tesseract)
-│   └── apex_helper.py       # helpers para Oracle APEX (MSI3)
-├── flows/
-│   ├── login_flow.py
-│   ├── login_flow_msi3.py
-│   ├── cadastro_paciente_flow.py
-│   ├── cadastro_funcionario_flow_sislab.py
-│   └── frequencia_aplicacao_flow.py
-├── runners/
-│   ├── opencv_runner.py     # runner desktop (visão computacional)
-│   └── playwright_runner.py # runner web (browser)
-├── configs/                 # credenciais por sistema
-│   ├── si3/
-│   ├── sislab/
-│   └── msi3/
-└── tests/
-    ├── unit/                # testes sem tela real (32 testes)
-    └── integration/
-        ├── si3/             # Oracle Forms desktop
-        ├── sislab/          # Oracle Forms desktop
-        └── msi3/            # Oracle APEX web
-templates/                   # recortes de tela por sistema
-evidence/                    # screenshots e relatórios por execução
-scripts/                     # posicao_mouse.py e utilitários
+VTAE/
+├── src/                         ← Clean Architecture
+│   ├── core/                    # context, result, observer, types
+│   ├── vision/                  # TemplateMatcher (89% cobertura), OcrHelper
+│   ├── runners/                 # OpenCVRunner, PlaywrightRunner
+│   ├── flows/
+│   │   ├── si3/                 # Oracle Forms — SI3
+│   │   ├── sislab/              # Oracle Forms — SisLab
+│   │   └── msi3/                # Oracle APEX + apex_helper
+│   ├── config/                  # ConfigLoader + schema YAML
+│   └── cli/                     # vtae run, systems, clean + summary report
+│
+├── vtae/                        ← aliases para src/ (retrocompatibilidade)
+├── configs/                     ← config.yaml + .env por sistema
+├── templates/                   ← recortes de tela por sistema
+└── evidence/                    ← screenshots e relatórios por execução
 ```
 
 ---
 
-## Como usar
+## Visão computacional — diferenciais técnicos
 
-### Testes unitários (sem tela real)
+### Multi-scale matching (F2-A)
+Testa o template em 5 escalas `(1.0, 0.9, 1.1, 0.8, 1.2)` automaticamente. Resolve falhas causadas por diferença de zoom ou DPI entre a captura e a execução — sem recapturar o template.
 
-```bash
-python -m pytest vtae/tests/unit/ -v
+### Heurísticas de confiança visual (F2-B)
+Quando multi-scale falha, aplica sequencialmente: contraste +30%, brilho +20, equalização de histograma e escala de cinza. Compensa renderização inconsistente de Oracle Forms sem configuração adicional.
+
+```
+[TemplateMatcher] match via 'contrast' (score=0.812, scale=1.0x)
 ```
 
-### Testes de integração (sistema aberto e maximizado)
-
-```bash
-# sistema específico
-python -m pytest vtae/tests/integration/si3/ -v -s
-python -m pytest vtae/tests/integration/msi3/ -v -s
-
-# teste específico
-python -m pytest vtae/tests/integration/si3/test_cadastro_paciente.py -v -s
-
-# múltiplos testes separados por espaço
-python -m pytest vtae/tests/integration/si3/test_cadastro_paciente.py vtae/tests/integration/msi3/test_frequencia_aplicacao.py -v -s
-
-# todos os testes de integração
-python -m pytest vtae/tests/integration/ -v -s
-
-# repetir o mesmo teste N vezes (valida estabilidade)
-python -m pytest vtae/tests/integration/si3/test_cadastro_paciente.py -v -s --count=5
+Quando tudo falha, exibe diagnóstico detalhado:
+```
+Template não encontrado: 'templates/sislab/btn_salvar.png'
+  ✗ original (multi-scale)    score=0.581
+  ✗ contrast                  score=0.623
+  ✗ equalize                  score=0.612
 ```
 
-### Via CLI (Fase 3)
-
-```bash
-python -m vtae.cli.run run --all
-python -m vtae.cli.run run --module si3
-python -m vtae.cli.run run --test cadastro_paciente
+### Anchor-based clicking (F2-C)
+```python
+# encontra label "Nome:" e clica 200px à direita — no campo
+runner.click_near("templates/si3/label_nome.png", offset_x=200)
 ```
 
 ---
 
-## Runners disponíveis
+## Configuração por YAML
+
+```yaml
+# configs/sislab/config.yaml
+sistema: sislab
+tipo: desktop
+runner: opencv
+
+ambientes:
+  dev:
+    url: http://127.0.0.1:5000
+    confidence: 0.8
+  homologacao:
+    url: http://sislab.hom.interno
+    headless: true
+
+credenciais:
+  usuario: ${SISLAB_USER:-admin}
+  senha: ${SISLAB_PASS}
+
+dados_faker:
+  - campo: nome
+    tipo: faker
+    metodo: name
+    transformacao: sem_prefixo_upper
+  - campo: cargo
+    tipo: fixo
+    valor: "ANALISTA DE RH"
+```
+
+Credenciais em `configs/<sistema>/.env` (gitignore):
+```
+SISLAB_USER=admin
+SISLAB_PASS=admin123
+```
+
+Uso nos testes:
+```python
+from src.config import ConfigLoader
+
+config = ConfigLoader.carregar("sislab")
+config = ConfigLoader.carregar("sislab", "homologacao")
+```
+
+---
+
+## Runners
 
 ### OpenCVRunner — desktop
-
-Usa visão computacional para encontrar e clicar em elementos na tela.
-
 ```python
-from vtae.runners.opencv_runner import OpenCVRunner
-
 runner = OpenCVRunner(confidence=0.8)
-ctx = FlowContext(runner=runner, config=LoginConfigSi3,
-                  evidence_dir=observer.evidence_dir)
-LoginFlow().execute(ctx, observer=observer)
+runner.safe_click("templates/sislab/btn_salvar.png")
+runner.click_near("templates/si3/label_nome.png", offset_x=200)
+runner.double_click("templates/si3/menu_cadastros.png")
 ```
-
-**Templates** — salve os recortes em `templates/sistema/modulo/`:
-
-```
-templates/
-└── si3/
-    └── paciente/
-        ├── menu_cadastro_paciente.png
-        ├── campo_nome_social.png
-        └── btn_salvar.png
-```
-
-> **Dica:** recorte o label do campo, não o campo em branco — o label é único na tela.
-> Nomes sem acentos e sem espaços — use underline. Ex: `campo_mae.png`
 
 ### PlaywrightRunner — web
-
-Usa seletores CSS ou texto para interagir com sistemas no browser.
-
 ```python
-from vtae.runners.playwright_runner import PlaywrightRunner
-
-runner = PlaywrightRunner(url="https://sistema.interno/login", headless=False)
-ctx = FlowContext(runner=runner, config=LoginConfigMsi3,
-                  evidence_dir=observer.evidence_dir)
-LoginFlowMsi3().execute(ctx, observer=observer)
+runner = PlaywrightRunner(url="https://sistema/login", headless=False)
 ```
 
 ### Modo híbrido — Playwright + OpenCV
-
-Para sistemas como Oracle APEX onde alguns elementos não têm seletor CSS acessível:
-
 ```python
-# Playwright — navegação via sidebar (normaliza acentos automaticamente)
-ctx.runner._page.get_by_role("link", name="Sistema de Pacientes").first.click()
-ApexHelper.aguardar_spinner(ctx.runner)
+# Playwright para navegação e formulários CSS
+page.get_by_role("link", name="Sistema de Pacientes").click()
+frame.locator("#P17_FRAP_CD").fill(dados["codigo"])
 
-# OpenCV — card sem href CSS acessível
-from vtae.runners.opencv_runner import OpenCVRunner
+# OpenCV para cards sem href CSS
 cv = OpenCVRunner(confidence=0.7)
-cv.safe_click("templates/msi3/cadastros_basicos/frequencia_aplicacao.png")
-
-# Playwright retoma para verificar resultado
-ctx.runner.wait_template("text=Novo Cadastro", timeout=20.0)
+cv.safe_click("templates/msi3/card_frequencia.png")
 ```
 
 ---
 
-## Helpers centralizados
+## Testes
 
-### OcrHelper — leitura de texto em interfaces nativas
+```bash
+# unitários — 70 testes, sem tela real
+python -m pytest vtae/tests/unit/ -v
 
-Para grades e tabelas do Oracle Forms que não são HTML:
+# cobertura
+python -m pytest vtae/tests/unit/ --cov=src --cov-report=term-missing
 
-```python
-from vtae.core.ocr_helper import OcrHelper
-
-# lê texto de uma região específica (x1, y1, x2, y2)
-texto = OcrHelper.ler_regiao(screenshot_path, regiao=(507, 139, 667, 169))
-
-# busca tolerante a erros do OCR
-encontrou, token = OcrHelper.contem_qualquer_token(
-    screenshot_path, tokens=nome.split(), regiao=(0, 320, 950, 620)
-)
-
-# salva imagem pré-processada para debug
-OcrHelper.salvar_debug(screenshot_path, regiao=(507, 139, 667, 169),
-                       output="debug_matricula.png")
+# integração — com sistema real aberto
+vtae run --module sislab
+vtae run --test tipo_anestesia
 ```
-
-> **Regra:** sistemas web → Playwright lê o texto diretamente.
-> OCR é reservado para interfaces nativas desktop (Oracle Forms).
-
-### ApexHelper — interações com Oracle APEX
-
-```python
-from vtae.core.apex_helper import ApexHelper
-
-ApexHelper.aguardar_spinner(ctx.runner)          # após ações AJAX
-ApexHelper.verificar_sem_erro(ctx.runner)        # após salvar
-ApexHelper.verificar_registro_na_grade(          # valida cadastro sem OCR
-    ctx.runner, texto=dados["codigo"]
-)
-info = ApexHelper.inspecionar_pagina(ctx.runner) # debug: url, título, erro
-```
-
-> **IMPORTANTE:** nunca navegue por URL direta no APEX — invalida a sessão.
-> Sempre clique nos menus. Use `get_by_role("link", name="...")` para o sidebar.
 
 ---
 
 ## Observabilidade
 
-Cada execução gera automaticamente três arquivos em `evidence/YYYY-MM-DD/nome_teste/`:
+Cada execução gera em `evidence/YYYY-MM-DD/<teste>/`:
 
 | Arquivo | Conteúdo |
 |---|---|
-| `execution.log` | Log estruturado com timestamps de cada step |
-| `execution.json` | Dados estruturados de todos os steps |
-| `report.html` | Relatório visual com screenshots — abra no browser |
+| `execution.log` | Log com timestamps de cada step |
+| `execution.json` | Dados estruturados para CI/CD |
+| `report.html` | Screenshots clicáveis com lightbox |
 
----
+A CLI gera adicionalmente em `evidence/YYYY-MM-DD/summary/`:
 
-## Dados dinâmicos com Faker
-
-```python
-from faker import Faker
-fake = Faker("pt_BR")
-
-dados = {
-    "nome":            fake.name().upper(),
-    "nome_social":     "",   # vazio = usa o nome do paciente
-    "data_nascimento": fake.date_of_birth(minimum_age=18).strftime("%d/%m/%Y"),
-    "sexo":            fake.random_element(["M", "F"]),
-    "mae":             fake.name_female().upper(),
-    "pai":             fake.name_male().upper(),
-    "cpf":             fake.cpf().replace(".", "").replace("-", ""),
-    "codigo":          fake.bothify(text="??##").upper(),
-    "descricao":       f"TESTE VTAE {fake.bothify(text='????####').upper()}",
-}
-```
-
-> **Atenção:** use sempre `ctx.runner.type_text()` para campos com acentos.
-> `pyautogui.typewrite()` perde `Í`, `Ã`, `Ç` no Windows.
-
----
-
-## FlowContext — conceito central
-
-```python
-ctx = FlowContext(
-    runner=runner,
-    config=LoginConfigSi3,
-    evidence_dir=observer.evidence_dir,
-)
-
-# ctx.user         → vem do config automaticamente
-# ctx.password     → vem do config automaticamente
-# ctx.runner       → instância do runner
-# ctx.evidence_dir → onde salvar screenshots
-```
-
----
-
-## Convenção de IDs de steps
-
-| Prefixo | Flow | Sistema |
-|---|---|---|
-| `L01`, `L02`... | `LoginFlow` | SisLab / SI3 desktop |
-| `MW01`, `MW02`... | `LoginFlowMsi3` | MSI3 Oracle APEX web |
-| `CP01`, `CP02`... | `CadastroPacienteFlow` | SI3 Oracle Forms |
-| `CF01`, `CF02`... | `CadastroFuncionarioFlow` | SisLab Oracle Forms |
-| `FA01`, `FA02`... | `FrequenciaAplicacaoFlow` | MSI3 Oracle APEX |
-| `A01`, `A02`... | `AdmissaoFlow` | Qualquer sistema |
-| `XX01`, `XX02`... | Novo flow | Definir prefixo único |
+| Arquivo | Conteúdo |
+|---|---|
+| `<modulo>_<ambiente>.html` | Métricas globais + tabela de resultados + erros |
 
 ---
 
 ## Sistemas automatizados
 
-| Sistema | Tipo | Runner | Flows ativos | Status |
+| Sistema | Tipo | Runner | Flows | Status |
 |---|---|---|---|---|
 | SisLab | Desktop — Oracle Forms | OpenCV | Login, CadastroFuncionario | ✅ |
 | SI3 | Desktop — Oracle Forms | OpenCV | Login, CadastroPaciente | ✅ |
-| MSI3 | Web — Oracle APEX 23.1 | Playwright + OpenCV | Login, FrequenciaAplicacao | ✅ |
-
----
-
-## Mapa de navegação MSI3
-
-Confirmado no ambiente. Navegação obrigatória via cliques — URL direta invalida sessão APEX.
-
-| Step | Ação | URL resultante |
-|---|---|---|
-| FA01 | sidebar → "Sistema de Pacientes" | `/home?p1_modu_nr=337` |
-| FA02 | sidebar → "Apoio" | `/home?p1_modu_nr=401` |
-| FA03 | sidebar → "Cadastros" | `/sec_menu?p2_modu_nr=402` |
-| FA04 | OpenCV → card Frequência de Aplicação | `/sec_menu?p2_modu_nr=405` |
-| FA05 | clica "Novo Cadastro" | abre iframe formulário |
+| MSI3 | Web — Oracle APEX 23.1 | Playwright + OpenCV | Login, FrequenciaAplicacao, TipoAnestesia | ✅ |
 
 ---
 
@@ -332,57 +286,25 @@ Confirmado no ambiente. Navegação obrigatória via cliques — URL direta inva
 | # | Fase | Descrição | Status |
 |---|---|---|---|
 | 1 | Base de IA aplicada | Python, NumPy, OpenCV, noções de ML | ✅ |
-| 2 | Automação inteligente | Playwright, OpenCV, OCR, híbrido web+desktop | 🔵 Em andamento |
-| 3 | Arquitetura de engenharia | Clean Architecture, CLI, migração vtae/ → src/ | 🔜 |
-| 4 | IA em produção | Docker, MLflow, Jenkins, CI/CD | 🔜 |
-| 5 | Portfólio profissional | Documentação, cases reais, repositório | 🔜 |
+| 2 | Automação inteligente | Playwright, OpenCV, OCR, multi-scale, heurísticas | ✅ |
+| 3 | Arquitetura de engenharia | Clean Architecture, ConfigLoader YAML, CLI, relatório | ✅ |
+| 4 | IA em produção | Docker, FastAPI, MLflow, Jenkins, YOLO | 🔜 |
+| 5 | Portfólio profissional | Documentação, cases reais, repositório público | 🔜 |
+
+---
+
+## Próximos passos (Fase 4)
+
+- [ ] YOLO — detecção de componentes de UI (treinado com screenshots reais do projeto)
+- [ ] Docker + FastAPI para servir modelos
+- [ ] MLflow — versionamento de modelos com métricas de flakiness
+- [ ] Jenkins / GitLab CI — `vtae run --all` integrado ao pipeline
+- [ ] Métricas: flakiness rate e drift visual por flow
 
 ---
 
 ## Documentação
 
-- `VTAE_Manualv3.docx` — manual do desenvolvedor para criar novos testes
-- `VTAE_Documentacao_v031.docx` — documentação completa do projeto
-- `CHANGELOG.md` — histórico de versões
-
----
-
-## Changelog
-
-### v0.3.1 — 2026-04-28
-- `CadastroPacienteFlow` SI3 — 14/14 steps OK, validado com Faker e OCR de matrícula
-- Estratégia de coordenadas diretas para Oracle Forms — resolve foco errático
-- CP07 Nacionalidade — dois popups em sequência com fallback Enter
-- CP13 Gerar matrícula — OCR confirma persistência do cadastro
-- CP14 Sair 3x — retorno completo ao Menu Principal
-
-### v0.3.0 — 2026-04-27
-- `FrequenciaAplicacaoFlow` MSI3 — validado em 10+ execuções consecutivas
-- `ApexHelper` centralizado — seletores validados no APEX 23.1
-- `LoginFlowMsi3` — detecção de erro de credencial
-- `OcrHelper` centralizado — pré-processamento otimizado para Oracle Forms
-- Mapa de navegação MSI3 documentado
-
-### v0.2.0
-- `OpenCVRunner` — runner desktop com visão computacional
-- `PlaywrightRunner` — runner web com browser maximizado
-- `ExecutionObserver` — logs, JSON e relatório HTML automático
-- `FrequenciaAplicacaoFlow` — fluxo completo MSI3 com Playwright + OpenCV
-- `LoginFlowMsi3` — login web Oracle APEX
-- Integração com **Faker** para dados únicos
-- 32 testes unitários passando
-
-### v0.1.0
-- Estrutura inicial de pastas
-- `LoginFlow`, `AdmissaoFlow`, `SuprimentosFlow` (esqueletos)
-- `LoginConfigSisLab`
-
----
-
-## Próximos passos
-
-- [ ] Fase 2 — YOLO para detecção de componentes de UI
-- [ ] Fase 2 — validar `CadastroFuncionarioFlow` no SisLab
-- [ ] Fase 3 — Clean Architecture e CLI funcional
-- [ ] Fase 3 — migração `vtae/` → `src/`
-- [ ] Suporte mobile — PlaywrightRunner com emulação de dispositivo
+- `VTAE_Documentacao.docx` — documentação completa v0.4.3
+- `VTAE_Manual.docx` — manual do desenvolvedor v0.4.3
+- `CHANGELOG.md` — histórico completo de versões

@@ -6,8 +6,8 @@ from vtae.core.context import FlowContext
 
 class _MockConfig:
     """Config mínimo para testes unitários — sem dependência de .env."""
-    USER     = "test_user"
-    PASSWORD = "test_pass"
+    USER     = "admin"
+    PASSWORD = "admin123"
     SYSTEM   = "sislab"
     URL      = "http://sislab.local"
 

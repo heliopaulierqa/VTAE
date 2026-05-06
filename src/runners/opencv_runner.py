@@ -145,7 +145,7 @@ class OpenCVRunner(BaseRunner):
             if attempt < retries:
                 time.sleep(delay)
 
-        raise RuntimeError(
+        raise TemplateNotFoundError(
             f"Template não encontrado após {retries} tentativas: '{template}'\n"
             f"Score máximo encontrado: {self._matcher.find_best_score(template):.3f} "
             f"(threshold: {thr:.2f})\n"
@@ -184,7 +184,7 @@ class OpenCVRunner(BaseRunner):
             if attempt < retries:
                 time.sleep(delay)
 
-        raise RuntimeError(
+        raise TemplateNotFoundError(
             f"Template não encontrado para duplo clique após {retries} tentativas: '{template}'\n"
             f"Score máximo: {self._matcher.find_best_score(template):.3f} "
             f"(threshold: {thr:.2f})"
@@ -256,7 +256,7 @@ class OpenCVRunner(BaseRunner):
             return True
         except TemplateNotFoundError:
             best_score = self._matcher.find_best_score(template)
-            raise RuntimeError(
+            raise TemplateNotFoundError(
                 f"Âncora não encontrada: '{template}'\n"
                 f"Score máximo: {best_score:.3f} "
                 f"(threshold: {threshold or self.confidence:.2f})"

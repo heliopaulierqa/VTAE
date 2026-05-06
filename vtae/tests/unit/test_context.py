@@ -4,7 +4,7 @@ from vtae.core.result import FlowResult, StepResult
 
 def test_context_credenciais_via_config(ctx):
     assert ctx.user == "admin"
-    assert ctx.password == "admin123"  # valor real do MockConfig no conftest.py
+    assert ctx.password == "admin123"
 
 
 def test_context_credenciais_via_dict(mock_runner):
@@ -17,10 +17,14 @@ def test_context_credenciais_via_dict(mock_runner):
 
 
 def test_context_credenciais_dict_tem_prioridade(mock_runner):
-    from vtae.configs.sislab.login_config import LoginConfigSisLab
+    """credentials= tem prioridade sobre config=."""
+    class _Config:
+        USER     = "admin"
+        PASSWORD = "admin123"
+
     ctx = FlowContext(
         runner=mock_runner,
-        config=LoginConfigSisLab,
+        config=_Config,
         credentials={"user": "override"},
     )
     assert ctx.user == "override"

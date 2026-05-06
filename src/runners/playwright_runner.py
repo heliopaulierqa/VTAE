@@ -12,7 +12,8 @@ import time
 
 from playwright.sync_api import sync_playwright, Page, Browser, Playwright
 
-from src.runners.base_runner import BaseRunner
+from vtae.core.base_runner import BaseRunner
+from src.core.types import RunnerError
 
 
 class PlaywrightRunner(BaseRunner):
@@ -64,13 +65,15 @@ class PlaywrightRunner(BaseRunner):
             args=["--start-maximized"],
         )
 
+        # cria página com tamanho de tela completo
         self._page: Page = self._browser.new_page(
-            viewport=None,
+            viewport=None,  # None = usa o tamanho real da janela maximizada
             no_viewport=True,
         )
         self._page.set_default_timeout(self.default_timeout)
         self._page.goto(url)
 
+        # garante que a janela está maximizada
         self._page.evaluate("() => { window.moveTo(0,0); window.resizeTo(screen.availWidth, screen.availHeight); }")
         time.sleep(0.5)
 
@@ -154,10 +157,10 @@ class PlaywrightRunner(BaseRunner):
     ) -> bool:
         """
         Clica no elemento com retry automático.
-        Lança RuntimeError se não encontrar após todas as tentativas.
+        Lança RunnerError se não encontrar após todas as tentativas.
 
         Raises:
-            RuntimeError: se o elemento não for encontrado após `retries` tentativas.
+            RunnerError: se o elemento não for encontrado após `retries` tentativas.
         """
         for attempt in range(1, retries + 1):
             if self.click_template(template):
@@ -166,7 +169,7 @@ class PlaywrightRunner(BaseRunner):
             if attempt < retries:
                 time.sleep(delay)
 
-        raise RuntimeError(
+        raise RunnerError(
             f"Elemento não encontrado após {retries} tentativas: '{template}'"
         )
 
@@ -178,25 +181,51 @@ class PlaywrightRunner(BaseRunner):
         """
         Limpa o campo e preenche com o texto.
         Mais confiável que type_text para inputs complexos.
+
+        Args:
+            selector: seletor CSS/XPath do campo.
+            text: texto a preencher.
         """
         self._page.fill(selector, text)
 
     def is_visible(self, selector: str) -> bool:
-        """Verifica se o elemento está visível na página sem interagir."""
+        """
+        Verifica se o elemento está visível na página sem interagir.
+
+        Args:
+            selector: seletor CSS/XPath do elemento.
+
+        Returns:
+            True se visível, False caso contrário.
+        """
         try:
             return self._page.is_visible(selector)
         except Exception:
             return False
 
     def get_text(self, selector: str) -> str:
-        """Retorna o texto visível de um elemento."""
+        """
+        Retorna o texto visível de um elemento.
+        Útil para validações dentro dos flows.
+
+        Args:
+            selector: seletor CSS/XPath do elemento.
+
+        Returns:
+            Texto do elemento ou string vazia se não encontrado.
+        """
         try:
             return self._page.inner_text(selector)
         except Exception:
             return ""
 
     def navigate(self, url: str) -> None:
-        """Navega para uma URL diferente."""
+        """
+        Navega para uma URL diferente.
+
+        Args:
+            url: URL de destino.
+        """
         self._page.goto(url)
         self._page.wait_for_load_state("networkidle")
 

@@ -4,7 +4,7 @@ from faker import Faker
 from vtae.runners.opencv_runner import OpenCVRunner
 from vtae.core.context import FlowContext
 from vtae.core.observer import ExecutionObserver
-from vtae.configs.si3.login_config import LoginConfigSi3
+from src.config import ConfigLoader
 from vtae.flows.login_flow import LoginFlow
 from vtae.flows.cadastro_paciente_flow import CadastroPacienteFlow
 
@@ -20,7 +20,7 @@ def test_cadastro_paciente():
     runner   = OpenCVRunner(confidence=0.8)
     ctx      = FlowContext(
         runner=runner,
-        config=LoginConfigSi3,
+    config=ConfigLoader.carregar("si3", configs_dir=__import__('pathlib').Path("vtae/configs")),
         evidence_dir=observer.evidence_dir,
     )
 

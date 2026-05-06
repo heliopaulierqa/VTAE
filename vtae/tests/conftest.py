@@ -1,9 +1,15 @@
 import pytest
 from unittest.mock import MagicMock
-
 from vtae.core.base_runner import BaseRunner
 from vtae.core.context import FlowContext
-from vtae.configs.sislab.login_config import LoginConfigSisLab
+
+
+class _MockConfig:
+    """Config mínimo para testes unitários — sem dependência de .env."""
+    USER     = "test_user"
+    PASSWORD = "test_pass"
+    SYSTEM   = "sislab"
+    URL      = "http://sislab.local"
 
 
 @pytest.fixture
@@ -19,9 +25,9 @@ def mock_runner():
 
 @pytest.fixture
 def ctx(mock_runner):
-    """FlowContext padrão para testes, com SisLab config e runner mockado."""
+    """FlowContext padrão para testes, com config mockado e runner mockado."""
     return FlowContext(
         runner=mock_runner,
-        config=LoginConfigSisLab,
+        config=_MockConfig,
         evidence_dir="evidence/test/",
     )

@@ -41,7 +41,7 @@ MODULOS: dict[str, list[str]] = {
 
 TESTES: dict[str, str] = {
     "cadastro_funcionario":  "vtae/tests/integration/sislab/test_cadastro_funcionario_sislab.py",
-    "cadastro_paciente":     "vtae/tests/integration/si3/test_cadastro_paciente_si3.py",
+    "cadastro_paciente":     "vtae/tests/integration/si3/test_cadastro_paciente.py",
     "login_msi3":            "vtae/tests/integration/msi3/test_login_msi3.py",
     "frequencia_aplicacao":  "vtae/tests/integration/msi3/test_frequencia_aplicacao.py",
     "tipo_anestesia":        "vtae/tests/integration/msi3/test_tipo_anestesia.py",
@@ -201,7 +201,8 @@ def _cmd_run(args):
         tentativa += 1
 
     # ── relatório unificado ───────────────────────────────────────────────────
-    _gerar_summary(existentes, env, titulo, returncode)
+    modulo_atual = "all" if args.all else (args.module if args.module else args.test)
+    _gerar_summary(existentes, env, titulo, returncode, modulo=modulo_atual)
 
     # ── resultado final ───────────────────────────────────────────────────────
     print(f"\n{'='*60}")
@@ -259,7 +260,8 @@ def _identificar_falhos(arquivos: list[str]) -> list[str]:
 
 
 def _gerar_summary(arquivos: list[str], env: str,
-                   titulo: str, returncode: int):
+                   titulo: str, returncode: int,
+                   modulo: str = None):
     """Coleta os execution.json e produz o summary.html."""
     try:
         from src.cli.summary import generate_summary
@@ -290,14 +292,12 @@ def _gerar_summary(arquivos: list[str], env: str,
             print(f"\n📊 Relatório unificado: {path}")
 
         # envio automático se configurado no YAML
-        try:
-            from src.cli.send import enviar_automatico
-            if args.all:
-                enviar_automatico("all", env)
-            elif hasattr(args, 'module') and args.module:
-                enviar_automatico(args.module, env)
-        except Exception:
-            pass  # envio automático nunca bloqueia a execução
+        if modulo:
+            try:
+                from src.cli.send import enviar_automatico
+                enviar_automatico(modulo, env)
+            except Exception:
+                pass
 
     except Exception as e:
         print(f"[VTAE] Aviso — não foi possível gerar relatório unificado: {e}")

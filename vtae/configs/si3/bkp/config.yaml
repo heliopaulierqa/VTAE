@@ -5,23 +5,23 @@ runner: opencv
 ambientes:
   dev:
     url: ""
-    confidence: 0.7
     headless: false
+    confidence: 0.7
     timeout: 30.0
   homologacao:
     url: ""
-    confidence: 0.7
     headless: false
+    confidence: 0.7
     timeout: 60.0
   producao:
     url: ""
-    confidence: 0.75
     headless: false
+    confidence: 0.75
     timeout: 60.0
 
 credenciais:
-  usuario: ${SI3_USER}
-  senha: ${SI3_PASS}
+  usuario: ${SI3_USER:-admin}
+  senha: ${SI3_PASS:-admin}
 
 flows:
   - login
@@ -31,7 +31,7 @@ dados_faker:
   - campo: nome
     tipo: faker
     metodo: name
-    transformacao: sem_prefixo_upper
+    transformacao: upper
     locale: pt_BR
 
   - campo: nome_social
@@ -39,17 +39,18 @@ dados_faker:
     valor: ""
 
   - campo: data_nascimento
-    tipo: faker
-    metodo: date_of_birth
-    transformacao: null
+    tipo: fixo
+    valor: "01/15/1990"
 
   - campo: hora
     tipo: fixo
     valor: "00:00"
 
   - campo: sexo
-    tipo: fixo
-    valor: "M"
+    tipo: random
+    opcoes:
+      - "M"
+      - "F"
 
   - campo: nacionalidade
     tipo: fixo
@@ -58,18 +59,23 @@ dados_faker:
   - campo: mae
     tipo: faker
     metodo: name
-    transformacao: sem_prefixo_upper
+    transformacao: upper
     locale: pt_BR
 
   - campo: pai
     tipo: faker
     metodo: name
-    transformacao: sem_prefixo_upper
+    transformacao: upper
     locale: pt_BR
 
   - campo: cor_etnia
-    tipo: fixo
-    valor: "PARDA"
+    tipo: random
+    opcoes:
+      - "PARDA"
+      - "BRANCA"
+      - "PRETA"
+      - "AMARELA"
+      - "INDIGENA"
 
   - campo: cpf
     tipo: faker

@@ -4,27 +4,27 @@ runner: playwright
 
 ambientes:
   dev:
-    url: https://msi3.dev.interno/apex
+    url: ${MSI3_URL}
     headless: false
     slow_mo: 100
     confidence: 0.7
     timeout: 30.0
   homologacao:
-    url: https://msi3.hom.interno/apex
+    url: ${MSI3_URL_HOM:-https://msi3.hom.interno/apex}
     headless: true
     slow_mo: 50
     confidence: 0.7
     timeout: 60.0
   producao:
-    url: https://msi3.prod.interno/apex
+    url: ${MSI3_URL_PROD:-https://msi3.prod.interno/apex}
     headless: true
     slow_mo: 50
     confidence: 0.75
     timeout: 60.0
 
 credenciais:
-  usuario: ${MSI3_USER:-admin}
-  senha: ${MSI3_PASS:-admin}
+  usuario: ${MSI3_USER}
+  senha: ${MSI3_PASS}
 
 flows:
   - login
@@ -35,17 +35,14 @@ dados_faker:
   - campo: sequencia
     tipo: fixo
     valor: "001"
-
   - campo: codigo
     tipo: faker
     metodo: bothify
     transformacao: upper
-
   - campo: descricao
     tipo: faker
     metodo: bothify
     transformacao: upper
-
   - campo: tipo_anestesia
     tipo: random
     opcoes:

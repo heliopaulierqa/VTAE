@@ -3,6 +3,9 @@ pyproject.toml
 src/__init__.py
 src/cli/__init__.py
 src/cli/run.py
+src/cli/send.py
+src/cli/summary.py
+src/cli/bkp/run.py
 src/config/__init__.py
 src/config/loader.py
 src/config/schema.py
@@ -94,9 +97,13 @@ vtae/tests/integration/sislab/test_login_sislab.py
 vtae/tests/integration/sislab/bkp/test_cadastro_funcionario_sislab.py
 vtae/tests/unit/__init__.py
 vtae/tests/unit/test_admissao_flow.py
+vtae/tests/unit/test_config_loader.py
 vtae/tests/unit/test_context.py
 vtae/tests/unit/test_dsl_interpreter.py
 vtae/tests/unit/test_login_component.py
 vtae/tests/unit/test_login_flow.py
 vtae/tests/unit/test_result.py
+vtae/tests/unit/test_schema.py
+vtae/tests/unit/test_send.py
 vtae/tests/unit/test_suprimentos_flow.py
+vtae/tests/unit/test_template_matcher.py

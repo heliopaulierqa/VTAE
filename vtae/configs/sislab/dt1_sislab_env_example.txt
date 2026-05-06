@@ -1,0 +1,5 @@
+# vtae/configs/sislab/.env.example
+# Copie para .env e preencha com as credenciais reais.
+# NUNCA commite o .env — está no .gitignore.
+SISLAB_USER=seu_usuario
+SISLAB_PASS=sua_senha

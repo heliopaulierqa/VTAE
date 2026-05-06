@@ -58,8 +58,6 @@ class AmbienteConfig:
     confidence: float = 0.8
 
     def __post_init__(self):
-        if not self.url:
-            raise ValueError("AmbienteConfig.url não pode ser vazio.")
         if not (0.0 < self.confidence <= 1.0):
             raise ValueError(
                 f"AmbienteConfig.confidence deve estar entre 0.0 e 1.0, "

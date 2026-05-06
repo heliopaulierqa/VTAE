@@ -52,10 +52,10 @@ class TestAmbienteConfig:
         assert amb.confidence == 0.8   # default
         assert amb.headless   is False  # default
 
-    def test_lanca_erro_url_vazia(self):
-        with pytest.raises(ValueError) as exc_info:
-            AmbienteConfig(url="")
-        assert "url" in str(exc_info.value).lower()
+    def test_aceita_url_vazia_para_sistemas_desktop(self):
+        """URL vazia é válida para sistemas desktop (Oracle Forms, SisLab, SI3)."""
+        amb = AmbienteConfig(url="")
+        assert amb.url == ""
 
     def test_lanca_erro_confidence_zero(self):
         with pytest.raises(ValueError):

@@ -1,57 +1,25 @@
 # VTAE — Visual Test Automation Engine
 
-> Framework híbrido de automação de testes baseado em Visão Computacional + IA
+> Framework híbrido de automação de testes baseado em Visão Computacional + IA  
 > para sistemas web modernos, legados desktop e ambientes híbridos.
 
 ![Python](https://img.shields.io/badge/Python-3.13%2B-blue)
-![Versão](https://img.shields.io/badge/versão-0.4.3-purple)
-![Testes](https://img.shields.io/badge/testes-70%20unitários-green)
-![Cobertura](https://img.shields.io/badge/cobertura%20vision-89%25-brightgreen)
-![Fase](https://img.shields.io/badge/fase%203-concluída-brightgreen)
-![Sistemas](https://img.shields.io/badge/sistemas-3%20automatizados-blue)
-
----
-
-## Por que VTAE?
-
-A maioria das ferramentas de automação resolve apenas parte do problema. O VTAE resolve tudo.
-
-| Cenário | Selenium / Playwright | PyAutoGUI | **VTAE** |
-|---|---|---|---|
-| Oracle APEX (web moderno) | ✅ | ❌ | ✅ |
-| Oracle Forms (desktop legado) | ❌ | ⚠️ frágil | ✅ robusto |
-| Canvas / iframe sem DOM | ❌ | ❌ | ✅ OpenCV |
-| Template falha por zoom/DPI | ❌ falha | ❌ falha | ✅ multi-scale |
-| Template com contraste diferente | ❌ falha | ❌ falha | ✅ heurísticas |
-| Múltiplos ambientes (dev/hom/prod) | configuração manual | não suporta | ✅ YAML nativo |
-| Relatório visual com evidências | plugin externo | não suporta | ✅ HTML nativo |
-| Detecção de componentes por imagem | não suporta | básico | ✅ TemplateMatcher |
-
-**O diferencial real:** o VTAE combina Playwright para HTML e OpenCV para o resto — no mesmo flow, de forma transparente. É o único framework que automatiza Oracle Forms, Oracle APEX e sistemas híbridos com a mesma base de código.
-
----
-
-## Casos reais automatizados
-
-### InCor — Instituto do Coração
-
-**CadastroPacienteFlow — SI3 (Oracle Forms)**
-Automatiza o cadastro completo de pacientes no sistema hospitalar legado SI3: nome, data de nascimento, CPF, filiação, cor/etnia, nacionalidade e geração de matrícula via OCR. 14 steps, validado em produção.
-
-**CadastroFuncionarioFlow — SisLab (Oracle Forms)**
-Cadastro end-to-end de funcionários no SisLab: login, preenchimento de dados pessoais e contratuais, seleção de cargo/departamento por dropdown, salvamento e verificação na grade via OCR. 10 steps, validado em produção.
-
-**TipoAnestesiaFlow — MSI3 (Oracle APEX)**
-Navegação por 4 níveis de menus do MSI3 — combinando Playwright para sidebar e OpenCV para cards sem href CSS — até o formulário de cadastro de tipo de anestesia em iframe de dialog. 9 steps, validado em produção.
-
-**FrequenciaAplicacaoFlow — MSI3 (Oracle APEX)**
-Cadastro de frequência de aplicação com preenchimento de 8 campos em iframe APEX. Validado em 10+ execuções consecutivas sem falha.
+![Versão](https://img.shields.io/badge/versão-0.5.0-purple)
+![Testes](https://img.shields.io/badge/testes-189%20unitários-green)
+![DT](https://img.shields.io/badge/débito%20técnico-concluído-brightgreen)
 
 ---
 
 ## O que é o VTAE
 
-Framework híbrido de automação de testes que combina visão computacional, controle de browser e OCR para interagir com qualquer sistema — como um usuário humano faria. Ele localiza elementos por imagem, seletor CSS ou leitura de texto, executa ações e captura evidências automaticamente em cada etapa.
+O VTAE é um framework híbrido de automação de testes que combina visão computacional (OpenCV), controle de browser (Playwright) e OCR (Tesseract) para interagir com qualquer sistema — como um usuário humano faria.
+
+**O diferencial:** onde ferramentas puramente web (Playwright, Cypress, Selenium) não chegam, o VTAE chega. E onde ferramentas puramente desktop falham em aplicações web modernas, o VTAE também resolve.
+
+Ideal para:
+- Sistemas web modernos (Oracle APEX, React, Angular)
+- Sistemas legados desktop sem API de automação (Oracle Forms, Citrix)
+- Ambientes híbridos onde Playwright e OpenCV precisam trabalhar juntos
 
 ---
 
@@ -63,51 +31,9 @@ pip install -e .
 playwright install chromium
 
 # OCR — Tesseract (Windows)
-# Baixar: https://github.com/UB-Mannheim/tesseract/wiki
+# Baixar em: https://github.com/UB-Mannheim/tesseract/wiki
 # Marcar "Portuguese" durante a instalação
-python -c "from src.vision.ocr import OcrHelper; OcrHelper.verificar_instalacao()"
-```
-
-> **Windows:** após `pip install -e .` o comando `vtae` fica disponível no PATH.
-
----
-
-## CLI — Como usar
-
-```bash
-# listar sistemas disponíveis
-vtae systems
-
-# listar ambientes de um sistema
-vtae systems --sistema sislab
-
-# executar módulo completo (dev por padrão)
-vtae run --module sislab
-vtae run --module msi3
-
-# executar em ambiente específico
-vtae run --module sislab --env homologacao
-vtae run --module sislab --env producao
-
-# executar teste específico
-vtae run --test cadastro_funcionario
-vtae run --test tipo_anestesia --env homologacao
-
-# re-executar testes que falharam automaticamente
-vtae run --module sislab --retry 2
-
-# executar tudo
-vtae run --all
-vtae run --all --env homologacao
-
-# limpar evidências antigas
-vtae clean --days 7
-vtae clean --days 30 --dry-run
-```
-
-Ao final de cada execução, relatório unificado salvo em:
-```
-evidence/YYYY-MM-DD/summary/<modulo>_<ambiente>.html
+python -c "from vtae.core.ocr_helper import OcrHelper; OcrHelper.verificar_instalacao()"
 ```
 
 ---
@@ -116,95 +42,75 @@ evidence/YYYY-MM-DD/summary/<modulo>_<ambiente>.html
 
 ```
 VTAE/
-├── src/                         ← Clean Architecture
-│   ├── core/                    # context, result, observer, types
-│   ├── vision/                  # TemplateMatcher (89% cobertura), OcrHelper
-│   ├── runners/                 # OpenCVRunner, PlaywrightRunner
-│   ├── flows/
-│   │   ├── si3/                 # Oracle Forms — SI3
-│   │   ├── sislab/              # Oracle Forms — SisLab
-│   │   └── msi3/                # Oracle APEX + apex_helper
-│   ├── config/                  # ConfigLoader + schema YAML
-│   └── cli/                     # vtae run, systems, clean + summary report
-│
-├── vtae/                        ← aliases para src/ (retrocompatibilidade)
-├── configs/                     ← config.yaml + .env por sistema
-├── templates/                   ← recortes de tela por sistema
-└── evidence/                    ← screenshots e relatórios por execução
+├── src/                     ← Clean Architecture
+│   ├── core/                # FlowContext, result, observer, types, exceções
+│   ├── vision/              # TemplateMatcher (multi-scale), OcrHelper
+│   ├── runners/             # OpenCVRunner, PlaywrightRunner
+│   ├── flows/               # flows por sistema (si3, sislab, msi3)
+│   ├── config/              # ConfigLoader + schema YAML
+│   └── cli/                 # vtae run, systems, clean, send
+├── vtae/                    ← aliases retrocompatibilidade
+│   ├── configs/             # config.yaml + .env por sistema
+│   └── tests/               # unit (189) + integration
+├── templates/               # recortes de tela por sistema
+└── evidence/                # screenshots e relatórios por execução
 ```
 
 ---
 
-## Visão computacional — diferenciais técnicos
+## Credenciais
 
-### Multi-scale matching (F2-A)
-Testa o template em 5 escalas `(1.0, 0.9, 1.1, 0.8, 1.2)` automaticamente. Resolve falhas causadas por diferença de zoom ou DPI entre a captura e a execução — sem recapturar o template.
+Credenciais em `vtae/configs/<sistema>/.env` — **nunca no código nem no Git**.
 
-### Heurísticas de confiança visual (F2-B)
-Quando multi-scale falha, aplica sequencialmente: contraste +30%, brilho +20, equalização de histograma e escala de cinza. Compensa renderização inconsistente de Oracle Forms sem configuração adicional.
+```bash
+# vtae/configs/si3/.env
+SI3_USER=seu_usuario
+SI3_PASS=sua_senha
 
-```
-[TemplateMatcher] match via 'contrast' (score=0.812, scale=1.0x)
-```
+# vtae/configs/sislab/.env
+SISLAB_USER=seu_usuario
+SISLAB_PASS=sua_senha
 
-Quando tudo falha, exibe diagnóstico detalhado:
-```
-Template não encontrado: 'templates/sislab/btn_salvar.png'
-  ✗ original (multi-scale)    score=0.581
-  ✗ contrast                  score=0.623
-  ✗ equalize                  score=0.612
-```
-
-### Anchor-based clicking (F2-C)
-```python
-# encontra label "Nome:" e clica 200px à direita — no campo
-runner.click_near("templates/si3/label_nome.png", offset_x=200)
+# vtae/configs/msi3/.env
+MSI3_USER=seu_usuario
+MSI3_PASS=sua_senha
+MSI3_URL=https://seu-servidor/apex/login
 ```
 
 ---
 
-## Configuração por YAML
+## Testes unitários
 
-```yaml
-# configs/sislab/config.yaml
-sistema: sislab
-tipo: desktop
-runner: opencv
-
-ambientes:
-  dev:
-    url: http://127.0.0.1:5000
-    confidence: 0.8
-  homologacao:
-    url: http://sislab.hom.interno
-    headless: true
-
-credenciais:
-  usuario: ${SISLAB_USER:-admin}
-  senha: ${SISLAB_PASS}
-
-dados_faker:
-  - campo: nome
-    tipo: faker
-    metodo: name
-    transformacao: sem_prefixo_upper
-  - campo: cargo
-    tipo: fixo
-    valor: "ANALISTA DE RH"
+```bash
+python -m pytest vtae/tests/unit/ -v
+# 189 testes — ~1.3s
 ```
 
-Credenciais em `configs/<sistema>/.env` (gitignore):
-```
-SISLAB_USER=admin
-SISLAB_PASS=admin123
-```
+---
 
-Uso nos testes:
-```python
-from src.config import ConfigLoader
+## CLI — Executar testes
 
-config = ConfigLoader.carregar("sislab")
-config = ConfigLoader.carregar("sislab", "homologacao")
+```bash
+# teste específico
+vtae run --test cadastro_paciente
+vtae run --test tipo_anestesia
+
+# módulo completo
+vtae run --module si3
+vtae run --module msi3
+
+# todos os sistemas
+vtae run --all
+
+# ambiente e retry
+vtae run --module si3 --env homologacao --retry 2
+
+# utilitários
+vtae systems
+vtae systems --sistema si3
+vtae clean --days 7
+vtae send --module si3 --to gestor@incor.org.br
+vtae send --all --to a@x.com --to b@x.com
 ```
 
 ---
@@ -212,99 +118,132 @@ config = ConfigLoader.carregar("sislab", "homologacao")
 ## Runners
 
 ### OpenCVRunner — desktop
+
 ```python
-runner = OpenCVRunner(confidence=0.8)
-runner.safe_click("templates/sislab/btn_salvar.png")
-runner.click_near("templates/si3/label_nome.png", offset_x=200)
-runner.double_click("templates/si3/menu_cadastros.png")
+from vtae.runners.opencv_runner import OpenCVRunner
+from src.config import ConfigLoader
+
+config = ConfigLoader.carregar("si3",
+    configs_dir=__import__('pathlib').Path("vtae/configs"))
+runner = OpenCVRunner(confidence=config.confidence)
 ```
 
 ### PlaywrightRunner — web
+
 ```python
-runner = PlaywrightRunner(url="https://sistema/login", headless=False)
+from vtae.runners.playwright_runner import PlaywrightRunner
+from src.config import ConfigLoader
+
+config = ConfigLoader.carregar("msi3",
+    configs_dir=__import__('pathlib').Path("vtae/configs"))
+runner = PlaywrightRunner(url=config.url, headless=False)
 ```
 
 ### Modo híbrido — Playwright + OpenCV
+
 ```python
-# Playwright para navegação e formulários CSS
+# Playwright — seletores CSS normais
 page.get_by_role("link", name="Sistema de Pacientes").click()
 frame.locator("#P17_FRAP_CD").fill(dados["codigo"])
 
-# OpenCV para cards sem href CSS
+# OpenCV — elementos sem href CSS (cards, canvas, iframes)
 cv = OpenCVRunner(confidence=0.7)
 cv.safe_click("templates/msi3/card_frequencia.png")
 ```
 
 ---
 
-## Testes
+## Exceções tipadas
 
-```bash
-# unitários — 70 testes, sem tela real
-python -m pytest vtae/tests/unit/ -v
-
-# cobertura
-python -m pytest vtae/tests/unit/ --cov=src --cov-report=term-missing
-
-# integração — com sistema real aberto
-vtae run --module sislab
-vtae run --test tipo_anestesia
+```python
+from src.core.types import (
+    TemplateNotFoundError,  # template OpenCV não encontrado após retries
+    RunnerError,            # erro no runner (Playwright ou OpenCV)
+    ConfigError,            # YAML inválido ou campo ausente
+    StepError,              # falha em step de execução
+)
 ```
-
----
-
-## Observabilidade
-
-Cada execução gera em `evidence/YYYY-MM-DD/<teste>/`:
-
-| Arquivo | Conteúdo |
-|---|---|
-| `execution.log` | Log com timestamps de cada step |
-| `execution.json` | Dados estruturados para CI/CD |
-| `report.html` | Screenshots clicáveis com lightbox |
-
-A CLI gera adicionalmente em `evidence/YYYY-MM-DD/summary/`:
-
-| Arquivo | Conteúdo |
-|---|---|
-| `<modulo>_<ambiente>.html` | Métricas globais + tabela de resultados + erros |
 
 ---
 
 ## Sistemas automatizados
 
-| Sistema | Tipo | Runner | Flows | Status |
-|---|---|---|---|---|
-| SisLab | Desktop — Oracle Forms | OpenCV | Login, CadastroFuncionario | ✅ |
-| SI3 | Desktop — Oracle Forms | OpenCV | Login, CadastroPaciente | ✅ |
-| MSI3 | Web — Oracle APEX 23.1 | Playwright + OpenCV | Login, FrequenciaAplicacao, TipoAnestesia | ✅ |
+| Sistema | Tipo | Runner | Flows | Steps | Status |
+|---|---|---|---|---|---|
+| SisLab | Desktop Oracle Forms | OpenCV | Login, CadastroFuncionario | 3 + 10 | ✅ |
+| SI3 | Desktop Oracle Forms | OpenCV | Login, CadastroPaciente | 3 + 14 | ✅ |
+| MSI3 | Web Oracle APEX 23.1 | Playwright + OpenCV | Login, FrequenciaAplicacao, TipoAnestesia | 5 + 10 + 9 | ✅ |
+
+---
+
+## Padrões consolidados
+
+### Oracle Forms (SI3 / SisLab)
+- `type_text()` obrigatório para campos com acentos
+- `double_click` para menus
+- `click_near` apenas para campos grandes e únicos — campos pequenos na mesma linha usam coordenada direta
+- URL vazia válida no `AmbienteConfig` para sistemas desktop
+
+### Oracle APEX / MSI3
+- Nunca navegar por URL direta — invalida a sessão APEX
+- Cards sem href CSS — OpenCV obrigatório
+- `networkidle` não funciona após cliques OpenCV — usar polling de URL
+- Formulários dialog abrem em frame separado — acessar via `page.frames`
+
+---
+
+## Convenção de IDs de steps
+
+| Prefixo | Flow | Sistema |
+|---|---|---|
+| `L01`... | `LoginFlow` | SisLab / SI3 desktop |
+| `MW01`... | `LoginFlowMsi3` | MSI3 Oracle APEX |
+| `CF01`... | `CadastroFuncionarioFlow` | SisLab |
+| `CP01`... | `CadastroPacienteFlow` | SI3 |
+| `FA01`... | `FrequenciaAplicacaoFlow` | MSI3 |
+| `TA01`... | `TipoAnestesiaFlow` | MSI3 |
 
 ---
 
 ## Fases do projeto
 
-| # | Fase | Descrição | Status |
-|---|---|---|---|
-| 1 | Base de IA aplicada | Python, NumPy, OpenCV, noções de ML | ✅ |
-| 2 | Automação inteligente | Playwright, OpenCV, OCR, multi-scale, heurísticas | ✅ |
-| 3 | Arquitetura de engenharia | Clean Architecture, ConfigLoader YAML, CLI, relatório | ✅ |
-| 4 | IA em produção | Docker, FastAPI, MLflow, Jenkins, YOLO | 🔜 |
-| 5 | Portfólio profissional | Documentação, cases reais, repositório público | 🔜 |
+| # | Fase | Status |
+|---|---|---|
+| 1 | Base de IA aplicada | ✅ |
+| 2 | Automação inteligente (web, desktop, híbrido) | ✅ |
+| 3 | Arquitetura de engenharia (Clean Arch, CLI, ConfigLoader) | ✅ |
+| 4 | DSL expandida + YOLO | 🔵 Em andamento |
+| 5 | CI/CD Jenkins + RDP | 🔜 |
+| 6 | Portfólio profissional | 🔜 |
 
 ---
 
-## Próximos passos (Fase 4)
+## Changelog
 
-- [ ] YOLO — detecção de componentes de UI (treinado com screenshots reais do projeto)
-- [ ] Docker + FastAPI para servir modelos
-- [ ] MLflow — versionamento de modelos com métricas de flakiness
-- [ ] Jenkins / GitLab CI — `vtae run --all` integrado ao pipeline
-- [ ] Métricas: flakiness rate e drift visual por flow
+### v0.5.0 — 2026-05-06
+- **DT-1:** credenciais migradas para `.env` + histórico Git limpo com `git filter-repo`
+- **DT-2:** `CadastroPacienteFlow` — estratégia híbrida `click_near` + coordenada direta
+- **DT-4:** `RuntimeError` → `TemplateNotFoundError` e `RunnerError` em todos os runners
+- **DT-5:** pastas `bkp/` removidas, flow com acento deletado
+- `conftest.py` sem dependência de `login_config.py`
+- 189 testes unitários verdes em 1.24s
+
+### v0.4.5
+- `vtae send` — envio de relatório HTML por e-mail (SMTP/TLS/SSL/Gmail)
+- 31 testes unitários para o módulo send
+
+### v0.3.1
+- `CadastroPacienteFlow` 14/14, `TipoAnestesiaFlow` 9/9, `CadastroFuncionarioFlow` 10/10
+- `ConfigLoader` com resolução de variáveis `${VAR}` e `${VAR:-default}`
+- CLI `vtae run` com retry, summary e envio automático
+- Clean Architecture `src/`
 
 ---
 
 ## Documentação
 
-- `VTAE_Documentacao.docx` — documentação completa v0.4.3
-- `VTAE_Manual.docx` — manual do desenvolvedor v0.4.3
-- `CHANGELOG.md` — histórico completo de versões
+| Arquivo | Descrição |
+|---|---|
+| `VTAE_Documentacao_Tecnica.docx` | Arquitetura, runners, matchers, exceções, padrões |
+| `VTAE_Manual_Criacao_Testes.docx` | Passo a passo para criar novos testes |
+| `VTAE_Roadmap_Revisado.docx` | Roadmap com ordem revisada |

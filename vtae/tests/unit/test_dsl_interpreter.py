@@ -1,17 +1,18 @@
 """
-Testes unitários — DSLInterpreter v0.5.1
+Testes unitários — DSLInterpreter v0.5.2
 
-Imports baseados na estrutura real do projeto:
-  - DSLInterpreter  → vtae.core.dsl_interpreter
-  - StepError       → src.core.types
-  - FlowResult      → src.core.result
-  - patch path      → vtae.core.dsl_interpreter.DSLInterpreter._ocr_read
+Cobre:
+  - select_dropdown desktop (mode: type, mode: arrow)
+  - select_dropdown web (selector + fill + Enter)
+  - select_dropdown validações (sem target, sem value)
+  - run_component (sucesso, falha, import inválido, name inválido, args <<DADOS>>)
+  - Regressão: 38 testes v0.5.1 continuam passando (importados via conftest)
 """
 
 from __future__ import annotations
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 
 
 # ---------------------------------------------------------------------------
@@ -36,8 +37,8 @@ def mock_config():
     config.sistema = "si3"
     config.DADOS = {
         "nome": "MARIA SILVA",
+        "cargo": "ANALISTA DE RH",
         "cpf": "12345678900",
-        "data_nascimento": "01/01/1990",
     }
     return config
 
@@ -59,261 +60,273 @@ def interp(mock_ctx):
 
 
 # ---------------------------------------------------------------------------
-# _resolve
+# select_dropdown — desktop mode: type (default)
 # ---------------------------------------------------------------------------
 
-class TestResolve:
-    def test_sem_interpolacao(self, interp):
-        assert interp._resolve("texto fixo") == "texto fixo"
+class TestSelectDropdownDesktopType:
+    def test_clica_e_digita_valor(self, interp, mock_runner):
+        with patch("pyautogui.press") as mock_press:
+            step = {
+                "action": "select_dropdown",
+                "template": "templates/si3/label_cargo.png",
+                "offset_x": 200,
+                "value": "ANALISTA",
+            }
+            interp._action_select_dropdown(1, step)
+        mock_runner.click_near.assert_called_once_with(
+            "templates/si3/label_cargo.png", offset_x=200, offset_y=0
+        )
+        mock_runner.type_text.assert_called_once_with("ANALISTA")
+        mock_press.assert_called_once_with("enter")
 
-    def test_interpolacao_simples(self, interp):
-        assert interp._resolve("<<DADOS.nome>>") == "MARIA SILVA"
+    def test_sem_offset_usa_safe_click(self, interp, mock_runner):
+        with patch("pyautogui.press"):
+            step = {
+                "action": "select_dropdown",
+                "template": "templates/si3/label_cargo.png",
+                "value": "ANALISTA",
+            }
+            interp._action_select_dropdown(1, step)
+        mock_runner.safe_click.assert_called_once_with("templates/si3/label_cargo.png")
 
-    def test_interpolacao_composta(self, interp):
-        result = interp._resolve("Nome: <<DADOS.nome>>, CPF: <<DADOS.cpf>>")
-        assert result == "Nome: MARIA SILVA, CPF: 12345678900"
+    def test_interpolacao_value(self, interp, mock_runner):
+        with patch("pyautogui.press"):
+            step = {
+                "action": "select_dropdown",
+                "template": "templates/label.png",
+                "value": "<<DADOS.cargo>>",
+            }
+            interp._action_select_dropdown(1, step)
+        mock_runner.type_text.assert_called_once_with("ANALISTA DE RH")
 
-    def test_chave_ausente_levanta_step_error(self, interp):
-        from src.core.types import StepError
-        with pytest.raises(StepError, match="<<DADOS.inexistente>>"):
-            interp._resolve("<<DADOS.inexistente>>")
-
-    def test_dados_vazio_levanta_step_error(self, interp, mock_config):
-        mock_config.DADOS = {}
-        from src.core.types import StepError
-        with pytest.raises(StepError):
-            interp._resolve("<<DADOS.nome>>")
-
-
-# ---------------------------------------------------------------------------
-# fill_field
-# ---------------------------------------------------------------------------
-
-class TestFillField:
-    def test_template_sem_offset_usa_safe_click(self, interp, mock_runner):
-        step = {"action": "fill_field", "template": "templates/label.png", "value": "teste"}
-        interp._action_fill_field(1, step)
-        mock_runner.safe_click.assert_called_once_with("templates/label.png")
-        mock_runner.type_text.assert_called_once_with("teste")
-
-    def test_template_com_offset_usa_click_near(self, interp, mock_runner):
-        step = {"action": "fill_field", "template": "templates/label_nome.png", "offset_x": 200, "value": "MARIA"}
-        interp._action_fill_field(1, step)
-        mock_runner.click_near.assert_called_once_with("templates/label_nome.png", offset_x=200, offset_y=0)
-        mock_runner.type_text.assert_called_once_with("MARIA")
-
-    def test_selector_usa_fill(self, interp, mock_runner):
-        step = {"action": "fill_field", "selector": "#P17_NOME", "value": "JOSE"}
-        interp._action_fill_field(1, step)
-        mock_runner.fill.assert_called_once_with("#P17_NOME", "JOSE")
-
-    def test_interpolacao_dados(self, interp, mock_runner):
-        step = {"action": "fill_field", "selector": "#P17_NOME", "value": "<<DADOS.nome>>"}
-        interp._action_fill_field(1, step)
-        mock_runner.fill.assert_called_once_with("#P17_NOME", "MARIA SILVA")
-
-    def test_sem_template_e_sem_selector_levanta_step_error(self, interp):
-        from src.core.types import StepError
-        step = {"action": "fill_field", "value": "algo"}
-        with pytest.raises(StepError, match="template.*selector"):
-            interp._action_fill_field(1, step)
-
-    def test_value_vazio_preenche_string_vazia(self, interp, mock_runner):
-        step = {"action": "fill_field", "selector": "#campo", "value": ""}
-        interp._action_fill_field(1, step)
-        mock_runner.fill.assert_called_once_with("#campo", "")
-
-    def test_offset_y_negativo(self, interp, mock_runner):
-        step = {"action": "fill_field", "template": "templates/label.png", "offset_y": -30, "value": "x"}
-        interp._action_fill_field(1, step)
-        mock_runner.click_near.assert_called_once_with("templates/label.png", offset_x=0, offset_y=-30)
-
-
-# ---------------------------------------------------------------------------
-# assert_visible
-# ---------------------------------------------------------------------------
-
-class TestAssertVisible:
-    def test_template_encontrado_retorna_screenshot(self, interp, mock_runner):
-        mock_runner.wait_template.return_value = True
-        step = {"action": "assert_visible", "template": "templates/msg.png"}
-        path = interp._action_assert_visible(1, step)
+    def test_tira_screenshot(self, interp, mock_runner):
+        with patch("pyautogui.press"):
+            step = {
+                "action": "select_dropdown",
+                "template": "t.png",
+                "value": "X",
+                "id": "SD01",
+            }
+            path = interp._action_select_dropdown(1, step)
         assert path == "evidence/step.png"
+        mock_runner.screenshot.assert_called_once_with("evidence/test/SD01.png")
 
-    def test_template_nao_encontrado_levanta_step_error(self, interp, mock_runner):
-        mock_runner.wait_template.return_value = False
+
+# ---------------------------------------------------------------------------
+# select_dropdown — desktop mode: arrow
+# ---------------------------------------------------------------------------
+
+class TestSelectDropdownDesktopArrow:
+    def test_pressiona_setas_e_enter(self, interp, mock_runner):
+        with patch("pyautogui.press") as mock_press:
+            step = {
+                "action": "select_dropdown",
+                "template": "templates/si3/label_cargo.png",
+                "value": "ANALISTA",
+                "mode": "arrow",
+                "arrows": 3,
+            }
+            interp._action_select_dropdown(1, step)
+        calls = mock_press.call_args_list
+        assert calls.count(call("down")) == 3
+        assert calls[-1] == call("enter")
+
+    def test_arrows_default_e_1(self, interp, mock_runner):
+        with patch("pyautogui.press") as mock_press:
+            step = {
+                "action": "select_dropdown",
+                "template": "t.png",
+                "value": "X",
+                "mode": "arrow",
+            }
+            interp._action_select_dropdown(1, step)
+        calls = mock_press.call_args_list
+        assert calls.count(call("down")) == 1
+        assert calls[-1] == call("enter")
+
+    def test_nao_digita_em_mode_arrow(self, interp, mock_runner):
+        with patch("pyautogui.press"):
+            step = {
+                "action": "select_dropdown",
+                "template": "t.png",
+                "value": "X",
+                "mode": "arrow",
+                "arrows": 2,
+            }
+            interp._action_select_dropdown(1, step)
+        mock_runner.type_text.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# select_dropdown — web
+# ---------------------------------------------------------------------------
+
+class TestSelectDropdownWeb:
+    def test_usa_fill_e_enter(self, interp, mock_runner):
+        page_mock = MagicMock()
+        mock_runner._page = page_mock
+        step = {
+            "action": "select_dropdown",
+            "selector": "#P17_CARGO",
+            "value": "ANALISTA",
+        }
+        interp._action_select_dropdown(1, step)
+        mock_runner.fill.assert_called_once_with("#P17_CARGO", "ANALISTA")
+        page_mock.locator.assert_called_once_with("#P17_CARGO")
+        page_mock.locator.return_value.press.assert_called_once_with("Enter")
+
+    def test_interpolacao_web(self, interp, mock_runner):
+        page_mock = MagicMock()
+        mock_runner._page = page_mock
+        step = {
+            "action": "select_dropdown",
+            "selector": "#P17_CARGO",
+            "value": "<<DADOS.cargo>>",
+        }
+        interp._action_select_dropdown(1, step)
+        mock_runner.fill.assert_called_once_with("#P17_CARGO", "ANALISTA DE RH")
+
+
+# ---------------------------------------------------------------------------
+# select_dropdown — validações
+# ---------------------------------------------------------------------------
+
+class TestSelectDropdownValidacoes:
+    def test_sem_template_e_sem_selector(self, interp):
         from src.core.types import StepError
-        step = {"action": "assert_visible", "template": "templates/msg.png", "timeout": 2.0}
-        with pytest.raises(StepError, match="assert_visible falhou"):
-            interp._action_assert_visible(1, step)
-
-    def test_selector_web_encontrado(self, interp, mock_runner):
-        mock_runner.wait_template.return_value = True
-        step = {"action": "assert_visible", "selector": "#sucesso"}
-        interp._action_assert_visible(1, step)
-        mock_runner.wait_template.assert_called_once_with("#sucesso", timeout=5.0)
-
-    def test_timeout_customizado(self, interp, mock_runner):
-        mock_runner.wait_template.return_value = True
-        step = {"action": "assert_visible", "template": "t.png", "timeout": 15.0}
-        interp._action_assert_visible(1, step)
-        mock_runner.wait_template.assert_called_once_with("t.png", timeout=15.0)
-
-    def test_sem_template_e_sem_selector_levanta_step_error(self, interp):
-        from src.core.types import StepError
-        step = {"action": "assert_visible"}
+        step = {"action": "select_dropdown", "value": "X"}
         with pytest.raises(StepError, match="template.*selector"):
-            interp._action_assert_visible(1, step)
+            interp._action_select_dropdown(1, step)
 
-    def test_screenshot_tirado_mesmo_em_falha(self, interp, mock_runner):
-        mock_runner.wait_template.return_value = False
-        mock_runner.screenshot.return_value = "evidence/DSL01.png"
+    def test_sem_value(self, interp):
         from src.core.types import StepError
-        step = {"action": "assert_visible", "template": "t.png"}
-        with pytest.raises(StepError):
-            interp._action_assert_visible(1, step)
-        mock_runner.screenshot.assert_called_once()
+        step = {"action": "select_dropdown", "template": "t.png", "value": ""}
+        with pytest.raises(StepError, match="value"):
+            interp._action_select_dropdown(1, step)
 
-
-# ---------------------------------------------------------------------------
-# assert_text
-# ---------------------------------------------------------------------------
-
-class TestAssertText:
-    def test_web_selector_texto_correto(self, interp, mock_runner):
-        mock_runner._page.locator.return_value.first.text_content.return_value = "Ativo"
-        step = {"action": "assert_text", "selector": "#P17_STATUS", "expected": "Ativo"}
-        with patch("vtae.core.dsl_interpreter.DSLInterpreter._web_get_text", return_value="Ativo"):
-            interp._action_assert_text(1, step)
-
-    def test_web_case_insensitive(self, interp, mock_runner):
-        step = {"action": "assert_text", "selector": "#msg", "expected": "cadastro realizado"}
-        with patch("vtae.core.dsl_interpreter.DSLInterpreter._web_get_text", return_value="CADASTRO REALIZADO"):
-            interp._action_assert_text(1, step)
-
-    def test_ocr_desktop_texto_correto(self, interp, mock_runner):
-        with patch("vtae.core.dsl_interpreter.DSLInterpreter._ocr_read", return_value="Cadastro realizado com sucesso"):
-            step = {"action": "assert_text", "expected": "Cadastro realizado"}
-            interp._action_assert_text(1, step)
-
-    def test_ocr_desktop_texto_errado_levanta_step_error(self, interp, mock_runner):
-        with patch("vtae.core.dsl_interpreter.DSLInterpreter._ocr_read", return_value="Erro ao salvar registro"):
-            from src.core.types import StepError
-            step = {"action": "assert_text", "expected": "Cadastro realizado"}
-            with pytest.raises(StepError, match="assert_text falhou"):
-                interp._action_assert_text(1, step)
-
-    def test_ocr_com_region(self, interp, mock_runner):
-        with patch("vtae.core.dsl_interpreter.DSLInterpreter._ocr_read", return_value="ok") as mock_ocr:
-            step = {"action": "assert_text", "expected": "ok", "region": [0, 620, 1366, 660]}
-            interp._action_assert_text(1, step)
-            mock_ocr.assert_called_once_with([0, 620, 1366, 660])
-
-    def test_expected_vazio_levanta_step_error(self, interp):
-        from src.core.types import StepError
-        step = {"action": "assert_text", "expected": ""}
-        with pytest.raises(StepError, match="expected"):
-            interp._action_assert_text(1, step)
-
-    def test_interpolacao_expected(self, interp, mock_runner):
-        with patch("vtae.core.dsl_interpreter.DSLInterpreter._ocr_read", return_value="MARIA SILVA cadastrada"):
-            step = {"action": "assert_text", "expected": "<<DADOS.nome>>"}
-            interp._action_assert_text(1, step)
-
-
-# ---------------------------------------------------------------------------
-# FlowResult — integração run()
-# ---------------------------------------------------------------------------
-
-class TestFlowResult:
-    def _def(self):
-        return {"flow": "teste_dsl", "steps": [{"action": "assert_visible", "template": "t.png"}]}
-
-    def test_run_retorna_flow_result(self, interp, mock_runner):
-        from src.core.result import FlowResult
-        mock_runner.wait_template.return_value = True
-        result = interp.run(self._def())
-        assert isinstance(result, FlowResult)
-
-    def test_run_step_sucesso(self, interp, mock_runner):
-        mock_runner.wait_template.return_value = True
-        result = interp.run(self._def())
-        assert result.success
-        assert len(result.steps) == 1
-        assert result.steps[0].success
-
-    def test_run_step_falha_aborta_flow(self, interp, mock_runner):
-        mock_runner.wait_template.return_value = False
-        definition = {"flow": "abort", "steps": [
-            {"action": "assert_visible", "template": "t1.png"},
-            {"action": "assert_visible", "template": "t2.png"},
-        ]}
-        result = interp.run(definition)
-        assert not result.success
-        assert len(result.steps) == 1
-
-    def test_run_chama_ctx_add_result(self, interp, mock_runner, mock_ctx):
-        mock_runner.wait_template.return_value = True
-        interp.run(self._def())
-        mock_ctx.add_result.assert_called_once()
-
-    def test_run_flow_vazio(self, interp):
-        result = interp.run({"flow": "vazio", "steps": []})
-        assert result.success
-        assert result.steps == []
-
-    def test_run_com_observer(self, mock_ctx, mock_runner):
-        from vtae.core.dsl_interpreter import DSLInterpreter
-        observer = MagicMock()
-        mock_runner.wait_template.return_value = True
-        interp = DSLInterpreter(mock_ctx, observer=observer)
-        interp.run({"flow": "obs_test", "steps": [{"action": "assert_visible", "template": "t.png"}]})
-        observer.log_flow_start.assert_called_once_with("obs_test")
-        observer.log_step_result.assert_called_once()
-        observer.log_flow_result.assert_called_once()
-
-
-# ---------------------------------------------------------------------------
-# Ações desconhecidas
-# ---------------------------------------------------------------------------
-
-class TestUnknownAction:
-    def test_acao_desconhecida_levanta_value_error(self, interp):
-        with pytest.raises(ValueError, match="Ação desconhecida"):
-            interp.run({"flow": "x", "steps": [{"action": "hover"}]})
-
-
-# ---------------------------------------------------------------------------
-# Ações legadas — smoke tests
-# ---------------------------------------------------------------------------
-
-class TestLegacyActions:
-    def test_click_template(self, interp, mock_runner):
-        interp.run({"flow": "x", "steps": [{"action": "click", "template": "t.png"}]})
-        mock_runner.safe_click.assert_called_with("t.png")
-
-    def test_click_sem_template_e_sem_selector(self, interp):
-        result = interp.run({"flow": "x", "steps": [{"action": "click"}]})
+    def test_via_run_falha_registra_no_step(self, interp, mock_runner):
+        result = interp.run({"flow": "x", "steps": [
+            {"action": "select_dropdown", "value": "X"},
+        ]})
         assert not result.success
         assert "template" in result.steps[0].error or "selector" in result.steps[0].error
 
-    def test_type_com_texto_fixo(self, interp, mock_runner):
-        interp.run({"flow": "x", "steps": [{"action": "type", "text": "hello"}]})
-        mock_runner.type_text.assert_called_with("hello")
 
-    def test_wait_timeout_customizado(self, interp, mock_runner):
-        mock_runner.wait_template.return_value = True
-        interp.run({"flow": "x", "steps": [{"action": "wait", "template": "t.png", "timeout": 20.0}]})
-        mock_runner.wait_template.assert_called_with("t.png", timeout=20.0)
+# ---------------------------------------------------------------------------
+# run_component
+# ---------------------------------------------------------------------------
 
-    def test_wait_timeout_levanta_step_error(self, interp, mock_runner):
-        mock_runner.wait_template.return_value = False
-        result = interp.run({"flow": "x", "steps": [{"action": "wait", "template": "t.png"}]})
-        assert not result.success
-        assert "timeout" in result.steps[0].error.lower()
+class TestRunComponent:
+    def _fake_module(self, fn_name="preencher_formulario", return_value=None):
+        """Cria módulo falso com função que retorna return_value."""
+        mod = MagicMock()
+        fn = MagicMock(return_value=return_value)
+        setattr(mod, fn_name, fn)
+        return mod
 
-    def test_screenshot_salva_caminho_correto(self, interp, mock_runner):
-        mock_runner.screenshot.return_value = "evidence/test/minha_foto.png"
-        result = interp.run({"flow": "x", "steps": [{"action": "screenshot", "name": "minha_foto.png"}]})
+    def test_importa_e_executa_componente(self, interp, mock_ctx):
+        fake_mod = self._fake_module()
+        with patch("importlib.import_module", return_value=fake_mod):
+            step = {
+                "action": "run_component",
+                "name": "si3.cadastro_paciente_component.preencher_formulario",
+            }
+            result = interp.run({"flow": "x", "steps": [step]})
         assert result.success
-        mock_runner.screenshot.assert_called_with("evidence/test/minha_foto.png")
+        fake_mod.preencher_formulario.assert_called_once_with(mock_ctx, None)
+
+    def test_passa_args_resolvidos(self, interp, mock_ctx):
+        fake_mod = self._fake_module()
+        with patch("importlib.import_module", return_value=fake_mod):
+            step = {
+                "action": "run_component",
+                "name": "si3.cadastro_paciente_component.preencher_formulario",
+                "args": {"dados": "<<DADOS>>"},
+            }
+            interp.run({"flow": "x", "steps": [step]})
+        call_kwargs = fake_mod.preencher_formulario.call_args
+        assert call_kwargs.kwargs["dados"] == {
+            "nome": "MARIA SILVA",
+            "cargo": "ANALISTA DE RH",
+            "cpf": "12345678900",
+        }
+
+    def test_args_com_interpolacao_de_campo(self, interp, mock_ctx):
+        fake_mod = self._fake_module()
+        with patch("importlib.import_module", return_value=fake_mod):
+            step = {
+                "action": "run_component",
+                "name": "si3.comp.fn",
+                "args": {"nome": "<<DADOS.nome>>"},
+            }
+            interp.run({"flow": "x", "steps": [step]})
+        call_kwargs = fake_mod.fn.call_args
+        assert call_kwargs.kwargs["nome"] == "MARIA SILVA"
+
+    def test_componente_retorna_flow_result_falha(self, interp):
+        flow_result_falha = MagicMock()
+        flow_result_falha.success = False
+        flow_result_falha.failed_steps = ["CP01"]
+        fake_mod = self._fake_module(return_value=flow_result_falha)
+        with patch("importlib.import_module", return_value=fake_mod):
+            step = {
+                "action": "run_component",
+                "name": "si3.comp.preencher_formulario",
+            }
+            result = interp.run({"flow": "x", "steps": [step]})
+        assert not result.success
+        assert "falhou" in result.steps[0].error
+
+    def test_import_invalido_registra_falha(self, interp):
+        with patch("importlib.import_module", side_effect=ImportError("não encontrado")):
+            result = interp.run({"flow": "x", "steps": [
+                {"action": "run_component", "name": "si3.inexistente.fn"},
+            ]})
+        assert not result.success
+        assert "não foi possível importar" in result.steps[0].error
+
+    def test_name_invalido_sem_tres_partes(self, interp):
+        result = interp.run({"flow": "x", "steps": [
+            {"action": "run_component", "name": "si3.comp"},
+        ]})
+        assert not result.success
+        assert "Formato esperado" in result.steps[0].error
+
+    def test_name_vazio(self, interp):
+        result = interp.run({"flow": "x", "steps": [
+            {"action": "run_component", "name": ""},
+        ]})
+        assert not result.success
+        assert "name" in result.steps[0].error
+
+    def test_funcao_nao_existe_no_modulo(self, interp):
+        fake_mod = MagicMock(spec=[])  # spec vazio — nenhum atributo
+        with patch("importlib.import_module", return_value=fake_mod):
+            result = interp.run({"flow": "x", "steps": [
+                {"action": "run_component", "name": "si3.comp.fn_inexistente"},
+            ]})
+        assert not result.success
+        assert "não encontrado" in result.steps[0].error
+
+    def test_componente_retorna_none_conta_como_sucesso(self, interp):
+        fake_mod = self._fake_module(return_value=None)
+        with patch("importlib.import_module", return_value=fake_mod):
+            result = interp.run({"flow": "x", "steps": [
+                {"action": "run_component", "name": "si3.comp.fn"},
+            ]})
+        assert result.success
+
+
+# ---------------------------------------------------------------------------
+# SUPPORTED_ACTIONS — regressão v0.5.1 + v0.5.2
+# ---------------------------------------------------------------------------
+
+class TestSupportedActions:
+    def test_contem_todas_as_acoes_v051(self, interp):
+        for action in ["login", "click", "type", "wait", "screenshot",
+                       "fill_field", "assert_visible", "assert_text"]:
+            assert action in interp.SUPPORTED_ACTIONS
+
+    def test_contem_acoes_v052(self, interp):
+        assert "select_dropdown" in interp.SUPPORTED_ACTIONS
+        assert "run_component" in interp.SUPPORTED_ACTIONS

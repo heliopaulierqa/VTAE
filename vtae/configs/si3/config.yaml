@@ -76,11 +76,3 @@ dados_faker:
     metodo: cpf
     transformacao: sem_pontuacao
 
-configs/si3/config.yaml
-notificacoes:
-  email:
-    destinatarios_padrao:
-      - gestor@incor.org.br
-      - qa@incor.org.br
-    assunto: "VTAE — Resultado {modulo} [{status}] {data}"
-    somente_em_falha: false   # true = só envia quando falha

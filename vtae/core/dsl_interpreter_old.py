@@ -1,13 +1,11 @@
 """
-DSL Interpreter — v0.5.2
+DSL Interpreter — v0.5.1
 Executa testes definidos em YAML sem necessidade de código Python.
 
-Ações suportadas (v0.5.2):
+Ações suportadas (v0.5.1):
     fill_field      — preenche campo via template (click_near) ou seletor CSS
     assert_visible  — verifica se template ou seletor está visível na tela
     assert_text     — verifica texto via OCR (desktop) ou seletor (web)
-    select_dropdown — seleciona opção em dropdown por valor (desktop: seta | web: fill)
-    run_component   — executa componente Python reutilizável referenciado pelo nome
     click           — clica em template ou seletor
     wait            — aguarda template ou seletor aparecer
     type            — digita texto no campo ativo (desktop)
@@ -18,30 +16,24 @@ Interpolação de dados:
     Qualquer campo de texto aceita <<DADOS.campo>> — substituído pelo valor
     gerado pelo Faker via config.DADOS (ex: <<DADOS.nome>>, <<DADOS.cpf>>).
 
-Exemplo de YAML — select_dropdown:
-    - action: select_dropdown
-      template: templates/si3/label_cargo.png   # desktop: ancora
-      offset_x: 200
-      value: ANALISTA                            # digita e confirma com Enter
-      mode: type                                 # type (default) | arrow (setas p/ baixo)
-      arrows: 2                                  # quantas setas (somente mode: arrow)
-
-    - action: select_dropdown
-      selector: "#P17_CARGO"                     # web: fill + Enter
-      value: <<DADOS.cargo>>
-
-Exemplo de YAML — run_component:
-    - action: run_component
-      name: si3.cadastro_paciente_component.preencher_formulario
-      args:
-        dados: <<DADOS>>
+Exemplo de YAML:
+    flow: cadastro_paciente
+    sistema: si3
+    steps:
+      - action: login
+      - action: fill_field
+        template: templates/si3/label_nome.png
+        offset_x: 200
+        value: <<DADOS.nome>>
+      - action: assert_visible
+        template: templates/si3/msg_sucesso.png
+        timeout: 5.0
 """
 
 from __future__ import annotations
 
 import re
 import time
-import importlib
 from typing import Any
 
 from src.core.result import FlowResult, StepResult
@@ -72,8 +64,6 @@ class DSLInterpreter:
     SUPPORTED_ACTIONS = {
         "login", "click", "type", "wait", "screenshot",
         "fill_field", "assert_visible", "assert_text",
-        # v0.5.2
-        "select_dropdown", "run_component",
     }
 
     def __init__(self, ctx, observer=None) -> None:
@@ -138,22 +128,16 @@ class DSLInterpreter:
 
     def _dispatch(self, action: str, index: int, step: dict) -> str | None:
         handlers = {
-            "login":            self._action_login,
-            "click":            self._action_click,
-            "type":             self._action_type,
-            "wait":             self._action_wait,
-            "screenshot":       self._action_screenshot,
-            "fill_field":       self._action_fill_field,
-            "assert_visible":   self._action_assert_visible,
-            "assert_text":      self._action_assert_text,
-            "select_dropdown":  self._action_select_dropdown,
-            "run_component":    self._action_run_component,
+            "login":          self._action_login,
+            "click":          self._action_click,
+            "type":           self._action_type,
+            "wait":           self._action_wait,
+            "screenshot":     self._action_screenshot,
+            "fill_field":     self._action_fill_field,
+            "assert_visible": self._action_assert_visible,
+            "assert_text":    self._action_assert_text,
         }
         return handlers[action](index, step)
-
-    # ------------------------------------------------------------------
-    # Handlers — ações legadas (v0.5.1)
-    # ------------------------------------------------------------------
 
     def _action_login(self, index: int, step: dict) -> str | None:
         sistema = getattr(self.ctx.config, "sistema", None)
@@ -256,148 +240,6 @@ class DSLInterpreter:
                     f"texto lido: '{found_text[:200]}'."
                 )
         return screenshot_path
-
-    # ------------------------------------------------------------------
-    # Handlers — v0.5.2
-    # ------------------------------------------------------------------
-
-    def _action_select_dropdown(self, index: int, step: dict) -> str | None:
-        """
-        Seleciona opção em dropdown por valor.
-
-        Desktop (template):
-            mode: type   — clica no campo e digita o valor + Enter (default)
-            mode: arrow  — clica no campo e pressiona seta para baixo N vezes + Enter
-
-        Web (selector):
-            Usa fill() + Enter via Playwright.
-
-        YAML desktop:
-            - action: select_dropdown
-              template: templates/si3/label_cargo.png
-              offset_x: 200
-              value: ANALISTA
-              mode: type        # type (default) | arrow
-              arrows: 2         # somente mode: arrow
-
-        YAML web:
-            - action: select_dropdown
-              selector: "#P17_CARGO"
-              value: <<DADOS.cargo>>
-        """
-        import pyautogui
-
-        value = self._resolve(step.get("value", ""))
-        template = step.get("template")
-        selector = step.get("selector")
-        mode = step.get("mode", "type")
-
-        if not template and not selector:
-            raise StepError(
-                "'select_dropdown' requer 'template' (desktop) ou 'selector' (web)."
-            )
-
-        if not value:
-            raise StepError("'select_dropdown' requer campo 'value'.")
-
-        if template:
-            # Desktop — posiciona no campo via click_near ou safe_click
-            offset_x = int(step.get("offset_x", 0))
-            offset_y = int(step.get("offset_y", 0))
-            if offset_x or offset_y:
-                self.ctx.runner.click_near(template, offset_x=offset_x, offset_y=offset_y)
-            else:
-                self.ctx.runner.safe_click(template)
-
-            if mode == "arrow":
-                arrows = int(step.get("arrows", 1))
-                for _ in range(arrows):
-                    pyautogui.press("down")
-                    time.sleep(0.1)
-                pyautogui.press("enter")
-            else:
-                # mode: type — digita o valor e confirma
-                self.ctx.runner.type_text(value)
-                time.sleep(0.2)
-                pyautogui.press("enter")
-        else:
-            # Web — fill + Enter via Playwright
-            self.ctx.runner.fill(selector, value)
-            time.sleep(0.1)
-            page = self.ctx.runner._page
-            page.locator(selector).press("Enter")
-
-        return self._auto_screenshot(index, step)
-
-    def _action_run_component(self, index: int, step: dict) -> str | None:
-        """
-        Executa um componente Python reutilizável referenciado pelo nome.
-
-        O nome segue o padrão: <sistema>.<modulo>.<funcao_ou_classe>
-        O componente é importado de src.components.<sistema>.<modulo>.
-
-        YAML:
-            - action: run_component
-              name: si3.cadastro_paciente_component.preencher_formulario
-              args:
-                dados: <<DADOS>>
-
-        O componente recebe (ctx, observer, **args) e deve retornar FlowResult.
-        Se retornar FlowResult com success=False, o step falha.
-        """
-        name = step.get("name", "")
-        if not name:
-            raise StepError("'run_component' requer campo 'name'.")
-
-        parts = name.split(".")
-        if len(parts) < 3:
-            raise StepError(
-                f"'run_component' name inválido: '{name}'. "
-                f"Formato esperado: <sistema>.<modulo>.<funcao>"
-            )
-
-        sistema = parts[0]
-        modulo = parts[1]
-        funcao = parts[2]
-        module_path = f"src.components.{sistema}.{modulo}"
-
-        try:
-            mod = importlib.import_module(module_path)
-        except ImportError as exc:
-            raise StepError(
-                f"run_component: não foi possível importar '{module_path}': {exc}"
-            ) from exc
-
-        if not hasattr(mod, funcao):
-            raise StepError(
-                f"run_component: '{funcao}' não encontrado em '{module_path}'."
-            )
-
-        # Resolve args — substitui <<DADOS>> pelo dict completo
-        raw_args = step.get("args", {}) or {}
-        resolved_args = {}
-        for k, v in raw_args.items():
-            if v == "<<DADOS>>":
-                resolved_args[k] = getattr(self.ctx.config, "DADOS", {}) or {}
-            elif isinstance(v, str):
-                resolved_args[k] = self._resolve(v)
-            else:
-                resolved_args[k] = v
-
-        component_fn = getattr(mod, funcao)
-        result = component_fn(self.ctx, self.observer, **resolved_args)
-
-        # Componente pode retornar FlowResult ou None
-        if result is not None and hasattr(result, "success") and not result.success:
-            raise StepError(
-                f"run_component '{name}' falhou: {getattr(result, 'failed_steps', '')}"
-            )
-
-        return self._auto_screenshot(index, step)
-
-    # ------------------------------------------------------------------
-    # Internals
-    # ------------------------------------------------------------------
 
     def _resolve(self, value: str) -> str:
         if "<<DADOS." not in value:

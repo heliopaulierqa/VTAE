@@ -1,13 +1,15 @@
 """
-DSL Interpreter — v0.5.2
+DSL Interpreter — v0.5.3
 Executa testes definidos em YAML sem necessidade de código Python.
 
-Ações suportadas (v0.5.2):
+Ações suportadas (v0.5.3):
     fill_field      — preenche campo via template (click_near) ou seletor CSS
     assert_visible  — verifica se template ou seletor está visível na tela
     assert_text     — verifica texto via OCR (desktop) ou seletor (web)
-    select_dropdown — seleciona opção em dropdown por valor (desktop: seta | web: fill)
-    run_component   — executa componente Python reutilizável referenciado pelo nome
+    select_dropdown — seleciona opção em dropdown por valor
+    run_component   — executa componente Python reutilizável
+    loop            — executa bloco de steps N vezes ou para cada item de uma lista
+    if              — executa bloco 'then' se condição for verdadeira, senão 'else'
     click           — clica em template ou seletor
     wait            — aguarda template ou seletor aparecer
     type            — digita texto no campo ativo (desktop)
@@ -15,26 +17,40 @@ Ações suportadas (v0.5.2):
     login           — executa o LoginFlow do sistema configurado no ctx
 
 Interpolação de dados:
-    Qualquer campo de texto aceita <<DADOS.campo>> — substituído pelo valor
-    gerado pelo Faker via config.DADOS (ex: <<DADOS.nome>>, <<DADOS.cpf>>).
+    <<DADOS.campo>>  — substituído por config.DADOS[campo]
+    <<LOOP.item>>    — dentro de loop, substituído pelo item corrente da lista
+    <<LOOP.index>>   — índice corrente do loop (começa em 1)
 
-Exemplo de YAML — select_dropdown:
-    - action: select_dropdown
-      template: templates/si3/label_cargo.png   # desktop: ancora
-      offset_x: 200
-      value: ANALISTA                            # digita e confirma com Enter
-      mode: type                                 # type (default) | arrow (setas p/ baixo)
-      arrows: 2                                  # quantas setas (somente mode: arrow)
+Exemplo de YAML — loop por contagem:
+    - action: loop
+      count: 3
+      steps:
+        - action: click
+          template: templates/si3/btn_novo.png
 
-    - action: select_dropdown
-      selector: "#P17_CARGO"                     # web: fill + Enter
-      value: <<DADOS.cargo>>
+Exemplo de YAML — loop por lista:
+    - action: loop
+      items:
+        - ANALISTA
+        - ASSISTENTE
+        - COORDENADOR
+      steps:
+        - action: fill_field
+          selector: "#P17_CARGO"
+          value: <<LOOP.item>>
 
-Exemplo de YAML — run_component:
-    - action: run_component
-      name: si3.cadastro_paciente_component.preencher_formulario
-      args:
-        dados: <<DADOS>>
+Exemplo de YAML — if/else:
+    - action: if
+      condition:
+        assert_visible:
+          template: templates/si3/popup_erro.png
+          timeout: 2.0
+      then:
+        - action: click
+          template: templates/si3/btn_fechar_popup.png
+      else:
+        - action: assert_visible
+          template: templates/si3/msg_sucesso.png
 """
 
 from __future__ import annotations
@@ -49,6 +65,7 @@ from src.core.types import RunnerError, StepError
 
 
 _DADOS_RE = re.compile(r"<<DADOS\.(\w+)>>")
+_LOOP_RE = re.compile(r"<<LOOP\.(item|index)>>")
 
 
 def _interpolate(value: str, dados: dict[str, Any]) -> str:
@@ -63,6 +80,18 @@ def _interpolate(value: str, dados: dict[str, Any]) -> str:
     return _DADOS_RE.sub(_replace, value)
 
 
+def _interpolate_loop(value: str, item: Any, index: int) -> str:
+    """Substitui <<LOOP.item>> e <<LOOP.index>> pelo valor corrente do loop."""
+    def _replace(match: re.Match) -> str:
+        key = match.group(1)
+        if key == "item":
+            return str(item)
+        if key == "index":
+            return str(index)
+        return match.group(0)
+    return _LOOP_RE.sub(_replace, value)
+
+
 class DSLInterpreter:
     """
     Interpreta e executa um teste definido em YAML.
@@ -72,13 +101,17 @@ class DSLInterpreter:
     SUPPORTED_ACTIONS = {
         "login", "click", "type", "wait", "screenshot",
         "fill_field", "assert_visible", "assert_text",
-        # v0.5.2
         "select_dropdown", "run_component",
+        # v0.5.3
+        "loop", "if",
     }
 
     def __init__(self, ctx, observer=None) -> None:
         self.ctx = ctx
         self.observer = observer
+        # Contexto do loop corrente — preenchido durante execução de loop
+        self._loop_item: Any = None
+        self._loop_index: int = 0
 
     def run(self, test_definition: dict[str, Any]) -> FlowResult:
         flow_name = test_definition.get("flow", "unknown")
@@ -148,11 +181,13 @@ class DSLInterpreter:
             "assert_text":      self._action_assert_text,
             "select_dropdown":  self._action_select_dropdown,
             "run_component":    self._action_run_component,
+            "loop":             self._action_loop,
+            "if":               self._action_if,
         }
         return handlers[action](index, step)
 
     # ------------------------------------------------------------------
-    # Handlers — ações legadas (v0.5.1)
+    # Handlers — ações legadas (v0.5.1 / v0.5.2)
     # ------------------------------------------------------------------
 
     def _action_login(self, index: int, step: dict) -> str | None:
@@ -174,8 +209,8 @@ class DSLInterpreter:
         return None
 
     def _action_click(self, index: int, step: dict) -> str | None:
-        template = step.get("template")
-        selector = step.get("selector")
+        template = self._resolve(step.get("template") or "")
+        selector = self._resolve(step.get("selector") or "")
         if not template and not selector:
             raise StepError("'click' requer 'template' (desktop) ou 'selector' (web).")
         self.ctx.runner.safe_click(template or selector)
@@ -257,58 +292,23 @@ class DSLInterpreter:
                 )
         return screenshot_path
 
-    # ------------------------------------------------------------------
-    # Handlers — v0.5.2
-    # ------------------------------------------------------------------
-
     def _action_select_dropdown(self, index: int, step: dict) -> str | None:
-        """
-        Seleciona opção em dropdown por valor.
-
-        Desktop (template):
-            mode: type   — clica no campo e digita o valor + Enter (default)
-            mode: arrow  — clica no campo e pressiona seta para baixo N vezes + Enter
-
-        Web (selector):
-            Usa fill() + Enter via Playwright.
-
-        YAML desktop:
-            - action: select_dropdown
-              template: templates/si3/label_cargo.png
-              offset_x: 200
-              value: ANALISTA
-              mode: type        # type (default) | arrow
-              arrows: 2         # somente mode: arrow
-
-        YAML web:
-            - action: select_dropdown
-              selector: "#P17_CARGO"
-              value: <<DADOS.cargo>>
-        """
         import pyautogui
-
         value = self._resolve(step.get("value", ""))
         template = step.get("template")
         selector = step.get("selector")
         mode = step.get("mode", "type")
-
         if not template and not selector:
-            raise StepError(
-                "'select_dropdown' requer 'template' (desktop) ou 'selector' (web)."
-            )
-
+            raise StepError("'select_dropdown' requer 'template' (desktop) ou 'selector' (web).")
         if not value:
             raise StepError("'select_dropdown' requer campo 'value'.")
-
         if template:
-            # Desktop — posiciona no campo via click_near ou safe_click
             offset_x = int(step.get("offset_x", 0))
             offset_y = int(step.get("offset_y", 0))
             if offset_x or offset_y:
                 self.ctx.runner.click_near(template, offset_x=offset_x, offset_y=offset_y)
             else:
                 self.ctx.runner.safe_click(template)
-
             if mode == "arrow":
                 arrows = int(step.get("arrows", 1))
                 for _ in range(arrows):
@@ -316,64 +316,36 @@ class DSLInterpreter:
                     time.sleep(0.1)
                 pyautogui.press("enter")
             else:
-                # mode: type — digita o valor e confirma
                 self.ctx.runner.type_text(value)
                 time.sleep(0.2)
                 pyautogui.press("enter")
         else:
-            # Web — fill + Enter via Playwright
             self.ctx.runner.fill(selector, value)
             time.sleep(0.1)
             page = self.ctx.runner._page
             page.locator(selector).press("Enter")
-
         return self._auto_screenshot(index, step)
 
     def _action_run_component(self, index: int, step: dict) -> str | None:
-        """
-        Executa um componente Python reutilizável referenciado pelo nome.
-
-        O nome segue o padrão: <sistema>.<modulo>.<funcao_ou_classe>
-        O componente é importado de src.components.<sistema>.<modulo>.
-
-        YAML:
-            - action: run_component
-              name: si3.cadastro_paciente_component.preencher_formulario
-              args:
-                dados: <<DADOS>>
-
-        O componente recebe (ctx, observer, **args) e deve retornar FlowResult.
-        Se retornar FlowResult com success=False, o step falha.
-        """
         name = step.get("name", "")
         if not name:
             raise StepError("'run_component' requer campo 'name'.")
-
         parts = name.split(".")
         if len(parts) < 3:
             raise StepError(
                 f"'run_component' name inválido: '{name}'. "
                 f"Formato esperado: <sistema>.<modulo>.<funcao>"
             )
-
-        sistema = parts[0]
-        modulo = parts[1]
-        funcao = parts[2]
+        sistema, modulo, funcao = parts[0], parts[1], parts[2]
         module_path = f"src.components.{sistema}.{modulo}"
-
         try:
             mod = importlib.import_module(module_path)
         except ImportError as exc:
             raise StepError(
                 f"run_component: não foi possível importar '{module_path}': {exc}"
             ) from exc
-
         if not hasattr(mod, funcao):
-            raise StepError(
-                f"run_component: '{funcao}' não encontrado em '{module_path}'."
-            )
-
-        # Resolve args — substitui <<DADOS>> pelo dict completo
+            raise StepError(f"run_component: '{funcao}' não encontrado em '{module_path}'.")
         raw_args = step.get("args", {}) or {}
         resolved_args = {}
         for k, v in raw_args.items():
@@ -383,27 +355,179 @@ class DSLInterpreter:
                 resolved_args[k] = self._resolve(v)
             else:
                 resolved_args[k] = v
-
         component_fn = getattr(mod, funcao)
         result = component_fn(self.ctx, self.observer, **resolved_args)
-
-        # Componente pode retornar FlowResult ou None
         if result is not None and hasattr(result, "success") and not result.success:
             raise StepError(
                 f"run_component '{name}' falhou: {getattr(result, 'failed_steps', '')}"
             )
-
         return self._auto_screenshot(index, step)
+
+    # ------------------------------------------------------------------
+    # Handlers — v0.5.3
+    # ------------------------------------------------------------------
+
+    def _action_loop(self, index: int, step: dict) -> str | None:
+        """
+        Executa um bloco de steps repetidamente.
+
+        Modo count — repete N vezes:
+            - action: loop
+              count: 3
+              steps:
+                - action: click
+                  template: templates/si3/btn_novo.png
+
+        Modo items — itera sobre lista, expondo <<LOOP.item>> e <<LOOP.index>>:
+            - action: loop
+              items:
+                - ANALISTA
+                - ASSISTENTE
+              steps:
+                - action: fill_field
+                  selector: "#P17_CARGO"
+                  value: <<LOOP.item>>
+        """
+        sub_steps = step.get("steps")
+        if not sub_steps:
+            raise StepError("'loop' requer campo 'steps' com pelo menos uma ação.")
+
+        items = step.get("items")
+        count = step.get("count")
+
+        if items is not None:
+            iterations = list(items)
+        elif count is not None:
+            iterations = list(range(1, int(count) + 1))
+        else:
+            raise StepError("'loop' requer 'count' (número) ou 'items' (lista).")
+
+        for loop_index, loop_item in enumerate(iterations, 1):
+            self._loop_item = loop_item
+            self._loop_index = loop_index
+            print(f"[DSL]   loop [{loop_index}/{len(iterations)}]: item={loop_item}")
+
+            for sub_i, sub_step in enumerate(sub_steps, 1):
+                sub_action = sub_step.get("action")
+                if sub_action not in self.SUPPORTED_ACTIONS:
+                    raise ValueError(
+                        f"Ação desconhecida em loop: '{sub_action}'."
+                    )
+                # Resolve interpolações de loop nos campos do sub_step
+                resolved_sub = self._resolve_loop_step(sub_step)
+                sub_result = self._execute_action(sub_i, resolved_sub)
+                if not sub_result.success:
+                    raise StepError(
+                        f"Loop falhou na iteração {loop_index}, step {sub_i} "
+                        f"({sub_action}): {sub_result.error}"
+                    )
+
+        self._loop_item = None
+        self._loop_index = 0
+        return None
+
+    def _action_if(self, index: int, step: dict) -> str | None:
+        """
+        Executa bloco 'then' se condição for verdadeira, senão bloco 'else'.
+        A condição é avaliada por assert_visible (não levanta erro — retorna bool).
+
+        YAML:
+            - action: if
+              condition:
+                assert_visible:
+                  template: templates/si3/popup_erro.png
+                  timeout: 2.0
+              then:
+                - action: click
+                  template: templates/si3/btn_fechar.png
+              else:
+                - action: assert_visible
+                  template: templates/si3/msg_sucesso.png
+        """
+        condition = step.get("condition")
+        then_steps = step.get("then", [])
+        else_steps = step.get("else", [])
+
+        if not condition:
+            raise StepError("'if' requer campo 'condition'.")
+        if not then_steps and not else_steps:
+            raise StepError("'if' requer pelo menos 'then' ou 'else'.")
+
+        condition_result = self._evaluate_condition(condition)
+        branch = then_steps if condition_result else else_steps
+        branch_name = "then" if condition_result else "else"
+
+        print(f"[DSL]   if → condição={'verdadeira' if condition_result else 'falsa'}, executando '{branch_name}'")
+
+        for sub_i, sub_step in enumerate(branch, 1):
+            sub_action = sub_step.get("action")
+            if sub_action not in self.SUPPORTED_ACTIONS:
+                raise ValueError(f"Ação desconhecida em if/{branch_name}: '{sub_action}'.")
+            sub_result = self._execute_action(sub_i, sub_step)
+            if not sub_result.success:
+                raise StepError(
+                    f"if/{branch_name} falhou no step {sub_i} "
+                    f"({sub_action}): {sub_result.error}"
+                )
+
+        return None
 
     # ------------------------------------------------------------------
     # Internals
     # ------------------------------------------------------------------
 
+    def _evaluate_condition(self, condition: dict) -> bool:
+        """
+        Avalia uma condição sem levantar exceção — retorna True/False.
+        Suporta: assert_visible (template ou selector).
+        """
+        if "assert_visible" in condition:
+            cfg = condition["assert_visible"]
+            template = cfg.get("template")
+            selector = cfg.get("selector")
+            timeout = float(cfg.get("timeout", 2.0))
+            target = template or selector
+            if not target:
+                return False
+            return bool(self.ctx.runner.wait_template(target, timeout=timeout))
+
+        if "assert_text" in condition:
+            cfg = condition["assert_text"]
+            expected = self._resolve(cfg.get("expected", ""))
+            selector = cfg.get("selector")
+            try:
+                if selector:
+                    found = self._web_get_text(selector)
+                else:
+                    found = self._ocr_read(cfg.get("region"))
+                return expected.lower() in found.lower()
+            except Exception:
+                return False
+
+        return False
+
     def _resolve(self, value: str) -> str:
-        if "<<DADOS." not in value:
+        """Interpola <<DADOS.campo>> e <<LOOP.*>> no valor."""
+        if not isinstance(value, str):
             return value
-        dados = getattr(self.ctx.config, "DADOS", {}) or {}
-        return _interpolate(value, dados)
+        if "<<DADOS." in value:
+            dados = getattr(self.ctx.config, "DADOS", {}) or {}
+            value = _interpolate(value, dados)
+        if "<<LOOP." in value:
+            value = _interpolate_loop(value, self._loop_item, self._loop_index)
+        return value
+
+    def _resolve_loop_step(self, step: dict) -> dict:
+        """Retorna cópia do step com todos os valores string resolvidos para o loop."""
+        resolved = {}
+        for k, v in step.items():
+            if isinstance(v, str):
+                resolved[k] = self._resolve(v)
+            elif isinstance(v, list):
+                resolved[k] = [self._resolve(i) if isinstance(i, str) else i for i in v]
+            else:
+                resolved[k] = v
+        return resolved
 
     def _auto_screenshot(self, index: int, step: dict) -> str | None:
         step_id = step.get("id", f"DSL{index:02d}")

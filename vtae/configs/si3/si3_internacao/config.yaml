@@ -18,7 +18,7 @@ dados_faker:
 
   - campo: obs
     tipo: fixo
-    valor: 'teste realizado com automacao'
+    valor: 'Teste realizado com ferramenta de automacao VTAE'
 
   - campo: unidade_funcional
     tipo: fixo

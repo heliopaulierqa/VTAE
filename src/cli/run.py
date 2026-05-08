@@ -31,6 +31,7 @@ MODULOS: dict[str, list[str]] = {
     ],
     "si3": [
         "vtae/tests/integration/si3/test_cadastro_paciente_si3.py",
+        "vtae/tests/integration/si3/test_admissao_internacao.py",
     ],
     "msi3": [
         "vtae/tests/integration/msi3/test_login_msi3.py",
@@ -42,6 +43,7 @@ MODULOS: dict[str, list[str]] = {
 TESTES: dict[str, str] = {
     "cadastro_funcionario":  "vtae/tests/integration/sislab/test_cadastro_funcionario_sislab.py",
     "cadastro_paciente":     "vtae/tests/integration/si3/test_cadastro_paciente.py",
+    "admissao_internacao":   "vtae/tests/integration/si3/test_admissao_internacao.py",
     "login_msi3":            "vtae/tests/integration/msi3/test_login_msi3.py",
     "frequencia_aplicacao":  "vtae/tests/integration/msi3/test_frequencia_aplicacao.py",
     "tipo_anestesia":        "vtae/tests/integration/msi3/test_tipo_anestesia.py",
@@ -61,6 +63,7 @@ Exemplos:
   vtae run --module sislab --env homologacao
   vtae run --module sislab --retry 2
   vtae run --test cadastro_funcionario
+  vtae run --test admissao_internacao
   vtae run --all --env producao
   vtae systems
   vtae systems --sistema sislab
@@ -72,7 +75,7 @@ Exemplos:
 
     sub = parser.add_subparsers(dest="command", metavar="comando")
 
-    # ── vtae run ──────────────────────────────────────────────────────────────
+    # ── vtae run ──────────────────────────────────────────────────────
     run_parser = sub.add_parser("run", help="Executa testes de integração")
     run_group = run_parser.add_mutually_exclusive_group(required=True)
     run_group.add_argument("--all", action="store_true", help="Executa todos os testes")
@@ -86,11 +89,11 @@ Exemplos:
         help="Re-executa testes que falharam até N vezes extras (ex: --retry 2)"
     )
 
-    # ── vtae systems ──────────────────────────────────────────────────────────
+    # ── vtae systems ──────────────────────────────────────────────────
     sys_parser = sub.add_parser("systems", help="Lista sistemas e ambientes disponíveis")
     sys_parser.add_argument("--sistema", choices=MODULOS.keys(), metavar="SISTEMA")
 
-    # ── vtae clean ────────────────────────────────────────────────────────────
+    # ── vtae clean ────────────────────────────────────────────────────
     clean_parser = sub.add_parser("clean", help="Remove evidências antigas")
     clean_parser.add_argument(
         "--days", type=int, default=7, metavar="N",
@@ -101,7 +104,7 @@ Exemplos:
         help="Mostra o que seria removido sem apagar"
     )
 
-    # ── vtae send ─────────────────────────────────────────────────────────────
+    # ── vtae send ─────────────────────────────────────────────────────
     send_parser = sub.add_parser("send", help="Envia relatório por e-mail")
     send_group = send_parser.add_mutually_exclusive_group(required=True)
     send_group.add_argument("--all", action="store_true", help="Envia relatório de todos os módulos")
@@ -172,7 +175,7 @@ def _cmd_run(args):
 
     _print_header(env, descricao, existentes, retry)
 
-    # ── execução com retry ────────────────────────────────────────────────────
+    # ── execução com retry ────────────────────────────────────────────
     tentativa      = 0
     max_tentativas = 1 + retry
     returncode     = 1
@@ -183,7 +186,7 @@ def _cmd_run(args):
             print(f"\n{'─'*60}")
             print(f"  🔄 RETRY {tentativa}/{retry} — re-executando testes que falharam")
             print(f"{'─'*60}\n")
-            time.sleep(2)  # pausa antes do retry
+            time.sleep(2)
 
         cmd = [sys.executable, "-m", "pytest", "-v", "-s"] + arquivos_pendentes
         resultado = subprocess.run(cmd, env=processo_env)
@@ -192,7 +195,6 @@ def _cmd_run(args):
         if returncode == 0:
             break
 
-        # identifica quais testes falharam para re-executar só eles
         if tentativa < max_tentativas - 1:
             arquivos_pendentes = _identificar_falhos(arquivos_pendentes)
             if not arquivos_pendentes:
@@ -200,11 +202,11 @@ def _cmd_run(args):
 
         tentativa += 1
 
-    # ── relatório unificado ───────────────────────────────────────────────────
+    # ── relatório unificado ───────────────────────────────────────────
     modulo_atual = "all" if args.all else (args.module if args.module else args.test)
     _gerar_summary(existentes, env, titulo, returncode, modulo=modulo_atual)
 
-    # ── resultado final ───────────────────────────────────────────────────────
+    # ── resultado final ───────────────────────────────────────────────
     print(f"\n{'='*60}")
     if returncode == 0:
         if tentativa > 0:
@@ -252,7 +254,7 @@ def _identificar_falhos(arquivos: list[str]) -> list[str]:
                 if data.get("status") != "PASSOU":
                     falhos.append(arq)
             except Exception:
-                falhos.append(arq)  # na dúvida, re-executa
+                falhos.append(arq)
         else:
             falhos.append(arq)
 
@@ -291,7 +293,6 @@ def _gerar_summary(arquivos: list[str], env: str,
         if path:
             print(f"\n📊 Relatório unificado: {path}")
 
-        # envio automático se configurado no YAML
         if modulo:
             try:
                 from src.cli.send import enviar_automatico
@@ -360,14 +361,12 @@ def _cmd_clean(args):
     for pasta in sorted(base_dir.iterdir()):
         if not pasta.is_dir():
             continue
-        # nome da pasta é YYYY-MM-DD
         try:
             data_pasta = datetime.strptime(pasta.name, "%Y-%m-%d")
         except ValueError:
             continue
 
         if data_pasta < cutoff:
-            # calcula tamanho
             size = sum(f.stat().st_size for f in pasta.rglob("*") if f.is_file())
             tamanho_total += size
             removidos.append((pasta, size))

@@ -1,5 +1,0 @@
-# vtae/configs/si3/.env.example
-# Copie para .env e preencha com as credenciais reais.
-# NUNCA commite o .env — está no .gitignore.
-SI3_USER=seu_usuario
-SI3_PASS=sua_senha

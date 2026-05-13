@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vtae"
-version = "0.4.0"
+version = "0.5.4"
 description = "Visual Test Automation Engine"
 requires-python = ">=3.13"
 dependencies = []
@@ -20,10 +20,10 @@ vtae = "src.cli.run:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["vtae*", "src*"]
+include = ["src*"]
 
 [tool.pytest.ini_options]
-testpaths = ["vtae/tests"]
+testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"

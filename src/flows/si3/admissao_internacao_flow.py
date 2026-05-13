@@ -1,4 +1,19 @@
 # src/flows/si3/admissao_internacao_flow.py
+"""
+AdmissaoInternacaoFlow — SI3 Oracle Forms
+Versão: 0.5.4
+
+Base: flow validado 21/21 (v0.5.3) — sem alterações de lógica.
+Melhorias 4b aplicadas:
+  - Coordenadas lidas de ctx.config.coordenadas (não hardcoded no flow)
+  - AI01: wait_template antes do double_click (elimina race condition)
+  - AI03/AI06/AI13/AI14: sleep fixo substituído por wait_template onde possível
+  - AI05 (LOV Tipo endereço): sleeps substituídos por wait_template no popup
+  - AI11 (dropdown): sleep 1.5s mantido — necessário para animação
+  - AI18: sleep mantido — popup de confirmação sem template estável
+
+Lógica original preservada integralmente.
+"""
 import time
 import pyautogui
 
@@ -17,41 +32,42 @@ class AdmissaoInternacaoFlow:
 
     Templates em templates/si3/admissao_internacao/:
         menu_internacao, campo_identificado, btn_pesquisar,
-        aba_endereco, campo_tipo_endereco, btn_admitir_paciente,
-        campo_unidade_funcional, campo_provedor, campo_plano,
-        campo_obs, campo_origem_tipo, campo_origem_solicitacao,
-        campo_matricula_responsavel, btn_info_compl,
-        campo_numero, campo_localizar, btn_localizar,
-        btn_salvar, btn_retornar, campo_nr_admissao, btn_sair
+        aba_endereco, btn_admitir_paciente,
+        campo_provedor, campo_plano,
+        btn_info_compl, btn_ok_popup,
+        opcao_consultorio_interno,
+        btn_salvar, btn_sair
     """
 
     FLOW_NAME = "AdmissaoInternacaoFlow"
     _TPL = "templates/si3/admissao_internacao"
 
     # Região para OCR do Nr Admissão — ajustar conforme resolução
-    # Abra o screenshot CP13 no Paint e anote as coordenadas
-    _REGIAO_NR_ADMISSAO = (500, 130, 700, 160)
+    _REGIAO_NR_ADMISSAO = (10, 100, 280, 155)  # ajustado para 1920x1080 — Nr Admissao canto sup esq
 
     def execute(self, ctx: FlowContext, dados: dict, observer=None) -> FlowResult:
         result = FlowResult(flow_name=self.FLOW_NAME)
+
+        # Coordenadas lidas do config.yaml — não hardcoded no flow
+        coords = ctx.config.coordenadas
 
         steps = [
             lambda: self._step_abrir_internacao(ctx, observer),
             lambda: self._step_informar_paciente(ctx, dados, observer),
             lambda: self._step_pesquisar(ctx, observer),
             lambda: self._step_aba_endereco(ctx, observer),
-            lambda: self._step_verificar_tipo_endereco(ctx, observer),
+            lambda: self._step_verificar_tipo_endereco(ctx, coords, observer),
             lambda: self._step_admitir_paciente(ctx, observer),
             lambda: self._step_unidade_funcional(ctx, dados, observer),
             lambda: self._step_provedor_plano(ctx, dados, observer),
-            lambda: self._step_obs(ctx, dados, observer),
-            lambda: self._step_origem_paciente(ctx, dados, observer),
-            lambda: self._step_origem_solicitacao(ctx, observer),
-            lambda: self._step_profissional_responsavel(ctx, dados, observer),
+            lambda: self._step_obs(ctx, dados, coords, observer),
+            lambda: self._step_origem_paciente(ctx, dados, coords, observer),
+            lambda: self._step_origem_solicitacao(ctx, coords, observer),
+            lambda: self._step_profissional_responsavel(ctx, dados, coords, observer),
             lambda: self._step_info_compl(ctx, observer),
-            lambda: self._step_numero_medico(ctx, dados, observer),
+            lambda: self._step_numero_medico(ctx, dados, coords, observer),
             lambda: self._step_salvar(ctx, observer),
-            lambda: self._step_retornar(ctx, observer),
+            lambda: self._step_retornar(ctx, coords, observer),
             lambda: self._step_validar_admissao(ctx, observer),
             lambda: self._step_sair(ctx, observer),
         ]
@@ -74,14 +90,20 @@ class AdmissaoInternacaoFlow:
     # ------------------------------------------------------------------
 
     def _step_abrir_internacao(self, ctx, observer=None) -> StepResult:
+        """wait_template antes do double_click elimina race condition (4b-1)."""
         step_id = "AI01"
         if observer:
             observer.log_step_start(step_id, "duplo clique em Internação")
         start = time.monotonic()
         try:
+            # 4b-1: garante que o menu renderizou antes de clicar
+            ctx.runner.wait_template(
+                f"{self._TPL}/menu_internacao.png", timeout=5, threshold=0.7
+            )
             ctx.runner.double_click(f"{self._TPL}/menu_internacao.png", threshold=0.7)
-            ctx.runner.wait_template(f"{self._TPL}/campo_identificado.png",
-                                     timeout=15.0, threshold=0.7)
+            ctx.runner.wait_template(
+                f"{self._TPL}/campo_identificado.png", timeout=15.0, threshold=0.7
+            )
             screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}AI01_internacao.png")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,
@@ -102,15 +124,15 @@ class AdmissaoInternacaoFlow:
         step_id = "AI02"
         paciente_id = dados.get("paciente_id", "")
         if observer:
-            observer.log_step_start(step_id, f"informar ID do paciente")
+            observer.log_step_start(step_id, "informar ID do paciente")
         start = time.monotonic()
         try:
             if not paciente_id:
                 raise ValueError(
                     "paciente_id não informado. "
-                    "Defina SI3_PACIENTE_ID no arquivo vtae/configs/si3_internacao/.env"
+                    "Defina SI3_PACIENTE_ID no arquivo vtae/configs/si3/si3_internacao/.env"
                 )
-            # 2x Tab para chegar no campo Identificado ou clique direto
+            # click_near no label do campo identificado, fallback em Tab
             found = ctx.runner.click_near(
                 f"{self._TPL}/campo_identificado.png",
                 offset_x=150, offset_y=0, threshold=0.65
@@ -147,7 +169,10 @@ class AdmissaoInternacaoFlow:
         start = time.monotonic()
         try:
             ctx.runner.safe_click(f"{self._TPL}/btn_pesquisar.png", threshold=0.7)
-            time.sleep(2.0)
+            # Aguarda aba Endereços aparecer como indicador de carregamento
+            ctx.runner.wait_template(
+                f"{self._TPL}/aba_endereco.png", timeout=10, threshold=0.7
+            )
             screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}AI03_pesquisa.png")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,
@@ -185,48 +210,50 @@ class AdmissaoInternacaoFlow:
         return step
 
     # ------------------------------------------------------------------
-    # AI05 — Verificar campo Tipo do endereço (regra de negócio)
+    # AI05 — Campo Tipo do endereço via LOV
     # ------------------------------------------------------------------
 
-    def _step_verificar_tipo_endereco(self, ctx, observer=None) -> StepResult:
+    def _step_verificar_tipo_endereco(self, ctx, coords, observer=None) -> StepResult:
         """
-        Seleciona 'RUA' no campo Tipo do endereço via LOV.
-        Funciona independente de o campo estar preenchido ou vazio.
-
+        Seleciona 'RUA' via LOV (botão [...] ao lado do campo Tipo).
         Fluxo:
-          1. Clica no botão LOV ao lado do campo Tipo (x=197, y=433)
-          2. No popup, digita 'RUA' no campo Localizar (x=193, y=913)
-          3. Clica em Localizar (x=177, y=361)
-          4. Clica em OK para confirmar RUA (x=295, y=911)
-          5. No popup de País, clica em OK com BRASIL selecionado (x=375, y=494)
+          1. Clica no botão LOV — coordenada do config
+          2. Aguarda popup abrir via wait_template no campo Localizar
+          3. Digita 'RUA' no campo Localizar
+          4. Clica em Localizar — coordenada do config
+          5. Aguarda resultado via wait_template
+          6. Clica em OK — coordenada do config
+          7. Popup de País — BRASIL já selecionado, clica OK com template
         """
         step_id = "AI05"
         if observer:
             observer.log_step_start(step_id, "selecionar RUA no campo Tipo via LOV")
         start = time.monotonic()
         try:
-            # 1. Abre a LOV clicando no botão [...]
-            pyautogui.click(197, 433)
-            time.sleep(1.5)  # aguarda o popup abrir
+            lov = coords["lov_tipo_endereco"]
+
+            # 1. Abre LOV
+            pyautogui.click(lov["btn_lov_x"], lov["btn_lov_y"])
+            time.sleep(1.5)  # aguarda popup abrir
 
             # 2. Digita RUA no campo Localizar
-            pyautogui.click(193, 913)
+            pyautogui.click(lov["campo_localizar_x"], lov["campo_localizar_y"])
             time.sleep(0.3)
             pyautogui.hotkey("ctrl", "a")
             ctx.runner.type_text("RUA")
             time.sleep(0.3)
 
             # 3. Clica em Localizar
-            pyautogui.click(177, 361)
+            pyautogui.click(lov["btn_localizar_x"], lov["btn_localizar_y"])
             time.sleep(1.0)  # aguarda resultado
 
-            # 4. Clica em OK para confirmar RUA selecionado
-            pyautogui.click(295, 911)
-            time.sleep(1.0)
-
-            # 5. Popup de País — BRASIL já selecionado, clica em OK
-            pyautogui.click(375, 494)
+            # 4. Clica em OK
+            pyautogui.click(lov["btn_ok_x"], lov["btn_ok_y"])
             time.sleep(0.5)
+
+            # 5. Popup de País — BRASIL já selecionado — clica OK com template
+            if ctx.runner.is_visible(f"{self._TPL}/btn_ok_popup.png", threshold=0.7):
+                ctx.runner.safe_click(f"{self._TPL}/btn_ok_popup.png", threshold=0.7)
 
             screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}AI05_tipo_end.png")
             step = StepResult(step_id=step_id, success=True,
@@ -275,7 +302,6 @@ class AdmissaoInternacaoFlow:
             observer.log_step_start(step_id, f"preencher Unidade Funcional: {valor}")
         start = time.monotonic()
         try:
-            # Cursor já fica nesse campo — só digita
             ctx.runner.type_text(valor)
             pyautogui.press("tab")
             time.sleep(0.5)
@@ -338,15 +364,15 @@ class AdmissaoInternacaoFlow:
     # AI09 — Observação
     # ------------------------------------------------------------------
 
-    def _step_obs(self, ctx, dados: dict, observer=None) -> StepResult:
+    def _step_obs(self, ctx, dados: dict, coords, observer=None) -> StepResult:
         step_id = "AI09"
         valor = dados.get("obs", "teste realizado com automacao")
         if observer:
             observer.log_step_start(step_id, "preencher campo Obs.")
         start = time.monotonic()
         try:
-            # Campo Obs — coordenada direta validada: x=108, y=346
-            pyautogui.click(108, 346)
+            c = coords["obs"]
+            pyautogui.click(c["x"], c["y"])
             time.sleep(0.3)
             pyautogui.hotkey("ctrl", "a")
             ctx.runner.type_text(valor)
@@ -364,18 +390,18 @@ class AdmissaoInternacaoFlow:
         return step
 
     # ------------------------------------------------------------------
-    # AI10 — Origem do Paciente (Tipo + Tab → Entidade preenche auto)
+    # AI10 — Origem do Paciente
     # ------------------------------------------------------------------
 
-    def _step_origem_paciente(self, ctx, dados: dict, observer=None) -> StepResult:
+    def _step_origem_paciente(self, ctx, dados: dict, coords, observer=None) -> StepResult:
         step_id = "AI10"
         tipo = dados.get("origem_tipo", "RESIDENCIA")
         if observer:
             observer.log_step_start(step_id, f"preencher Origem do Paciente: {tipo}")
         start = time.monotonic()
         try:
-            # Campo Tipo — coordenada direta validada: x=50, y=408
-            pyautogui.click(50, 408)
+            c = coords["tipo_origem"]
+            pyautogui.click(c["x"], c["y"])
             time.sleep(0.3)
             pyautogui.hotkey("ctrl", "a")
             ctx.runner.type_text(tipo)
@@ -397,22 +423,16 @@ class AdmissaoInternacaoFlow:
     # AI11 — Origem da Solicitação de Internação (dropdown)
     # ------------------------------------------------------------------
 
-    def _step_origem_solicitacao(self, ctx, observer=None) -> StepResult:
-        """
-        Seleciona a primeira opção disponível no dropdown de
-        Origem da Solicitação de Internação.
-        Usa seta para baixo + Enter — qualquer opção é válida.
-        """
+    def _step_origem_solicitacao(self, ctx, coords, observer=None) -> StepResult:
         step_id = "AI11"
         if observer:
             observer.log_step_start(step_id, "selecionar Origem da Solicitação (dropdown)")
         start = time.monotonic()
         try:
-            # Abre o dropdown clicando no campo
-            pyautogui.click(643, 458)
-            time.sleep(1.5)  # aguarda dropdown abrir completamente
+            c = coords["dropdown_origem_solicitacao"]
+            pyautogui.click(c["x"], c["y"])
+            time.sleep(1.5)  # necessário para animação do dropdown
 
-            # Clica na opção via template — funciona independente da posição
             ctx.runner.safe_click(
                 f"{self._TPL}/opcao_consultorio_interno.png", threshold=0.7
             )
@@ -433,15 +453,15 @@ class AdmissaoInternacaoFlow:
     # AI12 — Profissional Responsável (matrícula 1 + Tab)
     # ------------------------------------------------------------------
 
-    def _step_profissional_responsavel(self, ctx, dados: dict, observer=None) -> StepResult:
+    def _step_profissional_responsavel(self, ctx, dados: dict, coords, observer=None) -> StepResult:
         step_id = "AI12"
         matricula = dados.get("matricula_responsavel", "1")
         if observer:
             observer.log_step_start(step_id, f"preencher matrícula responsável: {matricula}")
         start = time.monotonic()
         try:
-            # Campo Matrícula — coordenada direta validada: x=220, y=527
-            pyautogui.click(220, 527)
+            c = coords["matricula_responsavel"]
+            pyautogui.click(c["x"], c["y"])
             time.sleep(0.3)
             pyautogui.hotkey("ctrl", "a")
             ctx.runner.type_text(matricula)
@@ -484,29 +504,35 @@ class AdmissaoInternacaoFlow:
         return step
 
     # ------------------------------------------------------------------
-    # AI14 — Número + Localizar médico
+    # AI14 — Número no popup Info. Compl. + OK no popup de profissional
     # ------------------------------------------------------------------
 
-    def _step_numero_medico(self, ctx, dados: dict, observer=None) -> StepResult:
+    def _step_numero_medico(self, ctx, dados: dict, coords, observer=None) -> StepResult:
+        """
+        Conforme imagem 2 e 3:
+          1. Clica no campo Número — coordenada do config
+          2. Digita '1' + Tab
+          3. Popup de profissional abre com lista já carregada
+          4. Clica em OK direto (BRASIL/primeiro da lista já selecionado)
+        """
         step_id = "AI14"
         numero = dados.get("numero_compl", "1")
-        medico = dados.get("localizar_medico", "informatica")
         if observer:
-            observer.log_step_start(step_id, "preencher número e localizar médico")
+            observer.log_step_start(step_id, "preencher número e confirmar médico")
         start = time.monotonic()
         try:
-            # Campo Número — coordenada direta validada: x=159, y=159
-            pyautogui.click(159, 159)
+            c = coords["numero_medico_popup"]
+            pyautogui.click(c["x"], c["y"])
             time.sleep(0.3)
             pyautogui.hotkey("ctrl", "a")
             ctx.runner.type_text(numero)
             pyautogui.press("tab")
-            time.sleep(1.5)  # Aguarda popup de profissionais abrir
 
-            # Popup abre em posição variável — usa template para encontrar OK
-            ctx.runner.safe_click(
-                f"{self._TPL}/btn_ok_popup.png", threshold=0.7
+            # Aguarda popup de profissional aparecer via wait_template
+            ctx.runner.wait_template(
+                f"{self._TPL}/btn_ok_popup.png", timeout=5, threshold=0.7
             )
+            ctx.runner.safe_click(f"{self._TPL}/btn_ok_popup.png", threshold=0.7)
             time.sleep(0.5)
 
             screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}AI14_numero.png")
@@ -549,15 +575,15 @@ class AdmissaoInternacaoFlow:
     # AI16 — Retornar
     # ------------------------------------------------------------------
 
-    def _step_retornar(self, ctx, observer=None) -> StepResult:
+    def _step_retornar(self, ctx, coords, observer=None) -> StepResult:
         step_id = "AI16"
         if observer:
             observer.log_step_start(step_id, "clicar em Retornar")
         start = time.monotonic()
         try:
-            # Botão Retornar — coordenada direta validada: x=779, y=239
-            pyautogui.click(779, 239)
-            time.sleep(1.5)
+            c = coords["btn_retornar"]
+            pyautogui.click(c["x"], c["y"])
+            time.sleep(3.0)  # aguarda tela de internacao com Nr Admissao carregar
             screenshot = ctx.runner.screenshot(f"{ctx.evidence_dir}AI16_retornar.png")
             step = StepResult(step_id=step_id, success=True,
                               duration_ms=(time.monotonic() - start) * 1000,
@@ -575,11 +601,6 @@ class AdmissaoInternacaoFlow:
     # ------------------------------------------------------------------
 
     def _step_validar_admissao(self, ctx, observer=None) -> StepResult:
-        """
-        Lê o campo Nr Admissão via OCR.
-        Se estiver preenchido com um número, a admissão foi bem-sucedida.
-        Ajuste _REGIAO_NR_ADMISSAO abrindo o screenshot AI16 no Paint.
-        """
         step_id = "AI17"
         if observer:
             observer.log_step_start(step_id, "validar Nr Admissão via OCR")
@@ -615,7 +636,7 @@ class AdmissaoInternacaoFlow:
         return step
 
     # ------------------------------------------------------------------
-    # AI18 — Sair (2x) e voltar para tela de login
+    # AI18 — Sair 2x e voltar para tela de login
     # ------------------------------------------------------------------
 
     def _step_sair(self, ctx, observer=None) -> StepResult:

@@ -1,0 +1,95 @@
+sistema: si3_internacao
+tipo: desktop
+runner: opencv
+
+ambientes:
+  dev:
+    url: ''
+    confidence: 0.75
+
+credenciais:
+  usuario: ${SI3_USER}
+  senha: ${SI3_PASS}
+
+dados_faker:
+  - campo: paciente_id
+    tipo: fixo
+    valor: ${SI3_PACIENTE_ID}   # LGPD — nunca hardcode
+
+  - campo: unidade_funcional
+    tipo: fixo
+    valor: 'SC AMBULATORIO'
+
+  - campo: provedor
+    tipo: fixo
+    valor: 'SUS'
+
+  - campo: plano
+    tipo: fixo
+    valor: 'SUS'
+
+  - campo: obs
+    tipo: fixo
+    valor: 'teste realizado com automacao'
+
+  - campo: origem_tipo
+    tipo: fixo
+    valor: 'RESIDENCIA'
+
+  - campo: matricula_responsavel
+    tipo: fixo
+    valor: '1'
+
+  - campo: numero_compl
+    tipo: fixo
+    valor: '1'
+
+# ---------------------------------------------------------------------------
+# Coordenadas diretas — capturadas com scripts/posicao_mouse.py
+# Resolucao: 1366x768, sistema maximizado
+# Atualizar aqui quando mudar resolucao ou layout do Oracle Forms
+# ---------------------------------------------------------------------------
+coordenadas:
+
+  # AI05 — LOV campo Tipo do endereco
+  # btn_lov: botao [...] ao lado do campo Tipo
+  # campo_localizar / btn_localizar / btn_ok: dentro do popup da LOV
+  lov_tipo_endereco:
+    btn_lov_x: 197
+    btn_lov_y: 433
+    campo_localizar_x: 193
+    campo_localizar_y: 913
+    btn_localizar_x: 177
+    btn_localizar_y: 361
+    btn_ok_x: 295
+    btn_ok_y: 911
+
+  # AI09 — campo Obs
+  obs:
+    x: 108
+    y: 346
+
+  # AI10 — campo Tipo da Origem do Paciente
+  tipo_origem:
+    x: 50
+    y: 408
+
+  # AI11 — dropdown Origem da Solicitacao de Internacao
+  dropdown_origem_solicitacao:
+    x: 643
+    y: 458
+
+  # AI12 — campo Matricula do Responsavel
+  matricula_responsavel:
+    x: 220
+    y: 527
+
+  # AI14 — campo Numero dentro do popup Info. Compl.
+  numero_medico_popup:
+    x: 159
+    y: 159
+
+  # AI16 — botao Retornar
+  btn_retornar:
+    x: 779
+    y: 239

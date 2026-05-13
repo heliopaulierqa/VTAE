@@ -85,10 +85,10 @@ class ConfigLoader:
             config = ConfigLoader.carregar("msi3", ambiente="homologacao")
         """
 
-        # resolve ambiente: parâmetro > VTAE_ENV > "dev"  ← 2. adicionar estas 3 linhas
+        # resolve ambiente: parâmetro > VTAE_ENV > "dev"
         if ambiente is None:
             ambiente = os.environ.get("VTAE_ENV", "dev")
-            
+
         base_dir = configs_dir or cls._CONFIGS_DIR
         config_path = base_dir / sistema / "config.yaml"
 
@@ -148,9 +148,9 @@ class ConfigLoader:
         raw = yaml.safe_load((base_dir / sistema / "config.yaml").read_text())
         return list(raw.get("ambientes", {}).keys())
 
-    # ──────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────────────────
     # Internos — construção
-    # ──────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────────────────
 
     @classmethod
     def _construir(cls, data: dict, sistema: str,
@@ -233,11 +233,12 @@ class ConfigLoader:
             credenciais=credenciais_cfg,
             flows=data.get("flows", []),
             dados_schema=dados_schema,
+            coordenadas=data.get("coordenadas", {}),  # ← v0.5.4: centraliza coords do config.yaml
         )
 
-    # ──────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────────────────
     # Internos — variáveis de ambiente
-    # ──────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────────────────
 
     @classmethod
     def _carregar_env(cls, sistema_dir: Path) -> dict[str, str]:

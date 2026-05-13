@@ -1,0 +1,14 @@
+sistema: si3_cadastro_paciente
+tipo: desktop
+runner: opencv
+
+ambientes:
+  dev:
+    url: ''
+    confidence: 0.80
+
+credenciais:
+  usuario: ${SI3_USER}
+  senha: ${SI3_PASS}
+
+dados_faker: []

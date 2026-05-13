@@ -1,430 +1,211 @@
+# src/cli/run.py
 """
-VTAE CLI — Visual Test Automation Engine
-
-Uso:
-    vtae run --module sislab
-    vtae run --module sislab --env homologacao
-    vtae run --module sislab --retry 2
-    vtae run --test cadastro_funcionario
-    vtae run --all
-    vtae run --all --env homologacao
-    vtae systems
-    vtae systems --sistema sislab
-    vtae clean --days 7
-    vtae send --module sislab --to gestor@incor.org.br
-    vtae send --all --to a@x.com --to b@x.com
-    vtae send --module sislab --date 2026-05-03 --to fulano@incor.org.br
+CLI do VTAE — vtae run, vtae systems, vtae clean, vtae send.
+v0.5.4 — caminhos atualizados após remoção da pasta vtae/
 """
-
 import argparse
-import os
-import sys
 import subprocess
-import time
-from datetime import datetime, timedelta
+import sys
 from pathlib import Path
 
+from src.cli.summary import generate_summary
+from src.cli.send import enviar_relatorio
 
-MODULOS: dict[str, list[str]] = {
+
+MODULOS = {
     "sislab": [
-        "vtae/tests/integration/sislab/test_cadastro_funcionario_sislab.py",
+        "tests/integration/sislab/test_cadastro_funcionario_sislab.py",
     ],
     "si3": [
-        "vtae/tests/integration/si3/test_cadastro_paciente_si3.py",
-        "vtae/tests/integration/si3/test_admissao_internacao.py",
+        "tests/integration/si3/test_cadastro_paciente.py",
+        "tests/integration/si3/test_admissao_internacao.py",
     ],
     "msi3": [
-        "vtae/tests/integration/msi3/test_login_msi3.py",
-        "vtae/tests/integration/msi3/test_frequencia_aplicacao.py",
-        "vtae/tests/integration/msi3/test_tipo_anestesia.py",
+        "tests/integration/msi3/test_frequencia_aplicacao.py",
+        "tests/integration/msi3/test_tipo_anestesia.py",
     ],
 }
 
-TESTES: dict[str, str] = {
-    "cadastro_funcionario":  "vtae/tests/integration/sislab/test_cadastro_funcionario_sislab.py",
-    "cadastro_paciente":     "vtae/tests/integration/si3/test_cadastro_paciente.py",
-    "admissao_internacao":   "vtae/tests/integration/si3/test_admissao_internacao.py",
-    "login_msi3":            "vtae/tests/integration/msi3/test_login_msi3.py",
-    "frequencia_aplicacao":  "vtae/tests/integration/msi3/test_frequencia_aplicacao.py",
-    "tipo_anestesia":        "vtae/tests/integration/msi3/test_tipo_anestesia.py",
+TESTES = {
+    "login_si3":            "tests/integration/si3/test_login_real.py",
+    "cadastro_paciente":    "tests/integration/si3/test_cadastro_paciente.py",
+    "admissao_internacao":  "tests/integration/si3/test_admissao_internacao.py",
+    "cadastro_funcionario": "tests/integration/sislab/test_cadastro_funcionario_sislab.py",
+    "frequencia_aplicacao": "tests/integration/msi3/test_frequencia_aplicacao.py",
+    "tipo_anestesia":       "tests/integration/msi3/test_tipo_anestesia.py",
 }
 
-AMBIENTES_VALIDOS = {"dev", "homologacao", "producao"}
 
+def _rodar_pytest(arquivos, ambiente, retry):
+    existentes = [a for a in arquivos if Path(a).exists()]
+    ausentes   = [a for a in arquivos if not Path(a).exists()]
 
-def main():
-    parser = argparse.ArgumentParser(
-        prog="vtae",
-        description="VTAE — Visual Test Automation Engine",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Exemplos:
-  vtae run --module sislab
-  vtae run --module sislab --env homologacao
-  vtae run --module sislab --retry 2
-  vtae run --test cadastro_funcionario
-  vtae run --test admissao_internacao
-  vtae run --all --env producao
-  vtae systems
-  vtae systems --sistema sislab
-  vtae clean --days 7
-  vtae send --module sislab --to gestor@incor.org.br
-  vtae send --all --to a@x.com --to b@x.com
-        """,
-    )
-
-    sub = parser.add_subparsers(dest="command", metavar="comando")
-
-    # ── vtae run ──────────────────────────────────────────────────────
-    run_parser = sub.add_parser("run", help="Executa testes de integração")
-    run_group = run_parser.add_mutually_exclusive_group(required=True)
-    run_group.add_argument("--all", action="store_true", help="Executa todos os testes")
-    run_group.add_argument("--module", choices=MODULOS.keys(), metavar="SISTEMA")
-    run_group.add_argument("--test", choices=TESTES.keys(), metavar="TESTE")
-    run_parser.add_argument(
-        "--env", choices=AMBIENTES_VALIDOS, default="dev", metavar="AMBIENTE"
-    )
-    run_parser.add_argument(
-        "--retry", type=int, default=0, metavar="N",
-        help="Re-executa testes que falharam até N vezes extras (ex: --retry 2)"
-    )
-
-    # ── vtae systems ──────────────────────────────────────────────────
-    sys_parser = sub.add_parser("systems", help="Lista sistemas e ambientes disponíveis")
-    sys_parser.add_argument("--sistema", choices=MODULOS.keys(), metavar="SISTEMA")
-
-    # ── vtae clean ────────────────────────────────────────────────────
-    clean_parser = sub.add_parser("clean", help="Remove evidências antigas")
-    clean_parser.add_argument(
-        "--days", type=int, default=7, metavar="N",
-        help="Remove evidências com mais de N dias (padrão: 7)"
-    )
-    clean_parser.add_argument(
-        "--dry-run", action="store_true",
-        help="Mostra o que seria removido sem apagar"
-    )
-
-    # ── vtae send ─────────────────────────────────────────────────────
-    send_parser = sub.add_parser("send", help="Envia relatório por e-mail")
-    send_group = send_parser.add_mutually_exclusive_group(required=True)
-    send_group.add_argument("--all", action="store_true", help="Envia relatório de todos os módulos")
-    send_group.add_argument("--module", choices=MODULOS.keys(), metavar="SISTEMA")
-    send_parser.add_argument(
-        "--to", action="append", dest="destinatarios", metavar="EMAIL",
-        required=True, help="Destinatário (pode repetir: --to a@x.com --to b@x.com)"
-    )
-    send_parser.add_argument(
-        "--env", choices=AMBIENTES_VALIDOS, default="dev", metavar="AMBIENTE"
-    )
-    send_parser.add_argument(
-        "--date", default=None, metavar="YYYY-MM-DD",
-        help="Data da execução a enviar (padrão: hoje)"
-    )
-
-    args = parser.parse_args()
-
-    if args.command is None:
-        parser.print_help()
-        sys.exit(0)
-
-    if args.command == "run":
-        _cmd_run(args)
-    elif args.command == "systems":
-        _cmd_systems(args)
-    elif args.command == "clean":
-        _cmd_clean(args)
-    elif args.command == "send":
-        _cmd_send(args)
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# vtae run
-# ──────────────────────────────────────────────────────────────────────────────
-
-def _cmd_run(args):
-    env    = args.env
-    retry  = args.retry
-
-    if args.all:
-        arquivos  = [f for files in MODULOS.values() for f in files]
-        descricao = "todos os módulos"
-        titulo    = "Execução Completa"
-    elif args.module:
-        arquivos  = MODULOS[args.module]
-        descricao = f"módulo '{args.module}'"
-        titulo    = f"Módulo {args.module.upper()}"
-    else:
-        arquivos  = [TESTES[args.test]]
-        descricao = f"teste '{args.test}'"
-        titulo    = args.test.replace("_", " ").title()
-
-    existentes = [f for f in arquivos if Path(f).exists()]
-    faltando   = [f for f in arquivos if not Path(f).exists()]
-
-    if faltando:
+    if ausentes:
         print("[VTAE] Aviso — arquivos não encontrados (serão ignorados):")
-        for f in faltando:
-            print(f"  ✗ {f}")
+        for a in ausentes:
+            print(f"  ✗ {a}")
 
     if not existentes:
-        print(f"[VTAE] Nenhum arquivo de teste encontrado para {descricao}.")
+        print("[VTAE] Nenhum arquivo de teste encontrado.")
+        return 1
+
+    cmd = ["python", "-m", "pytest"] + existentes + ["-v", "--tb=short"]
+    ultimo_rc = 0
+    for i in range(retry + 1):
+        if i > 0:
+            print(f"\n[VTAE] Retry {i}/{retry}...")
+        ultimo_rc = subprocess.run(cmd).returncode
+        if ultimo_rc == 0:
+            break
+    return ultimo_rc
+
+
+def cmd_run(args):
+    ambiente = args.ambiente or "dev"
+    print("\n" + "=" * 60)
+    print("  VTAE — Visual Test Automation Engine")
+    print("=" * 60)
+    print(f"  Ambiente  : {ambiente}")
+
+    if args.all:
+        arquivos = [f for files in MODULOS.values() for f in files]
+        label = "todos os sistemas"
+    elif args.module:
+        if args.module not in MODULOS:
+            print(f"[VTAE] Módulo '{args.module}' não encontrado. Disponíveis: {list(MODULOS.keys())}")
+            sys.exit(1)
+        arquivos = MODULOS[args.module]
+        label = f"módulo '{args.module}'"
+    elif args.test:
+        if args.test not in TESTES:
+            print(f"[VTAE] Teste '{args.test}' não encontrado. Disponíveis: {list(TESTES.keys())}")
+            sys.exit(1)
+        arquivos = [TESTES[args.test]]
+        label = f"teste '{args.test}'"
+    else:
+        print("[VTAE] Especifique --all, --module ou --test.")
         sys.exit(1)
 
-    processo_env = os.environ.copy()
-    processo_env["VTAE_ENV"] = env
+    print(f"  Executando: {label}")
+    print(f"  Testes    : {len(arquivos)} arquivo(s)")
+    for a in arquivos:
+        print(f"    → {a}")
+    print("=" * 60 + "\n")
 
-    _print_header(env, descricao, existentes, retry)
+    rc = _rodar_pytest(arquivos, ambiente, args.retry)
 
-    # ── execução com retry ────────────────────────────────────────────
-    tentativa      = 0
-    max_tentativas = 1 + retry
-    returncode     = 1
-    arquivos_pendentes = list(existentes)
-
-    while tentativa < max_tentativas and arquivos_pendentes:
-        if tentativa > 0:
-            print(f"\n{'─'*60}")
-            print(f"  🔄 RETRY {tentativa}/{retry} — re-executando testes que falharam")
-            print(f"{'─'*60}\n")
-            time.sleep(2)
-
-        cmd = [sys.executable, "-m", "pytest", "-v", "-s"] + arquivos_pendentes
-        resultado = subprocess.run(cmd, env=processo_env)
-        returncode = resultado.returncode
-
-        if returncode == 0:
-            break
-
-        if tentativa < max_tentativas - 1:
-            arquivos_pendentes = _identificar_falhos(arquivos_pendentes)
-            if not arquivos_pendentes:
-                break
-
-        tentativa += 1
-
-    # ── relatório unificado ───────────────────────────────────────────
-    modulo_atual = "all" if args.all else (args.module if args.module else args.test)
-    _gerar_summary(existentes, env, titulo, returncode, modulo=modulo_atual)
-
-    # ── resultado final ───────────────────────────────────────────────
-    print(f"\n{'='*60}")
-    if returncode == 0:
-        if tentativa > 0:
-            print(f"  ✅ PASSOU (após {tentativa} retry) — {descricao} [{env}]")
-        else:
-            print(f"  ✅ PASSOU — {descricao} [{env}]")
-    else:
-        tentativas_str = f" após {tentativa} retries" if retry > 0 else ""
-        print(f"  ❌ FALHOU{tentativas_str} — {descricao} [{env}]")
-    print(f"{'='*60}\n")
-
-    sys.exit(returncode)
-
-
-def _print_header(env, descricao, existentes, retry):
-    print(f"\n{'='*60}")
-    print(f"  VTAE — Visual Test Automation Engine")
-    print(f"{'='*60}")
-    print(f"  Ambiente  : {env}")
-    print(f"  Executando: {descricao}")
-    print(f"  Testes    : {len(existentes)} arquivo(s)")
-    for f in existentes:
-        print(f"    → {f}")
-    if retry > 0:
-        print(f"  Retry     : até {retry}x em caso de falha")
-    print(f"{'='*60}\n")
-
-
-def _identificar_falhos(arquivos: list[str]) -> list[str]:
-    """
-    Identifica quais testes falharam na última execução lendo os execution.json.
-    Retorna apenas os arquivos de testes que falharam para re-executar.
-    """
-    hoje = datetime.now().strftime("%Y-%m-%d")
-    falhos = []
-
-    for arq in arquivos:
-        test_name = Path(arq).stem
-        json_path = Path(f"evidence/{hoje}/{test_name}/execution.json")
-        if json_path.exists():
-            try:
-                import json
-                with open(json_path) as f:
-                    data = json.load(f)
-                if data.get("status") != "PASSOU":
-                    falhos.append(arq)
-            except Exception:
-                falhos.append(arq)
-        else:
-            falhos.append(arq)
-
-    return falhos
-
-
-def _gerar_summary(arquivos: list[str], env: str,
-                   titulo: str, returncode: int,
-                   modulo: str = None):
-    """Coleta os execution.json e produz o summary.html."""
+    modulo = args.module or args.test or "all"
     try:
-        from src.cli.summary import generate_summary
+        from pathlib import Path as _P
+        import glob as _glob
+        from datetime import datetime as _dt
+        hoje = _dt.now().strftime("%Y-%m-%d")
+        json_paths = _glob.glob(f"evidence/{hoje}/**/execution.json", recursive=True)
+        if json_paths:
+            out = f"evidence/{hoje}/summary/{modulo}_{ambiente}.html"
+            _P(out).parent.mkdir(parents=True, exist_ok=True)
+            generate_summary(json_paths=json_paths, output_path=out,
+                             titulo=f"{modulo} [{ambiente}]", ambiente=ambiente)
+            print(f"\n📊 Relatório unificado: {out}")
+    except Exception:
+        pass
 
-        hoje      = datetime.now().strftime("%Y-%m-%d")
-        json_paths = []
-
-        for arq in arquivos:
-            test_name = Path(arq).stem
-            json_path = Path(f"evidence/{hoje}/{test_name}/execution.json")
-            if json_path.exists():
-                json_paths.append(str(json_path))
-
-        if not json_paths:
-            return
-
-        summary_dir  = f"evidence/{hoje}/summary"
-        summary_path = f"{summary_dir}/{titulo.lower().replace(' ', '_')}_{env}.html"
-
-        path = generate_summary(
-            json_paths=json_paths,
-            output_path=summary_path,
-            titulo=titulo,
-            ambiente=env,
-        )
-
-        if path:
-            print(f"\n📊 Relatório unificado: {path}")
-
-        if modulo:
+    if args.to:
+        for dest in args.to:
             try:
-                from src.cli.send import enviar_automatico
-                enviar_automatico(modulo, env)
-            except Exception:
-                pass
+                enviar_relatorio(modulo=modulo, ambiente=ambiente, destinatario=dest)
+            except Exception as e:
+                print(f"[VTAE] Erro ao enviar para {dest}: {e}")
 
-    except Exception as e:
-        print(f"[VTAE] Aviso — não foi possível gerar relatório unificado: {e}")
+    status = "✅ PASSOU" if rc == 0 else "❌ FALHOU"
+    print(f"\n{'=' * 60}")
+    print(f"  {status} — {label} [{ambiente}]")
+    print("=" * 60 + "\n")
+    sys.exit(rc)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# vtae systems
-# ──────────────────────────────────────────────────────────────────────────────
-
-def _cmd_systems(args):
+def cmd_systems(args):
+    from src.config import ConfigLoader
+    base = Path("configs")
     if args.sistema:
-        try:
-            from src.config import ConfigLoader
-            ambientes = ConfigLoader.listar_ambientes(
-                args.sistema, configs_dir=Path("vtae/configs")
-            )
-            print(f"\nSistema '{args.sistema}' — ambientes disponíveis:")
-            for amb in ambientes:
-                marker = "← padrão" if amb == "dev" else ""
-                print(f"  • {amb} {marker}")
-            print()
-        except Exception as e:
-            print(f"[VTAE] Erro ao listar ambientes de '{args.sistema}': {e}")
-            sys.exit(1)
+        ambientes = ConfigLoader.listar_ambientes(args.sistema, configs_dir=base)
+        print(f"\nAmbientes para '{args.sistema}':")
+        for a in ambientes:
+            print(f"  • {a}")
     else:
-        try:
-            from src.config import ConfigLoader
-            sistemas = ConfigLoader.listar_sistemas(configs_dir=Path("vtae/configs"))
-        except Exception:
-            sistemas = list(MODULOS.keys())
-
-        print(f"\nSistemas disponíveis ({len(sistemas)}):")
+        sistemas = ConfigLoader.listar_sistemas(configs_dir=base)
+        print("\nSistemas disponíveis:")
         for s in sistemas:
-            testes_do_sistema = MODULOS.get(s, [])
-            existentes = sum(1 for f in testes_do_sistema if Path(f).exists())
-            print(f"  • {s:<12} — {existentes}/{len(testes_do_sistema)} testes")
-        print()
-        print("Use 'vtae systems --sistema <nome>' para ver os ambientes.")
-        print()
+            print(f"  • {s}")
+    print()
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# vtae clean
-# ──────────────────────────────────────────────────────────────────────────────
-
-def _cmd_clean(args):
-    """Remove pastas de evidências com mais de N dias."""
-    days     = args.days
-    dry_run  = args.dry_run
-    base_dir = Path("evidence")
-
-    if not base_dir.exists():
+def cmd_clean(args):
+    import shutil
+    from datetime import datetime, timedelta
+    base = Path("evidence")
+    if not base.exists():
         print("[VTAE] Pasta evidence/ não encontrada.")
         return
-
-    cutoff = datetime.now() - timedelta(days=days)
-    removidos = []
-    tamanho_total = 0
-
-    for pasta in sorted(base_dir.iterdir()):
+    cutoff = datetime.now() - timedelta(days=args.days)
+    removidos = 0
+    for pasta in sorted(base.iterdir()):
         if not pasta.is_dir():
             continue
         try:
-            data_pasta = datetime.strptime(pasta.name, "%Y-%m-%d")
+            data = datetime.strptime(pasta.name, "%Y-%m-%d")
         except ValueError:
             continue
+        if data < cutoff:
+            if args.dry_run:
+                print(f"  [dry-run] removeria: {pasta}")
+            else:
+                shutil.rmtree(pasta)
+                removidos += 1
+    if not args.dry_run:
+        print(f"\n[VTAE] {removidos} pasta(s) removida(s).")
 
-        if data_pasta < cutoff:
-            size = sum(f.stat().st_size for f in pasta.rglob("*") if f.is_file())
-            tamanho_total += size
-            removidos.append((pasta, size))
 
-    if not removidos:
-        print(f"[VTAE] Nenhuma evidência com mais de {days} dias encontrada.")
-        return
+def cmd_send(args):
+    ambiente = args.ambiente or "dev"
+    modulo = args.module or "all"
+    if not args.to:
+        print("[VTAE] Especifique --to.")
+        sys.exit(1)
+    for dest in args.to:
+        try:
+            enviar_relatorio(modulo=modulo, ambiente=ambiente, destinatario=dest)
+            print(f"[VTAE] Relatório enviado para {dest}")
+        except Exception as e:
+            print(f"[VTAE] Erro: {e}")
 
-    print(f"\n{'='*60}")
-    print(f"  vtae clean — evidências com mais de {days} dias")
-    print(f"{'='*60}")
-    if dry_run:
-        print(f"  Modo: DRY RUN (nenhum arquivo será apagado)")
-    print(f"  Pastas encontradas: {len(removidos)}")
-    print(f"  Espaço a liberar: {tamanho_total / 1024 / 1024:.1f} MB")
-    print(f"{'─'*60}")
 
-    for pasta, size in removidos:
-        print(f"  {'[dry-run] ' if dry_run else ''}🗑  {pasta.name}  ({size/1024:.0f} KB)")
-        if not dry_run:
-            import shutil
-            shutil.rmtree(pasta)
+def main():
+    parser = argparse.ArgumentParser(prog="vtae")
+    sub = parser.add_subparsers(dest="command")
 
-    print(f"{'='*60}")
-    if dry_run:
-        print(f"  Execute sem --dry-run para apagar.")
+    p_run = sub.add_parser("run")
+    p_run.add_argument("--module"); p_run.add_argument("--test")
+    p_run.add_argument("--all", action="store_true")
+    p_run.add_argument("--env", dest="ambiente", default="dev")
+    p_run.add_argument("--retry", type=int, default=0)
+    p_run.add_argument("--to", action="append")
+
+    p_sys = sub.add_parser("systems")
+    p_sys.add_argument("--sistema")
+
+    p_clean = sub.add_parser("clean")
+    p_clean.add_argument("--days", type=int, default=30)
+    p_clean.add_argument("--dry-run", action="store_true")
+
+    p_send = sub.add_parser("send")
+    p_send.add_argument("--module"); p_send.add_argument("--all", action="store_true")
+    p_send.add_argument("--to", action="append", required=True)
+    p_send.add_argument("--env", dest="ambiente", default="dev")
+
+    args = parser.parse_args()
+    dispatch = {"run": cmd_run, "systems": cmd_systems, "clean": cmd_clean, "send": cmd_send}
+    if args.command in dispatch:
+        dispatch[args.command](args)
     else:
-        print(f"  ✅ {len(removidos)} pasta(s) removida(s) — {tamanho_total/1024/1024:.1f} MB liberados.")
-    print(f"{'='*60}\n")
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# vtae send
-# ──────────────────────────────────────────────────────────────────────────────
-
-def _cmd_send(args):
-    """Envia o relatório de uma execução por e-mail."""
-    from src.cli.send import enviar_relatorio
-
-    modulo = "all" if args.all else args.module
-
-    print(f"\n{'='*60}")
-    print(f"  VTAE — Envio de relatório")
-    print(f"{'='*60}")
-    print(f"  Módulo : {modulo}")
-    print(f"  Para   : {', '.join(args.destinatarios)}")
-    print(f"  Data   : {args.date or 'hoje'}")
-    print(f"{'='*60}\n")
-
-    ok = enviar_relatorio(
-        modulo=modulo,
-        destinatarios=args.destinatarios,
-        ambiente=args.env,
-        data=args.date,
-    )
-
-    sys.exit(0 if ok else 1)
-
-
-if __name__ == "__main__":
-    main()
+        parser.print_help()

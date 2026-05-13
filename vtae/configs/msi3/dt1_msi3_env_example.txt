@@ -1,6 +1,0 @@
-# vtae/configs/msi3/.env.example
-# Copie para .env e preencha com as credenciais reais.
-# NUNCA commite o .env — está no .gitignore.
-MSI3_USER=seu_usuario
-MSI3_PASS=sua_senha
-MSI3_URL=https://seu-servidor/apex/login

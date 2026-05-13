@@ -158,6 +158,9 @@ class SystemConfig:
     credenciais: CredenciaisConfig
     flows: list[str] = field(default_factory=list)
     dados_schema: list[DadoFakerConfig] = field(default_factory=list)
+    # Coordenadas diretas de campos — lidas da seção `coordenadas:` do config.yaml.
+    # Default {} garante retrocompatibilidade com sistemas que não usam coordenadas.
+    coordenadas: dict = field(default_factory=dict)
     _dados_cache: dict | None = field(default=None, repr=False)
 
     # ── Compatibilidade com FlowContext ──────────────────────────────────────
@@ -246,16 +249,16 @@ class SystemConfig:
         if transformacao == "sem_prefixo":
             import re
             return re.sub(
-                r'^(Dr\.|Dra\.|Sr\.|Sra\.|Prof\.|Profª\.|Prof°\.|Mr\.|Mrs\.|Ms\.)\s*',
+                r'^(Dr\.|Dra\.|Sr\.|Sra\.|Prof\.|Profª\.|Profº\.|Mr\.|Mrs\.|Ms\.)\s*',
                 '', valor
             ).strip()
 
         if transformacao == "sem_prefixo_upper":
             import re
             valor = re.sub(
-                r'^(Dr\.|Dra\.|Sr\.|Sra\.|Prof\.|Profª\.|Prof°\.|Mr\.|Mrs\.|Ms\.)\s*',
+                r'^(Dr\.|Dra\.|Sr\.|Sra\.|Prof\.|Profª\.|Profº\.|Mr\.|Mrs\.|Ms\.)\s*',
                 '', valor
             ).strip()
-            return valor.upper()  # remove prefixo E converte para maiúsculas
+            return valor.upper()
 
         return valor

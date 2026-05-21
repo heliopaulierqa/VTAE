@@ -1,5 +1,19 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
+
+class CausaFalha(Enum):
+    """Classificação da causa raiz de um step com falha."""
+    OCR_REGIAO          = "ocr_regiao"           # região OCR não calibrada ou vazia
+    OCR_LEITURA         = "ocr_leitura"          # OCR rodou mas não leu o esperado
+    TEMPLATE_NAO_ENCONTRADO = "template_nao_encontrado"  # safe_click/double_click falhou
+    TIMEOUT             = "timeout"              # wait_template excedeu o tempo
+    COORDENADA          = "coordenada"           # pyautogui.click em posição errada
+    AMBIENTE            = "ambiente"             # sistema não estava aberto/na tela correta
+    SISTEMA             = "sistema"              # erro inesperado do Oracle Forms
+    CONFIGURACAO        = "configuracao"         # campo ausente no config.yaml ou .env
+    ESTADO_AUSENTE      = "estado_ausente"       # paciente_id ou dado de jornada nao encontrado
+    DESCONHECIDA        = "desconhecida"         # exception não classificada
 
 
 @dataclass
@@ -11,6 +25,7 @@ class StepResult:
     duration_ms: float
     screenshot_path: str | None = None
     error: str | None = None
+    causa_falha: CausaFalha | None = None
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
     def __str__(self) -> str:
@@ -18,6 +33,8 @@ class StepResult:
         base = f"{status} [{self.step_id}] {self.duration_ms:.0f}ms"
         if self.error:
             base += f" | erro: {self.error}"
+        if self.causa_falha:    
+            base += f" | causa: {self.causa_falha.value}"
         return base
 
 

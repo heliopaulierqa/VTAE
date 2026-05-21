@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/Python-3.13%2B-blue)
 ![Versão](https://img.shields.io/badge/versão-0.5.6-purple)
 ![Testes](https://img.shields.io/badge/testes-372%20unitários-green)
-![Fase](https://img.shields.io/badge/fase-5a%20em%20andamento-orange)
+![Fase](https://img.shields.io/badge/fase-5b%20observabilidade-blue)
 
 ---
 
@@ -205,6 +205,9 @@ vtae run --module si3
 # todos os sistemas
 vtae run --all
 
+# repetir para validar estabilidade
+vtae run --test cadastro_paciente_jornada --repeat 3
+
 # ambiente e retry
 vtae run --module si3 --env homologacao --retry 2
 
@@ -259,7 +262,7 @@ runner = PlaywrightRunner(url=config.url, headless=False)
 | Sistema | Tipo | Runner | Flows | Status |
 |---|---|---|---|---|
 | SisLab | Desktop Oracle Forms | OpenCV | Login, CadastroFuncionario | ✅ |
-| SI3 | Desktop Oracle Forms | OpenCV | Login, CadastroPaciente | ✅ 21/22 steps |
+| SI3 | Desktop Oracle Forms | OpenCV | Login, CadastroPaciente (23 steps), AdmissaoInternacao (18 steps) | ✅ |
 | MSI3 | Web Oracle APEX 23.1 | Playwright + OpenCV | Login, FrequenciaAplicacao, TipoAnestesia | ✅ |
 
 ---
@@ -278,6 +281,7 @@ runner = PlaywrightRunner(url=config.url, headless=False)
 - URL vazia válida no `AmbienteConfig` para sistemas desktop
 - ID do paciente sempre via `.env` (LGPD — nunca hardcoded)
 - Coordenadas TODAS no `config.yaml` — nunca hardcoded no flow
+- Popups de erro aleatórios (FRM-*, HC-INCOR): `_fechar_popups_oracle()` — fecha se aparecer, ignora se não
 
 ### Oracle APEX / MSI3
 
@@ -338,16 +342,29 @@ config = ConfigLoader.carregar(
 | 3 | Arquitetura de engenharia (Clean Arch, CLI, ConfigLoader) | ✅ |
 | 4 | DSL expandida (fill_field, assert, loop, if/else) | ✅ |
 | 4b | Admissão de Internação SI3 (18 steps, LGPD) | ✅ |
-| 5a | CadastroPacienteFlow integração real — 21/22 steps | 🔵 Em andamento |
-| 5b | Observabilidade (enum CausaFalha, flakiness.json, health check) | 🔜 |
-| 6 | CI/CD Jenkins + RDP | 🔜 |
-| 7 | Portfólio profissional | 🔜 |
+| 5a | CadastroPacienteFlow integração real — 23/23 steps, 3x seguidas | ✅ |
+| 5b | Observabilidade (enum CausaFalha, flakiness.json, health check) | 🔵 Em andamento |
+| 5c | Jornada ambulatório completa (test_01–test_04) | 🔜 |
+| 6 | YOLO fine-tuning + integração OpenCVRunner | 🔜 |
+| 7 | CI/CD Jenkins + RDP | 🔜 |
+| 8 | Portfólio profissional | 🔜 |
 
 ---
 
 ## Changelog
 
+### v0.5.6c — 2026-05-21
+- `CadastroPacienteFlow` **23/23 steps passando 3x seguidas** — Fase 5a concluída ✅
+- `regioes_ocr` migrado para `config.yaml` — região OCR da matrícula configurável sem tocar no código
+- `schema.py` e `loader.py` atualizados — `SystemConfig` expõe `ctx.config.regioes_ocr`
+- `_fechar_popups_oracle()` — fecha popups FRM-*/HC-INCOR aleatórios sem falhar o teste
+- LOV de Comunicação corrigido — click no campo Localizar `(82,142)` antes de digitar
+- E-mail fixo `teste@teste.com` — evita validação de formato do SI3
+- `--repeat N` adicionado ao CLI — `vtae run --test X --repeat 3`
+- Aba Documentos com `pyperclip` — RG + Emissor + UF + Data + CPF + CNS via `ctrl+v`
+
 ### v0.5.6 — 2026-05-19
+
 - `CadastroPacienteFlow` 21/22 steps passando em integração real
 - Jornada completa: Login → Dados gerais → Endereço → Comunicação → Documentos → Gerar Matrícula
 - `pyperclip` para campos de grade Oracle Forms (aba Documentos)
@@ -385,5 +402,5 @@ config = ConfigLoader.carregar(
 |---|---|
 | `VTAE_Documentacao_Tecnica.docx` | Arquitetura, runners, matchers, exceções, padrões |
 | `VTAE_Manual_Criacao_Testes.docx` | Passo a passo detalhado para criar novos testes |
-| `VTAE_Continuacao_5a_v2.docx` | Prompt de continuação — estado atual da Fase 5a |
-| `VTAE_Roadmap_v055.docx` | Roadmap com fases e prioridades |
+| `VTAE_Prompt_Instrucao_Geral.md` | Prompt de instrução geral — estado atual do projeto |
+| `VTAE_Roadmap_v056.docx` | Roadmap com fases e prioridades |

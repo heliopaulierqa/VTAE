@@ -1,32 +1,68 @@
 """
-VTAE Observer — Fase 4: Observabilidade
-Responsável por logs estruturados, evidências organizadas e relatório de execução.
+VTAE Observer — Fase 5b: Observabilidade
+Responsavel por logs estruturados, evidencias organizadas e relatorio de execucao.
 Gera automaticamente execution.log, execution.json e report.html ao final.
+
+v0.5.6c:
+  - execution_id (UUID) por execucao — correlacao de logs (item 1)
+  - duracao media por step no flakiness.json (item 4)
+  - ambiente no execution.json: hostname, SO, resolucao (item 5)
 """
 
 import json
 import logging
 import os
+import platform
+import socket
+import uuid
 from datetime import datetime
 
 from src.core.result import FlowResult, StepResult
 
 
+def _coletar_ambiente() -> dict:
+    """Coleta informacoes do ambiente de execucao."""
+    ambiente = {
+        "hostname": socket.gethostname(),
+        "os": f"{platform.system()} {platform.release()}",
+        "python": platform.python_version(),
+        "resolucao": None,
+    }
+    try:
+        import ctypes
+        user32 = ctypes.windll.user32
+        ambiente["resolucao"] = f"{user32.GetSystemMetrics(0)}x{user32.GetSystemMetrics(1)}"
+    except Exception:
+        try:
+            import subprocess
+            out = subprocess.check_output(
+                ["xrandr", "--current"], text=True, timeout=3
+            )
+            for line in out.splitlines():
+                if "*" in line:
+                    res = line.strip().split()[0]
+                    ambiente["resolucao"] = res
+                    break
+        except Exception:
+            ambiente["resolucao"] = "desconhecida"
+    return ambiente
+
+
 class ExecutionObserver:
     """
-    Observador de execução do VTAE.
-    Registra logs estruturados (.log + .json) e gera relatório HTML automático.
+    Observador de execucao do VTAE.
+    Registra logs estruturados (.log + .json) e gera relatorio HTML automatico.
 
     Uso:
         observer = ExecutionObserver(test_name="test_login_real")
         ctx = FlowContext(runner=runner, config=config, evidence_dir=observer.evidence_dir)
-        # ... executa os flows ...
         observer.report(ctx)  # gera .log, .json e .html automaticamente
     """
 
     def __init__(self, test_name: str, base_dir: str = "evidence"):
         self.test_name = test_name
         self.started_at = datetime.now()
+        self.execution_id = str(uuid.uuid4())  # item 1: ID unico por execucao
 
         date_str = self.started_at.strftime("%Y-%m-%d")
         time_str = self.started_at.strftime("%H-%M-%S")
@@ -38,13 +74,21 @@ class ExecutionObserver:
         self._json_path = os.path.join(self.evidence_dir, "execution.json")
         self._html_path = os.path.join(self.evidence_dir, "report.html")
 
-        self._logger = self._setup_logger(time_str)
-        self._logger.info(f"Iniciando execução: {test_name}")
-        self._logger.info(f"Evidências em: {self.evidence_dir}")
+        self._ambiente = _coletar_ambiente()  # item 5: coleta ambiente uma vez
 
-    # ──────────────────────────────────────────────
-    # API pública
-    # ──────────────────────────────────────────────
+        self._logger = self._setup_logger(time_str)
+        self._logger.info(f"Iniciando execucao: {test_name}")
+        self._logger.info(f"execution_id: {self.execution_id}")
+        self._logger.info(f"Evidencias em: {self.evidence_dir}")
+        self._logger.info(
+            f"Ambiente: {self._ambiente['os']} | "
+            f"{self._ambiente['hostname']} | "
+            f"resolucao: {self._ambiente['resolucao']}"
+        )
+
+    # ----------------------------------------------------------------
+    # API publica
+    # ----------------------------------------------------------------
 
     def log_step_start(self, step_id: str, description: str = "") -> None:
         msg = f"[{step_id}] INICIANDO"
@@ -59,6 +103,8 @@ class ExecutionObserver:
             msg += f" | screenshot: {step.screenshot_path}"
         if step.error:
             msg += f" | erro: {step.error}"
+        if step.causa_falha:
+            msg += f" | causa: {step.causa_falha.value}"
 
         if step.success:
             self._logger.info(msg)
@@ -77,10 +123,10 @@ class ExecutionObserver:
 
     def report(self, ctx) -> str:
         """
-        Gera o relatório final:
-          - execution.log  (já escrito durante a execução)
-          - execution.json (dados estruturados)
-          - report.html    (relatório visual para gestão)
+        Gera o relatorio final:
+          - execution.log  (ja escrito durante a execucao)
+          - execution.json (dados estruturados com execution_id e ambiente)
+          - report.html    (relatorio visual para gestao)
 
         Retorna o caminho do HTML gerado.
         """
@@ -94,18 +140,20 @@ class ExecutionObserver:
 
         status = "PASSOU" if all_passed else "FALHOU"
         self._logger.info(
-            f"Execução finalizada — {status} | "
+            f"Execucao finalizada — {status} | "
             f"{total_steps - failed_steps}/{total_steps} steps OK | "
             f"{duration_s:.1f}s total"
         )
 
-        # ── JSON ──
+        # — JSON —
         report_data = {
+            "execution_id": self.execution_id,          # item 1
             "test_name": self.test_name,
             "status": status,
             "started_at": self.started_at.isoformat(),
             "finished_at": finished_at.isoformat(),
             "duration_seconds": round(duration_s, 2),
+            "ambiente": self._ambiente,                  # item 5
             "summary": {
                 "total_flows": len(all_flows),
                 "total_steps": total_steps,
@@ -124,6 +172,7 @@ class ExecutionObserver:
                             "duration_ms": round(s.duration_ms, 1),
                             "screenshot": s.screenshot_path,
                             "error": s.error,
+                            "causa_falha": s.causa_falha.value if s.causa_falha else None,
                             "timestamp": s.timestamp,
                         }
                         for s in f.steps
@@ -136,22 +185,77 @@ class ExecutionObserver:
         with open(self._json_path, "w", encoding="utf-8") as f:
             json.dump(report_data, f, ensure_ascii=False, indent=2)
 
-        self._logger.info(f"Relatório JSON salvo em: {self._json_path}")
+        self._logger.info(f"Relatorio JSON salvo em: {self._json_path}")
+        self._atualizar_flakiness(report_data)
 
-        # ── HTML ── gerado automaticamente
+        # — HTML — gerado automaticamente
         try:
             from src.core.report_generator import generate
             html_path = generate(self._json_path, self._html_path)
-            self._logger.info(f"Relatório HTML salvo em: {html_path}")
-            print(f"\n📊 Relatório HTML: {html_path}\n")
+            self._logger.info(f"Relatorio HTML salvo em: {html_path}")
+            print(f"\nRelatorio HTML: {html_path}\n")
         except Exception as e:
-            self._logger.warning(f"Não foi possível gerar relatório HTML: {e}")
+            self._logger.warning(f"Nao foi possivel gerar relatorio HTML: {e}")
 
         return self._html_path
 
-    # ──────────────────────────────────────────────
-    # Setup interno
-    # ──────────────────────────────────────────────
+    # ----------------------------------------------------------------
+    # Internos
+    # ----------------------------------------------------------------
+
+    def _atualizar_flakiness(self, report_data: dict) -> None:
+        """
+        Acumula historico de pass/fail por step_id em evidence/flakiness.json.
+        item 4: acumula tambem duracao media e maxima por step.
+        """
+        flakiness_path = os.path.join("evidence", "flakiness.json")
+
+        try:
+            with open(flakiness_path, encoding="utf-8") as f:
+                historico = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            historico = {}
+
+        for flow in report_data.get("flows", []):
+            for step in flow.get("steps", []):
+                sid = step["step_id"]
+                dur = step.get("duration_ms", 0) or 0
+
+                if sid not in historico:
+                    historico[sid] = {
+                        "pass_count": 0,
+                        "fail_count": 0,
+                        "last_failure": None,
+                        "last_causa_falha": None,
+                        "avg_duration_ms": 0.0,   # item 4
+                        "max_duration_ms": 0.0,   # item 4
+                        "total_duration_ms": 0.0, # item 4 — acumulador interno
+                        "total_execucoes": 0,     # item 4 — acumulador interno
+                    }
+
+                h = historico[sid]
+
+                # contadores pass/fail
+                if step["success"]:
+                    h["pass_count"] += 1
+                else:
+                    h["fail_count"] += 1
+                    h["last_failure"] = report_data["finished_at"]
+                    h["last_causa_falha"] = step.get("causa_falha")
+
+                # duracao media e maxima — item 4
+                h["total_execucoes"] += 1
+                h["total_duration_ms"] += dur
+                h["avg_duration_ms"] = round(
+                    h["total_duration_ms"] / h["total_execucoes"], 1
+                )
+                if dur > h["max_duration_ms"]:
+                    h["max_duration_ms"] = round(dur, 1)
+
+        with open(flakiness_path, "w", encoding="utf-8") as f:
+            json.dump(historico, f, ensure_ascii=False, indent=2)
+
+        self._logger.info(f"flakiness.json atualizado: {flakiness_path}")
 
     def _setup_logger(self, time_str: str) -> logging.Logger:
         logger_name = f"vtae.{self.test_name}.{time_str}"

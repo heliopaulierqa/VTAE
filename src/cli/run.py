@@ -1,9 +1,10 @@
 # src/cli/run.py
 """
-CLI do VTAE — vtae run, vtae systems, vtae clean, vtae send.
-v0.5.6b — --jornada implementado com encadeamento e estado_jornada.json
+CLI do VTAE — vtae run, vtae systems, vtae clean, vtae send, vtae flakiness.
+v0.5.6c — vtae flakiness: ranking de steps instáveis (item 3)
 """
 import argparse
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -34,17 +35,18 @@ TESTES = {
     "frequencia_aplicacao":      "tests/integration/msi3/test_frequencia_aplicacao.py",
     "tipo_anestesia":            "tests/integration/msi3/test_tipo_anestesia.py",
     "cadastro_paciente_jornada": "tests/integration/jornadas/ambulatorio/test_01_cadastro_paciente.py",
+    "admissao_ambulatorio_jornada": "tests/integration/jornadas/ambulatorio/test_02_admissao_ambulatorio.py",
 }
 
-# Jornadas: sequência ordenada de testes encadeados
+# Jornadas: sequencia ordenada de testes encadeados
 JORNADAS = {
     "ambulatorio": [
         "tests/integration/jornadas/ambulatorio/test_01_cadastro_paciente.py",
-        # test_02, test_03, test_04 — adicionar aqui quando criados (Fase 5c)
+        "tests/integration/jornadas/ambulatorio/test_02_admissao_ambulatorio.py",
     ],
 }
 
-# Mapa explícito: nome do teste → sistema para o health check
+# Mapa explicito: nome do teste -> sistema para o health check
 _MAPA_TESTE_SISTEMA = {
     "login_si3":                 "si3",
     "cadastro_paciente":         "si3",
@@ -65,7 +67,7 @@ def _rodar_pytest(arquivos, ambiente, retry, repeat=1):
     ausentes   = [a for a in arquivos if not Path(a).exists()]
 
     if ausentes:
-        print("[VTAE] Aviso — arquivos não encontrados (serão ignorados):")
+        print("[VTAE] Aviso — arquivos nao encontrados (serao ignorados):")
         for a in ausentes:
             print(f"  x {a}")
 
@@ -190,8 +192,6 @@ def cmd_jornada(args):
     Para imediatamente se qualquer teste falhar.
     Estado compartilhado via evidence/estado_jornada.json.
     """
-    import json
-
     jornada = args.jornada
     ambiente = args.ambiente or "dev"
 
@@ -211,7 +211,6 @@ def cmd_jornada(args):
         print(f"    {i}. {t}")
     print("=" * 60 + "\n")
 
-    # health check
     sistema = _MAPA_JORNADA_SISTEMA.get(jornada)
     if sistema:
         _health_check([sistema])
@@ -273,6 +272,90 @@ def cmd_jornada(args):
     print(f"\n  {status_final} — jornada '{jornada}' [{ambiente}]")
     print("=" * 60 + "\n")
     sys.exit(rc_final)
+
+
+def cmd_flakiness(args):
+    """
+    Exibe ranking de steps instáveis a partir do flakiness.json.
+    Uso: vtae flakiness
+         vtae flakiness --min-falhas 2
+         vtae flakiness --top 10
+    """
+    flakiness_path = Path("evidence/flakiness.json")
+
+    if not flakiness_path.exists():
+        print("[VTAE] flakiness.json nao encontrado. Execute pelo menos um teste primeiro.")
+        sys.exit(1)
+
+    try:
+        historico = json.loads(flakiness_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"[VTAE] Erro ao ler flakiness.json: {e}")
+        sys.exit(1)
+
+    if not historico:
+        print("[VTAE] flakiness.json vazio — nenhum historico ainda.")
+        sys.exit(0)
+
+    min_falhas = args.min_falhas if hasattr(args, "min_falhas") else 0
+    top = args.top if hasattr(args, "top") else 999
+
+    # calcula taxa de flakiness e ordena
+    linhas = []
+    for sid, dados in historico.items():
+        total = dados["pass_count"] + dados["fail_count"]
+        if total == 0:
+            continue
+        fail = dados["fail_count"]
+        if fail < min_falhas:
+            continue
+        taxa = (fail / total) * 100
+        avg_ms = dados.get("avg_duration_ms", 0)
+        max_ms = dados.get("max_duration_ms", 0)
+        ultima = dados.get("last_failure") or "-"
+        causa = dados.get("last_causa_falha") or "-"
+        linhas.append((taxa, fail, total, avg_ms, max_ms, ultima, causa, sid))
+
+    # ordena por taxa desc, depois por fail_count desc
+    linhas.sort(key=lambda x: (-x[0], -x[1]))
+    linhas = linhas[:top]
+
+    print("\n" + "=" * 70)
+    print("  VTAE — Flakiness Report")
+    print("=" * 70)
+    print(f"  {'Step':<10} {'Falhas':<8} {'Total':<8} {'Taxa%':<8} "
+          f"{'Avg ms':<10} {'Max ms':<10} {'Ultima Causa':<20} {'Ultima Falha'}")
+    print("-" * 70)
+
+    for taxa, fail, total, avg_ms, max_ms, ultima, causa, sid in linhas:
+        # indicador visual de severidade
+        if taxa >= 30:
+            indicador = "!!"
+        elif taxa >= 10:
+            indicador = " !"
+        else:
+            indicador = "  "
+
+        # formata data — pega apenas YYYY-MM-DD HH:MM
+        data_curta = ultima[:16] if ultima != "-" else "-"
+
+        print(f"  {indicador} {sid:<8} {fail:<8} {total:<8} {taxa:<8.1f} "
+              f"{avg_ms:<10.0f} {max_ms:<10.0f} {causa:<20} {data_curta}")
+
+    print("-" * 70)
+
+    # estatisticas globais
+    total_steps = len(historico)
+    steps_com_falha = sum(1 for d in historico.values() if d["fail_count"] > 0)
+    steps_flaky = sum(
+        1 for d in historico.values()
+        if d["fail_count"] > 0 and d["pass_count"] > 0
+    )
+    print(f"\n  Total de steps monitorados : {total_steps}")
+    print(f"  Steps com pelo menos 1 falha: {steps_com_falha}")
+    print(f"  Steps flaky (falhou E passou): {steps_flaky}")
+    print(f"\n  Arquivo: {flakiness_path.resolve()}")
+    print("=" * 70 + "\n")
 
 
 def cmd_systems(args):
@@ -356,8 +439,21 @@ def main():
     p_send.add_argument("--to", action="append", required=True)
     p_send.add_argument("--env", dest="ambiente", default="dev")
 
+    # item 3: vtae flakiness
+    p_flak = sub.add_parser("flakiness")
+    p_flak.add_argument("--min-falhas", type=int, default=0,
+                        help="Mostrar apenas steps com pelo menos N falhas")
+    p_flak.add_argument("--top", type=int, default=999,
+                        help="Mostrar apenas os N steps mais instáveis")
+
     args = parser.parse_args()
-    dispatch = {"run": cmd_run, "systems": cmd_systems, "clean": cmd_clean, "send": cmd_send}
+    dispatch = {
+        "run":       cmd_run,
+        "systems":   cmd_systems,
+        "clean":     cmd_clean,
+        "send":      cmd_send,
+        "flakiness": cmd_flakiness,
+    }
     if args.command in dispatch:
         dispatch[args.command](args)
     else:

@@ -54,10 +54,13 @@ Regra de popup Oracle Forms:
       pelo proprio step com _fechar_popups_oracle() — registra WARNING no log, nao falha
     - Popups INESPERADOS: o step lanca AssertionError manualmente quando necessario
     - O wrapper _step NAO verifica popup automaticamente — cada step e responsavel
+
+Estado da jornada:
+    - CP22 salva paciente_id via src.core.estado_jornada.salvar()
+    - test_02+ leem via src.core.estado_jornada.ler("paciente_id")
+    - Falha na leitura gera CausaFalha.ESTADO_AUSENTE
 """
 
-import json
-import pathlib
 import re
 import time
 from datetime import date, timedelta
@@ -66,28 +69,9 @@ import pyautogui
 import pyperclip
 
 from src.core.context import FlowContext
-from src.core.result import FlowResult, StepResult, CausaFalha
+from src.core.estado_jornada import salvar as _salvar_estado_jornada  # helper centralizado
+from src.core.result import CausaFalha, FlowResult, StepResult
 from src.vision.ocr import OcrHelper
-
-
-# Caminho do arquivo de estado compartilhado entre testes da jornada
-_ESTADO_JORNADA_PATH = pathlib.Path("evidence/estado_jornada.json")
-
-
-def _salvar_estado_jornada(chave: str, valor: str) -> None:
-    """Atualiza evidence/estado_jornada.json com a chave/valor fornecidos."""
-    _ESTADO_JORNADA_PATH.parent.mkdir(parents=True, exist_ok=True)
-    estado = {}
-    if _ESTADO_JORNADA_PATH.exists():
-        try:
-            estado = json.loads(_ESTADO_JORNADA_PATH.read_text(encoding="utf-8"))
-        except Exception:
-            estado = {}
-    estado[chave] = valor
-    _ESTADO_JORNADA_PATH.write_text(
-        json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
-    print(f"[estado_jornada] {chave} = {valor} -> {_ESTADO_JORNADA_PATH}")
 
 
 class CadastroPacienteFlow:
@@ -222,7 +206,7 @@ class CadastroPacienteFlow:
         Wrapper padrao para todos os steps.
         Nao verifica popup automaticamente — cada step e responsavel
         por tratar popups esperados dentro do proprio fn().
-        Classifica a CausaFalha automaticamente pelo tipo de excecao.
+        Classifica CausaFalha automaticamente pelo tipo de excecao.
         """
         if observer:
             observer.log_step_start(step_id, descricao)
@@ -235,11 +219,16 @@ class CadastroPacienteFlow:
                 screenshot_path=screenshot_path,
             )
         except AssertionError as e:
+            msg = str(e).lower()
+            if "estado_ausente" in msg:
+                causa = CausaFalha.ESTADO_AUSENTE
+            else:
+                causa = CausaFalha.SISTEMA
             step = StepResult(
                 step_id=step_id, success=False,
                 duration_ms=(time.monotonic() - start) * 1000,
                 error=str(e),
-                causa_falha=CausaFalha.SISTEMA,
+                causa_falha=causa,
             )
         except Exception as e:
             causa = CausaFalha.DESCONHECIDA
@@ -252,6 +241,8 @@ class CadastroPacienteFlow:
                 causa = CausaFalha.OCR_LEITURA
             elif "coordenada" in msg or isinstance(e, KeyError):
                 causa = CausaFalha.COORDENADA
+            elif "estado_ausente" in msg:
+                causa = CausaFalha.ESTADO_AUSENTE
             step = StepResult(
                 step_id=step_id, success=False,
                 duration_ms=(time.monotonic() - start) * 1000,
@@ -324,7 +315,6 @@ class CadastroPacienteFlow:
                                   dados.get("nacionalidade", "BRASILEIRA"))
             pyautogui.press("tab")
             time.sleep(2.0)
-            # Popup 1 - lista tipo de nacionalidade
             encontrou = ctx.runner.wait_template(f"{self._TPL}/btn_ok.png",
                                                   timeout=8.0, threshold=0.6)
             if encontrou:
@@ -332,7 +322,6 @@ class CadastroPacienteFlow:
             else:
                 pyautogui.press("enter")
             time.sleep(1.5)
-            # Popup 2 - UF/Estado de nascimento
             ctx.runner.type_text("SP")
             pyautogui.press("tab")
             time.sleep(0.5)
@@ -455,36 +444,32 @@ class CadastroPacienteFlow:
 
     def _step_documentos(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            # Aba Documentos ja vem ativa - nao precisa clicar na aba
             time.sleep(0.5)
 
-            # RG - linha 1 (tipo ja vem preenchido pelo SI3)
-            pyautogui.click(262, 424); time.sleep(0.3)  # Conteudo RG
+            pyautogui.click(262, 424); time.sleep(0.3)
             pyperclip.copy(dados.get("rg", "44643579X"))
             pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
-            pyautogui.click(637, 427); time.sleep(0.3)  # Orgao Emissor
+            pyautogui.click(637, 427); time.sleep(0.3)
             pyperclip.copy("SSP")
             pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
-            pyautogui.click(780, 426); time.sleep(0.3)  # UF
+            pyautogui.click(780, 426); time.sleep(0.3)
             pyperclip.copy("SP")
             pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
-            pyautogui.click(868, 424); time.sleep(0.3)  # Data Emissao
-            # sempre 30 dias atras - nunca anterior ao nascimento, nunca futuro
+            pyautogui.click(868, 424); time.sleep(0.3)
+            # sempre 30 dias atras — nunca anterior ao nascimento, nunca futuro
             data_emissao = (date.today() - timedelta(days=30)).strftime("%d/%m/%Y")
             pyperclip.copy(data_emissao)
             pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
-            # CIC (CPF) - linha 2 (tipo ja vem preenchido pelo SI3)
             cpf = dados["cpf"].replace(".", "").replace("-", "")
-            pyautogui.click(262, 450); time.sleep(0.3)  # Conteudo CIC
+            pyautogui.click(262, 450); time.sleep(0.3)
             pyperclip.copy(cpf)
             pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
-            # CNS - linha 3 (tipo ja vem preenchido pelo SI3)
-            pyautogui.click(257, 476); time.sleep(0.3)  # Conteudo CNS
+            pyautogui.click(257, 476); time.sleep(0.3)
             pyperclip.copy("726337961670004")
             pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
@@ -497,11 +482,9 @@ class CadastroPacienteFlow:
             time.sleep(0.5)
             end = dados.get("endereco", {})
 
-            # CEP + aguarda auto-preenchimento
             self._preencher_coord(ctx, "campo_cep", end.get("cep", "01310100"))
             pyautogui.press("tab"); time.sleep(2.5)
 
-            # OCR no campo Logradouro - verifica se auto-preencheu
             screenshot_cep = ctx.runner.screenshot(f"{ctx.evidence_dir}CP20_cep_check.png")
             logradouro_lido = OcrHelper.ler_regiao(screenshot_cep, (214, 424, 528, 444)).strip()
             print(f"[CP20] Logradouro apos CEP: '{logradouro_lido}'")
@@ -590,7 +573,7 @@ class CadastroPacienteFlow:
                 self._clicar_coord(ctx, "btn_gerar_matricula")
             time.sleep(2.0)
 
-            # 2. Salvar - coordenada direta confirmada (x:58, y:66)
+            # 2. Salvar
             pyautogui.click(58, 66); time.sleep(3.0)
 
             # Popup apos salvar e comportamento esperado — fechar silenciosamente
@@ -600,11 +583,11 @@ class CadastroPacienteFlow:
             # 3. Screenshot para OCR
             screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}CP22_matricula.png")
 
-            # 4. Le regiao OCR do config.yaml - secao regioes_ocr.matricula
+            # 4. Le regiao OCR do config.yaml
             r = ctx.config.regioes_ocr["matricula"]
             regiao_tuple = (r["x1"], r["y1"], r["x2"], r["y2"])
 
-            # 5. OCR - le a matricula na regiao configurada
+            # 5. OCR
             OcrHelper.salvar_debug(screenshot_path, regiao_tuple,
                                    f"{ctx.evidence_dir}CP22_ocr_debug.png")
             texto = OcrHelper.ler_regiao(screenshot_path, regiao_tuple)
@@ -619,7 +602,7 @@ class CadastroPacienteFlow:
             matricula = numeros[0]
             print(f"[CP22] Matricula gerada: {matricula}")
 
-            # 6. Salva para uso nos proximos testes da jornada
+            # 6. Salva via helper centralizado — disponivel para test_02+
             _salvar_estado_jornada("paciente_id", matricula)
 
             return screenshot_path

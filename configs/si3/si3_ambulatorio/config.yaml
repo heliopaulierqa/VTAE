@@ -1,0 +1,101 @@
+# configs/si3/si3_ambulatorio/config.yaml
+# AdmissaoAmbulatorioFlow — v0.5.7b — cenarios de provedor
+
+sistema: si3_ambulatorio
+tipo: desktop
+runner: opencv
+
+ambientes:
+  dev:
+    url: ''
+    confidence: 0.75
+    headless: false
+    timeout: 30
+
+credenciais:
+  usuario: ${SI3_USER}
+  senha: ${SI3_PASS}
+
+dados_faker: []  # sem faker — dados fixos para admissao ambulatorial
+
+dados:
+  unidade_funcional:  'SC MONITORIZACAO AMBULATORIAL'
+  declarante:         'TESTE AUTOMATIZADO'
+  especialidade:      'CAR - CARDIO GERAL'
+  obs:                'ADMISSAO REALIZADA COM FERRAMENTA DE AUTOMACAO DE TESTES'
+  origem_tipo:        'RESIDENCIA'
+  medico_nome:        'MEDICO'
+  codigo_proc:        'CARDIO'
+  complemento_proc:   'CASO NOVO'
+  profissional_proc:  'MEDICO'
+
+  # Cenario ativo — trocar para testar outro provedor:
+  #   sus | particular | incor_sis | convenio_allianz | convenio_unimed
+  cenario_provedor: 'ALLIANZ'
+
+  cenarios_provedor:
+
+    sus:
+      provedor:             'SUS'
+      plano:                'SUS'
+      numero_carteirinha:   ''
+      validade_carteirinha: ''
+
+    particular:
+      provedor:             'PARTICULAR'
+      plano:                'PARTICULAR'
+      numero_carteirinha:   ''
+      validade_carteirinha: ''
+
+    incor_sis:
+      provedor:             'INCOR SIS'
+      plano:                'INCOR - SIS'
+      numero_carteirinha:   ''
+      validade_carteirinha: ''
+
+    convenio_allianz:
+      provedor:             'ALLIANZ'
+      plano:                'EXCELLENCE'
+      numero_carteirinha:   '54354354353'
+      validade_carteirinha: '30/07/2028'
+
+    convenio_unimed:
+      provedor:             'UNIMED SEGURADORA'
+      plano:                'CORPORATIVO COMPLETO - APARTAMENTO'
+      numero_carteirinha:   '54354354353'
+      validade_carteirinha: '30/07/2028'
+
+coordenadas:
+
+  # AB04 — Tipo Endereco + salvar
+  campo_tipo_endereco_amb:    { x: 149, y: 434 }
+
+  # AB02 — campo Identificador na tela de pesquisa do Ambulatorio
+  campo_identificador_amb:    { x: 530, y: 180 }
+
+  # AB08 — Declarante / Especialidade
+  campo_declarante:           { x: 47,  y: 282 }
+  campo_especialidade:        { x: 340, y: 280 }
+
+  # AB09 — Obs
+  campo_obs_amb:              { x: 74,  y: 348 }
+
+  # AB10 — Origem do Paciente
+  campo_origem_tipo:          { x: 57,  y: 408 }
+
+  # AB11 — Medico Responsavel (campo Nome)
+  campo_medico_nome:          { x: 235, y: 471 }
+
+  # AB12 — Lista de Procedimentos
+  campo_codigo_proc:          { x: 59,  y: 242 }
+  campo_complemento_proc:     { x: 481, y: 240 }
+  campo_profissional_proc:    { x: 591, y: 240 }
+
+  # AB15 — Sair
+  btn_sair_1:                 { x: 509, y: 62  }
+  btn_sair_2:                 { x: 20,  y: 574 }
+
+regioes_ocr:
+
+  # AB14 — Nr Admissao — calibrar com Paint apos primeira execucao
+  nr_admissao_amb:    { x1: 10, y1: 40, x2: 200, y2: 70 }

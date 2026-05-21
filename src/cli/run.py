@@ -33,10 +33,11 @@ TESTES = {
     "cadastro_funcionario": "tests/integration/sislab/test_cadastro_funcionario_sislab.py",
     "frequencia_aplicacao": "tests/integration/msi3/test_frequencia_aplicacao.py",
     "tipo_anestesia":       "tests/integration/msi3/test_tipo_anestesia.py",
+    "cadastro_paciente_jornada": "tests/integration/jornadas/ambulatorio/test_01_cadastro_paciente.py",
 }
 
 
-def _rodar_pytest(arquivos, ambiente, retry):
+def _rodar_pytest(arquivos, ambiente, retry, repeat=1):
     existentes = [a for a in arquivos if Path(a).exists()]
     ausentes   = [a for a in arquivos if not Path(a).exists()]
 
@@ -49,7 +50,7 @@ def _rodar_pytest(arquivos, ambiente, retry):
         print("[VTAE] Nenhum arquivo de teste encontrado.")
         return 1
 
-    cmd = ["python", "-m", "pytest"] + existentes + ["-v", "--tb=short"]
+    cmd = ["python", "-m", "pytest"] + existentes + ["-v", "--tb=short", f"--count={repeat}"]
     ultimo_rc = 0
     for i in range(retry + 1):
         if i > 0:
@@ -86,13 +87,14 @@ def cmd_run(args):
         print("[VTAE] Especifique --all, --module ou --test.")
         sys.exit(1)
 
-    print(f"  Executando: {label}")
+    repeat_label = f" × {args.repeat}" if args.repeat > 1 else ""
+    print(f"  Executando: {label}{repeat_label}")
     print(f"  Testes    : {len(arquivos)} arquivo(s)")
     for a in arquivos:
         print(f"    → {a}")
     print("=" * 60 + "\n")
 
-    rc = _rodar_pytest(arquivos, ambiente, args.retry)
+    rc = _rodar_pytest(arquivos, ambiente, args.retry, args.repeat)
 
     modulo = args.module or args.test or "all"
     try:
@@ -189,6 +191,7 @@ def main():
     p_run.add_argument("--all", action="store_true")
     p_run.add_argument("--env", dest="ambiente", default="dev")
     p_run.add_argument("--retry", type=int, default=0)
+    p_run.add_argument("--repeat", type=int, default=1)
     p_run.add_argument("--to", action="append")
 
     p_sys = sub.add_parser("systems")

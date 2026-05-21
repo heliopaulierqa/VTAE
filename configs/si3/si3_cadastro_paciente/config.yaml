@@ -1,3 +1,6 @@
+# configs/si3/si3_cadastro_paciente/config.yaml
+# CadastroPacienteFlow — v0.5.6 — coordenadas calibradas 19/05/2026
+
 sistema: si3_cadastro_paciente
 tipo: desktop
 runner: opencv
@@ -5,10 +8,206 @@ runner: opencv
 ambientes:
   dev:
     url: ''
-    confidence: 0.80
+    confidence: 0.75
+    headless: false
+    timeout: 30
 
 credenciais:
   usuario: ${SI3_USER}
   senha: ${SI3_PASS}
 
-dados_faker: []
+dados_faker:
+  - campo: nome
+    tipo: faker
+    metodo: name
+    transformacao: sem_prefixo_upper
+
+  - campo: nome_social
+    tipo: faker
+    metodo: name
+    transformacao: sem_prefixo_upper
+
+  - campo: nome_pai
+    tipo: faker
+    metodo: name
+    transformacao: sem_prefixo_upper
+
+  - campo: nome_mae
+    tipo: faker
+    metodo: name
+    transformacao: sem_prefixo_upper
+
+  - campo: cpf
+    tipo: faker
+    metodo: cpf
+    transformacao: sem_pontuacao
+
+  - campo: email
+    tipo: faker
+    metodo: email
+
+  - campo: celular
+    tipo: fixo
+    valor: '11948657895'
+
+  - campo: sexo
+    tipo: random
+    opcoes: ['M', 'F']
+
+  - campo: hora
+    tipo: fixo
+    valor: '00:00'
+
+  - campo: cor_etnia
+    tipo: fixo
+    valor: 'PARDA'
+
+  - campo: nacionalidade
+    tipo: fixo
+    valor: 'BRASILEIRA'
+
+  - campo: religiao
+    tipo: fixo
+    valor: 'CATOLICO'
+
+  - campo: estado_civil
+    tipo: fixo
+    valor: 'SOLTEIRO'
+
+  - campo: ocupacao
+    tipo: fixo
+    valor: 'PROFESSOR DE ENSINO PRE ESCOLAR'
+
+  - campo: situacao_familiar
+    tipo: fixo
+    valor: 'VIVE SO'
+
+  - campo: tipo_deficiencia
+    tipo: fixo
+    valor: ''
+
+  - campo: escolaridade
+    tipo: fixo
+    valor: 'SUPERIOR COMPLETO'
+
+  - campo: frequenta_escola
+    tipo: fixo
+    valor: 'Sim'
+
+  - campo: conjuge
+    tipo: fixo
+    valor: ''
+
+  - campo: responsavel
+    tipo: fixo
+    valor: ''
+
+  - campo: rg
+    tipo: fixo
+    valor: '1234567'
+
+  - campo: cns
+    tipo: fixo
+    valor: ''
+
+  - campo: endereco
+    tipo: fixo
+    valor:
+      cep:         '01310100'
+      tipo:        'AVENIDA'
+      logradouro:  'DR. ENEAS CARVALHO DE AGUIAR'
+      numero:      '44'
+      complemento: 'Cadastro de Teste'
+      uf:          'SP'
+      municipio:   'SAO PAULO'
+      bairro:      'CERQUEIRA CESAR'
+      referencia:  'Proximo ao centro'
+
+coordenadas:
+
+  # CP02 - Tela de Pesquisa
+  campo_pesquisa_nome:              { x: 170,  y: 180  }
+
+  # CP04 - Nome Social
+  campo_nome_social:                { x: 38,   y: 201  }
+
+  # CP05 - Data Nascimento + Hora
+  campo_data_nascimento:            { x: 382,  y: 201  }
+  campo_hora:                       { x: 481,  y: 201  }
+
+  # CP06 - Sexo
+  campo_sexo:                       { x: 551,  y: 201  }
+
+  # CP07 - Nacionalidade
+  campo_nacionalidade:              { x: 676,  y: 200  }
+  btn_ok_nacion_coord:              { x: 708,  y: 324  }
+  btn_ok_nacion_popup2:             { x: 461,  y: 363  }
+
+  # CP08-CP11 - Mãe, Pai, Cônjuge, Responsável
+  campo_mae:                        { x: 33,   y: 244  }
+  campo_pai:                        { x: 240,  y: 243  }
+  campo_conjuge:                    { x: 447,  y: 243  }
+  campo_responsavel:                { x: 660,  y: 247  }
+
+  # CP12-CP17 - Dados sociais
+  campo_cor_etnia:                  { x: 45,   y: 287  }
+  campo_religiao:                   { x: 228,  y: 288  }
+  campo_estado_civil:               { x: 416,  y: 288  }
+  campo_ocupacao:                   { x: 593,  y: 289  }
+  campo_situacao_familiar:          { x: 35,   y: 330  }
+  campo_tipo_deficiencia:           { x: 320,  y: 330  }
+  campo_escolaridade:               { x: 591,  y: 330  }
+  campo_frequenta_escola:           { x: 907,  y: 329  }
+
+  # Abas de navegação (fallback quando template não encontra)
+  aba_documentos:                   { x: 63,   y: 361  }
+  aba_enderecos:                    { x: 140,  y: 359  }
+  aba_comunicacao:                  { x: 219,  y: 361  }
+
+  # CP21 - Aba Documentos
+  campo_rg:                         { x: 330,  y: 425  }
+  campo_cpf:                        { x: 264,  y: 450  }
+  campo_cns:                        { x: 240,  y: 472  }
+
+  # CP19 - Aba Endereços
+  campo_cep:                        { x: 57,   y: 435  }
+  campo_tipo_endereco:              { x: 136,  y: 437  }
+  campo_logradouro:                 { x: 223,  y: 432  }
+  campo_numero_endereco:            { x: 571,  y: 437  }
+  campo_complemento_endereco:       { x: 643,  y: 435  }
+  campo_uf_endereco:                { x: 221,  y: 487  }
+  campo_municipio_endereco:         { x: 505,  y: 489  }
+  campo_bairro:                     { x: 60,   y: 542  }
+  campo_referencia_endereco:        { x: 528,  y: 541  }
+  campo_pais_endereco:              { x: 134,  y: 462  }
+
+  # CP20 - Aba Comunicação
+  campo_comunicacao_prioridade_l1:  { x: 58,   y: 454  }
+  campo_comunicacao_lov_l1:         { x: 254,  y: 452  }
+  campo_comunicacao_numero_l1:      { x: 287,  y: 455  }
+  campo_comunicacao_prioridade_l2:  { x: 59,   y: 481  }
+  campo_comunicacao_lov_l2:         { x: 254,  y: 477  }
+  campo_comunicacao_numero_l2:      { x: 286,  y: 415  }
+
+  # CP22 - Gerar Matrícula / Salvar / Sair
+  btn_gerar_matricula:              { x: 894,  y: 653 }
+  btn_sair_1:                       { x: 511,  y: 64  }
+  btn_sair_2:                       { x: 512,  y: 67  }
+  btn_sair_menu:                    { x: 18,   y: 572 }
+
+regioes_ocr:
+
+  nome:                    { x1: 37,  y1: 155, x2: 440, y2: 175 }
+  data_nascimento:         { x1: 340, y1: 193, x2: 460, y2: 210 }
+  hora:                    { x1: 460, y1: 193, x2: 530, y2: 210 }
+  sexo:                    { x1: 530, y1: 193, x2: 620, y2: 210 }
+  cor_etnia:               { x1: 32,  y1: 280, x2: 174, y2: 297 }
+  nacionalidade:           { x1: 620, y1: 193, x2: 830, y2: 210 }
+  nome_mae:                { x1: 31,  y1: 238, x2: 224, y2: 253 }
+  frequenta_escola:        { x1: 863, y1: 324, x2: 960, y2: 335 }
+  rg:                      { x1: 50,  y1: 444, x2: 188, y2: 460 }
+  cpf:                     { x1: 50,  y1: 420, x2: 193, y2: 436 }
+  cns:                     { x1: 55,  y1: 466, x2: 187, y2: 482 }
+  celular:                 { x1: 275, y1: 449, x2: 432, y2: 462 }
+  email:                   { x1: 276, y1: 474, x2: 433, y2: 487 }
+  matricula:               { x1: 557, y1: 148, x2: 626, y2: 172 }

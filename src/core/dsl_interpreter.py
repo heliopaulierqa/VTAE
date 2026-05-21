@@ -1,4 +1,4 @@
-"""
+﻿"""
 DSL Interpreter — v0.5.3
 Executa testes definidos em YAML sem necessidade de código Python.
 
@@ -200,7 +200,7 @@ class DSLInterpreter:
             elif sistema == "msi3":
                 from src.flows.msi3.login_flow_msi3 import LoginFlowMsi3 as LoginFlow
             else:
-                from vtae.flows.login_flow import LoginFlow  # type: ignore[import]
+                from src.flows.login_flow import LoginFlow  # type: ignore[import]
         except ImportError as exc:
             raise StepError(f"LoginFlow não encontrado para sistema '{sistema}': {exc}") from exc
         flow_result = LoginFlow().execute(self.ctx, observer=self.observer)

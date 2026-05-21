@@ -161,6 +161,10 @@ class SystemConfig:
     # Coordenadas diretas de campos — lidas da seção `coordenadas:` do config.yaml.
     # Default {} garante retrocompatibilidade com sistemas que não usam coordenadas.
     coordenadas: dict = field(default_factory=dict)
+    # Regiões OCR — lidas da seção `regioes_ocr:` do config.yaml.
+    # Cada entrada: { x1: int, y1: int, x2: int, y2: int }
+    # Default {} garante retrocompatibilidade com sistemas que não usam OCR.
+    regioes_ocr: dict = field(default_factory=dict)
     _dados_cache: dict | None = field(default=None, repr=False)
 
     # ── Compatibilidade com FlowContext ──────────────────────────────────────

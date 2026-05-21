@@ -1,4 +1,4 @@
-"""
+﻿"""
 VTAE — vtae send
 Envia o relatório HTML de uma execução por e-mail.
 
@@ -462,7 +462,7 @@ def enviar_automatico(modulo: str,
                                else list(MODULOS.keys())))
 
         for sistema in sistemas_do_modulo:
-            yaml_path = Path(f"vtae/configs/{sistema}/config.yaml")
+            yaml_path = Path(f"configs/{sistema}/config.yaml")
             if not yaml_path.exists():
                 continue
 

@@ -1,11 +1,11 @@
-
+﻿
 # vtae/flows/cadastro_orientação_flow.py
 import time
 import pyautogui
 
-from vtae.core.context import FlowContext
-from vtae.core.result import FlowResult, StepResult
-from vtae.core.apex_helper import ApexHelper
+from src.core.context import FlowContext
+from src.core.result import FlowResult, StepResult
+from src.core.apex_helper import ApexHelper
 
 
 class CadastrarOrientacao:

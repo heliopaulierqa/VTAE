@@ -1,6 +1,6 @@
 # tests/conftest.py
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from src.runners.base_runner import BaseRunner
 from src.core.context import FlowContext
 
@@ -17,6 +17,23 @@ class _MockConfig:
     @property
     def confidence(self):
         return 0.8
+
+
+@pytest.fixture(autouse=True)
+def mock_sleep():
+    """
+    Intercepta TODOS os time.sleep() em qualquer módulo src.*
+    sem precisar de pytest-mock — usa unittest.mock.patch diretamente.
+
+    autouse=True: aplicado automaticamente em todos os testes unitários
+    sem precisar declarar a fixture explicitamente.
+
+    Cobre os dois padrões usados nos flows:
+      - import time / time.sleep(x)     → patch("time.sleep")
+      - from time import sleep / sleep() → patch já cobre via módulo
+    """
+    with patch("time.sleep", return_value=None):
+        yield
 
 
 @pytest.fixture

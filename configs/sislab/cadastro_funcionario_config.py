@@ -1,4 +1,4 @@
-# vtae/configs/sislab/cadastro_funcionario_config.py
+﻿# configs/sislab/cadastro_funcionario_config.py
 from faker import Faker
 
 _fake = Faker("pt_BR")

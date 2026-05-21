@@ -1,9 +1,9 @@
-# vtae/flows/cadastro_funcionario_flow_sislab.py
+﻿# vtae/flows/cadastro_funcionario_flow_sislab.py
 import time
 import pyautogui
-from vtae.core.context import FlowContext
-from vtae.core.ocr_helper import OcrHelper
-from vtae.core.result import FlowResult, StepResult
+from src.core.context import FlowContext
+from src.core.ocr_helper import OcrHelper
+from src.core.result import FlowResult, StepResult
 
 
 class CadastroFuncionarioFlowSislab:

@@ -3,13 +3,25 @@ opencv-python
 pyautogui
 pillow
 numpy
+pyperclip          # colar via clipboard em campos de grade Oracle Forms
+
+# ── OCR ──
+pytesseract        # leitura de texto em screenshots (requer Tesseract instalado no SO)
 
 # ── Web (PlaywrightRunner) ──
 playwright
 
+# ── Dados de teste ──
+Faker              # geração de dados falsos (nome, CPF, email, etc.)
+
 # ── Testes ──
 pytest
 pytest-cov
+pytest-html        # relatório HTML de execução
+pytest-metadata
 
 # ── YAML ──
 pyyaml>=6.0
+
+# ── Utilitários ──
+python-dotenv      # leitura de .env (credenciais)

@@ -1,4 +1,4 @@
-# vtae/tests/integration/si3/test_login_real.py
+﻿# vtae/tests/integration/si3/test_login_real.py
 """
 Teste de integração — Login SI3
 
@@ -22,7 +22,7 @@ from vtae.flows.login_flow import LoginFlow
 def test_login_real():
     config = ConfigLoader.carregar(
         "si3_cadastro_paciente",
-        configs_dir=pathlib.Path("vtae/configs/si3"),
+        configs_dir=pathlib.Path("configs/si3"),
     )
 
     observer = ExecutionObserver(test_name="test_login_si3")

@@ -1,4 +1,4 @@
-"""
+﻿"""
 PlaywrightRunner — runner para sistemas web.
 Usa Playwright para controle de browser no lugar do OpenCV.
 
@@ -12,7 +12,7 @@ import time
 
 from playwright.sync_api import sync_playwright, Page, Browser, Playwright
 
-from vtae.core.base_runner import BaseRunner
+from src.runners.base_runner import BaseRunner
 from src.core.types import RunnerError
 
 

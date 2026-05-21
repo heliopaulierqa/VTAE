@@ -1,7 +1,7 @@
-import time
+﻿import time
 
-from vtae.core.context import FlowContext
-from vtae.core.result import FlowResult, StepResult
+from src.core.context import FlowContext
+from src.core.result import FlowResult, StepResult
 
 
 class LoginFlowSisLab:

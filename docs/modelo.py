@@ -53,8 +53,8 @@ import json
 import pathlib
 import re
 import time
+
 import pyautogui
-import pyperclip
 
 from src.core.context import FlowContext
 from src.core.result import FlowResult, StepResult
@@ -90,6 +90,9 @@ class CadastroPacienteFlow:
 
     FLOW_NAME = "CadastroPacienteFlow"
     _TPL = "templates/si3/cadastro_paciente"
+
+    # Região OCR para leitura da matrícula gerada (ajuste se necessário)
+    _REGIAO_MATRICULA = (507, 139, 667, 169)
 
     # ──────────────────────────────────────────────────────────────────
     # execute
@@ -184,23 +187,6 @@ class CadastroPacienteFlow:
             pyautogui.click(x, y)
         time.sleep(0.5)
 
-    def _fechar_popups_oracle(self, ctx) -> None:
-        """Fecha popups de erro Oracle Forms (FRM-* / HC-INCOR) se aparecerem.
-        Tenta até 3 vezes com timeout curto — se não achar, segue em frente."""
-        for _ in range(6):
-            try:
-                encontrou = ctx.runner.wait_template(
-                    f"{self._TPL}/btn_ok_erro.png",
-                    timeout=2.0, threshold=0.6,
-                )
-                if encontrou:
-                    ctx.runner.safe_click(f"{self._TPL}/btn_ok_erro.png", threshold=0.6)
-                    time.sleep(0.5)
-                else:
-                    break
-            except Exception:
-                break
-
     def _step(self, step_id: str, descricao: str, fn, observer) -> StepResult:
         """Wrapper padrão para todos os steps."""
         if observer:
@@ -250,6 +236,10 @@ class CadastroPacienteFlow:
             ctx.runner.wait_template(f"{self._TPL}/campo_nome_social.png",
                                      timeout=15.0, threshold=0.7)
             time.sleep(0.5)
+            # Clica no campo Nome (principal) e Tab para foco correto
+            self._clicar_coord(ctx, "campo_nome")
+            pyautogui.press("tab")
+            time.sleep(0.3)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP03_novo.png")
         return self._step("CP03", "clicar em Novo", fn, observer)
 
@@ -269,7 +259,7 @@ class CadastroPacienteFlow:
     def _step_data_nascimento(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
             # campos pequenos na mesma linha — coordenada direta
-            self._preencher_coord(ctx, "campo_data_nascimento", dados["data_nascimento"])
+            self._preencher_coord(ctx, "campo_data_nasc", dados["data_nascimento"])
             self._preencher_coord(ctx, "campo_hora", dados.get("hora", "00:00"))
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP05_data.png")
         return self._step("CP05", "Data Nascimento + Hora", fn, observer)
@@ -282,7 +272,7 @@ class CadastroPacienteFlow:
 
     def _step_nacionalidade(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            self._preencher_coord(ctx, "campo_nacionalidade",
+            self._preencher_coord(ctx, "campo_nacion",
                                   dados.get("nacionalidade", "BRASILEIRA"))
             pyautogui.press("tab")
             time.sleep(2.0)
@@ -341,29 +331,15 @@ class CadastroPacienteFlow:
             time.sleep(0.3)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP12_cor.png")
         return self._step("CP12", "Cor/Etnia", fn, observer)
-    
 
     def _step_religiao(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
             # Dropdown — digita a primeira letra e Tab confirma
-            self._preencher_coord(ctx, "campo_religiao", dados.get("religiao", "CATOLICA"))
+            self._preencher_coord(ctx, "campo_religiao", dados.get("religiao", "CATOLIC"))
             pyautogui.press("tab")
-            time.sleep(1.5) # aguarda o popup de religião carregar
-
-            encontrou = ctx.runner.wait_template(
-                f"{self._TPL}/btn_ok.png",
-                timeout=8.0,
-                threshold=0.6,
-            )
-            if encontrou:
-                ctx.runner.safe_click(f"{self._TPL}/btn_ok.png", threshold=0.6)
-            else:
-                pyautogui.press("enter")  # fallback caso template não apareça
-
-            time.sleep(0.5)
+            time.sleep(0.3)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP13_religiao.png")
         return self._step("CP13", "Religião", fn, observer)
-    
 
     def _step_estado_civil(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
@@ -385,8 +361,8 @@ class CadastroPacienteFlow:
 
     def _step_situacao_familiar(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            self._preencher_coord(ctx, "campo_situacao_familiar",
-                                  dados.get("situacao_familiar", "SEM INFORMACAO"))
+            self._preencher_coord(ctx, "campo_sit_familiar",
+                                  dados.get("situacao_familiar", "FAMILIA"))
             pyautogui.press("tab")
             time.sleep(0.3)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP16_sit_familiar.png")
@@ -394,35 +370,26 @@ class CadastroPacienteFlow:
 
     def _step_tipo_deficiencia(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            self._preencher_coord(ctx, "campo_tipo_deficiencia",
-                                  dados.get("tipo_deficiencia", ""))
+            self._preencher_coord(ctx, "campo_tipo_defic",
+                                  dados.get("tipo_deficiencia", "SEM DEFICI"))
             pyautogui.press("tab")
             time.sleep(0.3)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP17_defic.png")
         return self._step("CP17", "Tipo de Deficiência", fn, observer)
-    
-
 
     def _step_escolaridade(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
             self._preencher_coord(ctx, "campo_escolaridade",
-                                  dados.get("escolaridade", "SUPERIOR INCOMPLETO"))
+                                  dados.get("escolaridade", "SUPERIOR"))
             pyautogui.press("tab")
-            time.sleep(1.5)  # aguarda popup de LOV abrir
-
-            encontrou = ctx.runner.wait_template(
-                f"{self._TPL}/btn_ok.png",
-                timeout=8.0,
-                threshold=0.6,
-            )
-            if encontrou:
-                ctx.runner.safe_click(f"{self._TPL}/btn_ok.png", threshold=0.6)
-            else:
-                pyautogui.press("enter")  # fallback
-
-            time.sleep(0.5)
+            time.sleep(0.3)
+            # Campo Frequenta Escola (dropdown logo após)
+            self._preencher_coord(ctx, "campo_freq_escola",
+                                  dados.get("frequenta_escola", "NAO"))
+            pyautogui.press("tab")
+            time.sleep(0.3)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP18_escolar.png")
-        return self._step("CP18", "Escolaridade", fn, observer)
+        return self._step("CP18", "Escolaridade + Frequenta Escola", fn, observer)
 
     # ──────────────────────────────────────────────────────────────────
     # Steps CP19–CP21: Abas
@@ -430,82 +397,59 @@ class CadastroPacienteFlow:
 
     def _step_documentos(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            # Aba Documentos já vem ativa — não precisa clicar na aba
+            # Clicar na aba Documentos
+            self._clicar_aba(ctx, "aba_documentos.png", "aba_documentos")
             time.sleep(0.5)
 
-            # RG — linha 1 (tipo já vem preenchido pelo SI3)
-            pyautogui.click(262, 424); time.sleep(0.3)  # Conteúdo RG
-            pyperclip.copy(dados.get("rg", "44643579X"))
-            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
-
-            pyautogui.click(637, 427); time.sleep(0.3)  # Órgão Emissor
-            pyperclip.copy("SSP")
-            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
-
-            pyautogui.click(780, 426); time.sleep(0.3)  # UF
-            pyperclip.copy("SP")
-            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
-
-            pyautogui.click(868, 424); time.sleep(0.3)  # Data Emissão
-            pyperclip.copy("12/05/1990")
-            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
-
-            # CIC (CPF) — linha 2 (tipo já vem preenchido pelo SI3)
+            # CPF (CIC) — sem pontuação
             cpf = dados["cpf"].replace(".", "").replace("-", "")
-            pyautogui.click(262, 450); time.sleep(0.3)  # Conteúdo CIC
-            pyperclip.copy(cpf)
-            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            self._preencher_coord(ctx, "campo_cpf", cpf)
+            pyautogui.press("tab")
+            time.sleep(0.3)
 
-            # CNS — linha 3 (tipo já vem preenchido pelo SI3)
-            pyautogui.click(257, 476); time.sleep(0.3)  # Conteúdo CNS
-            pyperclip.copy("726337961670004")
-            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            # RG
+            self._preencher_coord(ctx, "campo_rg", dados.get("rg", ""))
+            pyautogui.press("tab")
+            time.sleep(0.3)
+
+            # CNS (Cartão Nacional de Saúde)
+            self._preencher_coord(ctx, "campo_cns", dados.get("cns", ""))
+            pyautogui.press("tab")
+            time.sleep(0.3)
 
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP19_docs.png")
-        return self._step("CP19", "Aba Documentos: RG + CPF + CNS", fn, observer)
+        return self._step("CP19", "Aba Documentos: CPF + RG + CNS", fn, observer)
 
     def _step_enderecos(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
+            # Clicar na aba Endereços
             self._clicar_aba(ctx, "aba_enderecos.png", "aba_enderecos")
             time.sleep(0.5)
+
             end = dados.get("endereco", {})
-
-            # CEP + aguarda auto-preenchimento
-            self._preencher_coord(ctx, "campo_cep", end.get("cep", "01310100"))
-            pyautogui.press("tab"); time.sleep(2.5)
-
-            # OCR no campo Logradouro — verifica se auto-preencheu
-            screenshot_cep = ctx.runner.screenshot(f"{ctx.evidence_dir}CP19_cep_check.png")
-            logradouro_lido = OcrHelper.ler_regiao(screenshot_cep, (214, 424, 528, 444)).strip()
-            print(f"[CP19] Logradouro após CEP: '{logradouro_lido}'")
-
-            if logradouro_lido:
-                print("[CP19] Auto-preenchimento OK — preenchendo apenas Número e Complemento")
-                self._preencher_coord(ctx, "campo_numero_endereco",      end.get("numero",      "44"))
-                pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, "campo_complemento_endereco", end.get("complemento", "CADASTRO DE TESTE"))
-                pyautogui.press("tab"); time.sleep(0.3)
-            else:
-                print("[CP19] Auto-preenchimento falhou — preenchendo todos os campos")
-                self._preencher_coord(ctx, "campo_tipo_endereco",        end.get("tipo",        "AVENIDA"))
-                pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, "campo_logradouro",           end.get("logradouro",  "DR. ENEAS CARVALHO DE AGUIAR"))
-                pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, "campo_numero_endereco",      end.get("numero",      "44"))
-                pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, "campo_complemento_endereco", end.get("complemento", "CADASTRO DE TESTE"))
-                pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, "campo_pais_endereco",        end.get("pais",        "BRASIL"))
-                pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, "campo_uf_endereco",          end.get("uf",          "SP"))
-                pyautogui.press("tab"); time.sleep(0.3)
-                pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, "campo_municipio_endereco",   end.get("municipio",   "SAO PAULO"))
-                pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, "campo_bairro",               end.get("bairro",      "BELA VISTA"))
-                pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, "campo_referencia_endereco",  end.get("referencia",  "PROXIMO AO CENTRO"))
-                pyautogui.press("tab"); time.sleep(0.3)
+            self._preencher_coord(ctx, "campo_cep",         end.get("cep",         "01310100"))
+            pyautogui.press("tab"); time.sleep(0.3)
+            self._preencher_coord(ctx, "campo_tipo_logr",   end.get("tipo",        "AVENIDA"))
+            pyautogui.press("tab"); time.sleep(0.3)
+            self._preencher_coord(ctx, "campo_logradouro",  end.get("logradouro",  "DR. ENEAS CARVALHO DE AGUIAR"))
+            pyautogui.press("tab"); time.sleep(0.3)
+            self._preencher_coord(ctx, "campo_numero",      end.get("numero",      "44"))
+            pyautogui.press("tab"); time.sleep(0.3)
+            self._preencher_coord(ctx, "campo_complemento", end.get("complemento", "CADASTRO DE TESTE"))
+            pyautogui.press("tab"); time.sleep(0.3)
+            # campo_tipo_endereco já vem preenchido (RESIDENCIAL) — pular
+            self._preencher_coord(ctx, "campo_pais",        end.get("pais",        "BRASIL"))
+            pyautogui.press("tab"); time.sleep(0.3)
+            self._preencher_coord(ctx, "campo_uf",          end.get("uf",          "SP"))
+            pyautogui.press("tab"); time.sleep(0.3)
+            self._preencher_coord(ctx, "campo_estado",      end.get("estado",      "SAO PAULO"))
+            pyautogui.press("tab"); time.sleep(0.3)
+            self._preencher_coord(ctx, "campo_municipio",   end.get("municipio",   "SAO PAULO"))
+            pyautogui.press("tab"); time.sleep(0.3)
+            self._preencher_coord(ctx, "campo_bairro",      end.get("bairro",      "BELA VISTA"))
+            pyautogui.press("tab"); time.sleep(0.3)
+            self._preencher_coord(ctx, "campo_ref",         end.get("referencia",  "PROXIMO AO CENTRO"))
+            pyautogui.press("tab"); time.sleep(0.3)
 
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP20_endereco.png")
         return self._step("CP20", "Aba Endereços", fn, observer)
@@ -519,36 +463,25 @@ class CadastroPacienteFlow:
             com = dados.get("comunicacao", {})
 
             # Linha 1 — celular
-            self._preencher_coord(ctx, "campo_comunicacao_prioridade_l1", "1")
+            self._preencher_coord(ctx, "campo_com_prioridade_1", "1")
             pyautogui.press("tab"); time.sleep(0.2)
-            pyautogui.click(*self._coord(ctx, "campo_comunicacao_lov_l1")); time.sleep(1.5)
-            pyautogui.click(82, 142); time.sleep(0.3)
-            ctx.runner.type_text("CELULAR")
-            pyautogui.click(113, 354); time.sleep(1.0)
-            pyautogui.click(221, 355); time.sleep(0.5)
-            self._preencher_coord(ctx, "campo_comunicacao_numero_l1",com.get("celular", dados.get("celular", "")))
+            self._preencher_coord(ctx, "campo_com_tipo_1", "CELULAR")
+            pyautogui.press("tab"); time.sleep(0.2)
+            self._preencher_coord(ctx, "campo_com_numero_1",
+                                  com.get("celular", dados.get("celular", "")))
             pyautogui.press("tab"); time.sleep(0.3)
-           
-          
+
             # Linha 2 — e-mail
-            self._preencher_coord(ctx, "campo_comunicacao_prioridade_l2", "2")
+            self._preencher_coord(ctx, "campo_com_prioridade_2", "2")
             pyautogui.press("tab"); time.sleep(0.2)
-            pyautogui.click(*self._coord(ctx, "campo_comunicacao_lov_l2")); time.sleep(1.5)
-            pyautogui.click(82, 142); time.sleep(0.3)
-            ctx.runner.type_text("E-MAIL")
-            pyautogui.click(113, 354); time.sleep(1.0)
-            pyautogui.click(221, 355); time.sleep(0.5)
-            self._preencher_coord(ctx, "campo_comunicacao_numero_l2", "teste@teste.com")
-            pyautogui.press("tab"); time.sleep(0.3)           
+            self._preencher_coord(ctx, "campo_com_tipo_2", "E-MAIL")
+            pyautogui.press("tab"); time.sleep(0.2)
+            self._preencher_coord(ctx, "campo_com_numero_2",
+                                  com.get("email", dados.get("email", "")))
+            pyautogui.press("tab"); time.sleep(0.3)
 
-         
-
-            # Salvar antes de gerar matrícula
-            pyautogui.click(58, 66); time.sleep(2.5)
-            self._fechar_popups_oracle(ctx)
-
-            return ctx.runner.screenshot(f"{ctx.evidence_dir}CP20_comunicacao.png")
-        return self._step("CP20", "Aba Comunicação: celular + e-mail", fn, observer)
+            return ctx.runner.screenshot(f"{ctx.evidence_dir}CP21_comunicacao.png")
+        return self._step("CP21", "Aba Comunicação: celular + e-mail", fn, observer)
 
     # ──────────────────────────────────────────────────────────────────
     # Step CP22: Gerar Matrícula + Salvar + OCR + estado_jornada.json
@@ -563,35 +496,31 @@ class CadastroPacienteFlow:
                 self._clicar_coord(ctx, "btn_gerar_matricula")
             time.sleep(2.0)
 
-            # 2. Salvar — coordenada direta confirmada (x:58, y:66)
-            pyautogui.click(58, 66); time.sleep(3.0)
+            # 2. Salvar
+            try:
+                ctx.runner.safe_click(f"{self._TPL}/btn_salvar.png", threshold=0.7)
+            except Exception:
+                self._clicar_coord(ctx, "btn_salvar")
+            time.sleep(2.5)
 
             # 3. Screenshot para OCR
             screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}CP22_matricula.png")
 
-            # 4. Lê região OCR do config.yaml — seção regioes_ocr.matricula
-            r = ctx.config.regioes_ocr["matricula"]
-            regiao_tuple = (r["x1"], r["y1"], r["x2"], r["y2"])
-
-            # 5. OCR — lê a matrícula na região configurada
-            # Salva debug sempre (visível no report.html mesmo quando passa)
-            OcrHelper.salvar_debug(screenshot_path, regiao_tuple,
-                                   f"{ctx.evidence_dir}CP22_ocr_debug.png")
-            texto = OcrHelper.ler_regiao(screenshot_path, regiao_tuple)
+            # 4. OCR — lê a matrícula na região configurada
+            texto = OcrHelper.ler_regiao(screenshot_path, self._REGIAO_MATRICULA)
             numeros = re.findall(r"\d+", texto)
             if not numeros:
-                OcrHelper.salvar_debug(screenshot_path, regiao_tuple,
+                OcrHelper.salvar_debug(screenshot_path, self._REGIAO_MATRICULA,
                                        f"{ctx.evidence_dir}CP22_ocr_debug.png")
                 raise AssertionError(
                     f"Matrícula não gerada ou OCR não leu.\n"
                     f"Texto lido: '{texto}'\n"
-                    f"Região usada: {regiao_tuple}\n"
-                    f"Veja CP22_ocr_debug.png e ajuste regioes_ocr.matricula no config.yaml."
+                    f"Veja CP22_ocr_debug.png e ajuste _REGIAO_MATRICULA."
                 )
             matricula = numeros[0]
             print(f"[CP22] Matrícula gerada: {matricula}")
 
-            # 6. Salva para uso nos próximos testes da jornada
+            # 5. Salva para uso nos próximos testes da jornada
             _salvar_estado_jornada("paciente_id", matricula)
 
             return screenshot_path

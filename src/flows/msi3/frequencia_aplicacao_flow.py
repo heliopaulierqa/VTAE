@@ -1,4 +1,4 @@
-# vtae/flows/frequencia_aplicacao_flow.py
+﻿# vtae/flows/frequencia_aplicacao_flow.py
 import time
 import pyautogui
 
@@ -185,7 +185,7 @@ class FrequenciaAplicacaoFlow:
             observer.log_step_start(step_id, "clicar em Frequência de Aplicação")
         start = time.monotonic()
         try:
-            from vtae.runners.opencv_runner import OpenCVRunner
+            from src.runners.opencv_runner import OpenCVRunner
             cv = OpenCVRunner(confidence=0.7)
             cv.safe_click("templates/msi3/cadastros_basicos/frequencia_aplicacao.png")
 
@@ -212,7 +212,7 @@ class FrequenciaAplicacaoFlow:
             observer.log_step_start(step_id, "clicar em Novo Cadastro")
         start = time.monotonic()
         try:
-            from vtae.runners.opencv_runner import OpenCVRunner
+            from src.runners.opencv_runner import OpenCVRunner
             cv = OpenCVRunner(confidence=0.7)
             cv.safe_click("templates/msi3/cadastros_basicos/btn_novo_cadastro.png")
 
@@ -245,7 +245,7 @@ class FrequenciaAplicacaoFlow:
             observer.log_step_start(step_id, "preencher campos do formulário")
         start = time.monotonic()
         try:
-            from vtae.runners.opencv_runner import OpenCVRunner
+            from src.runners.opencv_runner import OpenCVRunner
             cv = OpenCVRunner(confidence=0.6)
 
             time.sleep(1)
@@ -293,7 +293,7 @@ class FrequenciaAplicacaoFlow:
             observer.log_step_start(step_id, "preencher Horário Padrão")
         start = time.monotonic()
         try:
-            from vtae.runners.opencv_runner import OpenCVRunner
+            from src.runners.opencv_runner import OpenCVRunner
             cv = OpenCVRunner(confidence=0.7)
 
             if dados.get("hora"):
@@ -336,7 +336,7 @@ class FrequenciaAplicacaoFlow:
             observer.log_step_start(step_id, "clicar em Inserir")
         start = time.monotonic()
         try:
-            from vtae.runners.opencv_runner import OpenCVRunner
+            from src.runners.opencv_runner import OpenCVRunner
             cv = OpenCVRunner(confidence=0.7)
             cv.safe_click("templates/msi3/formulario/btn_inserir.png")
             time.sleep(1)
@@ -378,7 +378,7 @@ class FrequenciaAplicacaoFlow:
             )
         start = time.monotonic()
         try:
-            from vtae.runners.opencv_runner import OpenCVRunner
+            from src.runners.opencv_runner import OpenCVRunner
             cv = OpenCVRunner(confidence=0.6)
 
             time.sleep(1)
@@ -425,7 +425,7 @@ class FrequenciaAplicacaoFlow:
             observer.log_step_start(step_id, "clicar em Confirmar e validar na grade")
         start = time.monotonic()
         try:
-            from vtae.runners.opencv_runner import OpenCVRunner
+            from src.runners.opencv_runner import OpenCVRunner
             cv = OpenCVRunner(confidence=0.7)
             cv.safe_click("templates/msi3/formulario/btn_confirmar.png")
 

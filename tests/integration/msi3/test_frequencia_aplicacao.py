@@ -1,11 +1,11 @@
 import pytest
 from faker import Faker
-from vtae.runners.playwright_runner import PlaywrightRunner
-from vtae.core.context import FlowContext
-from vtae.core.observer import ExecutionObserver
-from vtae.configs.msi3.login_config import LoginConfigMsi3
-from vtae.flows.login_flow_msi3 import LoginFlowMsi3
-from vtae.flows.frequencia_aplicacao_flow import FrequenciaAplicacaoFlow
+from src.runners.playwright_runner import PlaywrightRunner
+from src.core.context import FlowContext
+from src.core.observer import ExecutionObserver
+from configs.msi3.login_config import LoginConfigMsi3
+from src.flows.msi3.login_flow_msi3 import LoginFlowMsi3
+from src.flows.msi3.frequencia_aplicacao_flow import FrequenciaAplicacaoFlow
 
 fake = Faker("pt_BR")
 

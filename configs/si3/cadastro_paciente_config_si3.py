@@ -1,4 +1,4 @@
-# vtae/configs/si3/paciente_config.py
+﻿# configs/si3/paciente_config.py
 from faker import Faker
 
 _fake = Faker("pt_BR")

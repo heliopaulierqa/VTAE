@@ -1,95 +1,227 @@
-sistema: si3_internacao
+# configs/si3/si3_cadastro_paciente/config.yaml
+# CadastroPacienteFlow — Jornada Ambulatório Fase 5a — v0.5.5
+#
+# Como carregar:
+#   config = ConfigLoader.carregar(
+#       "si3_cadastro_paciente",
+#       configs_dir=pathlib.Path("configs/si3"),
+#   )
+
+sistema: si3_cadastro_paciente
 tipo: desktop
 runner: opencv
 
 ambientes:
   dev:
-    url: ''
+    url: ''          # vazio para sistemas desktop
     confidence: 0.75
+    headless: false
+    timeout: 30
 
 credenciais:
   usuario: ${SI3_USER}
   senha: ${SI3_PASS}
 
+# ---------------------------------------------------------------------------
+# dados_faker
+#
+# data_nascimento e hora são gerados no teste via Faker (faixa de idade
+# controlada) e injetados em dados antes de chamar o flow.
+# ---------------------------------------------------------------------------
 dados_faker:
-  - campo: paciente_id
-    tipo: fixo
-    valor: ${SI3_PACIENTE_ID}   # LGPD — nunca hardcode
+  - campo: nome
+    tipo: faker
+    metodo: name
+    transformacao: sem_prefixo_upper
 
-  - campo: unidade_funcional
-    tipo: fixo
-    valor: 'SC AMBULATORIO'
+  - campo: cpf
+    tipo: faker
+    metodo: cpf
+    transformacao: sem_pontuacao      # CPF sem . e - (Oracle Forms com máscara)
 
-  - campo: provedor
-    tipo: fixo
-    valor: 'SUS'
+  - campo: email
+    tipo: faker
+    metodo: email
 
-  - campo: plano
-    tipo: fixo
-    valor: 'SUS'
+  - campo: celular
+    tipo: faker
+    metodo: phone_number
 
-  - campo: obs
-    tipo: fixo
-    valor: 'teste realizado com automacao'
+  - campo: nome_mae
+    tipo: faker
+    metodo: name
+    transformacao: sem_prefixo_upper
 
-  - campo: origem_tipo
-    tipo: fixo
-    valor: 'RESIDENCIA'
+  - campo: sexo
+    tipo: random
+    opcoes: ['M', 'F']
 
-  - campo: matricula_responsavel
+  - campo: cor_etnia
     tipo: fixo
-    valor: '1'
+    valor: 'PARDA'
 
-  - campo: numero_compl
+  - campo: nacionalidade
     tipo: fixo
-    valor: '1'
+    valor: 'BRASILEIRA'
+
+  - campo: naturalidade_uf
+    tipo: fixo
+    valor: 'SP'
+
+  - campo: naturalidade_municipio
+    tipo: fixo
+    valor: 'SAO PAULO'
+
+  - campo: religiao
+    tipo: fixo
+    valor: 'CATOLICISMO'
+
+  - campo: estado_civil
+    tipo: fixo
+    valor: 'SOLTEIRO'
+
+  - campo: ocupacao
+    tipo: fixo
+    valor: 'ANALISTA DE RH'
+
+  - campo: situacao_familiar
+    tipo: fixo
+    valor: 'MORA SOZINHO'
+
+  - campo: tipo_deficiencia
+    tipo: fixo
+    valor: 'NENHUMA'
+
+  - campo: escolaridade
+    tipo: fixo
+    valor: 'SUPERIOR COMPLETO'
+
+  - campo: frequenta_escola
+    tipo: fixo
+    valor: 'N'
+
+  - campo: endereco
+    tipo: fixo
+    valor:
+      cep: '01310100'
+      logradouro: 'DR. ENEAS CARVALHO DE AGUIAR'
+      numero: '44'
+      uf: 'SP'
+      municipio: 'SAO PAULO'
+      bairro: 'CERQUEIRA CESAR'
+      referencia: ''
+
+  # Campos opcionais — vazios por padrão
+  - campo: conjuge
+    tipo: fixo
+    valor: ''
+
+  - campo: responsavel
+    tipo: fixo
+    valor: ''
+
+  - campo: rg
+    tipo: fixo
+    valor: ''
+
+  - campo: cns
+    tipo: fixo
+    valor: ''
 
 # ---------------------------------------------------------------------------
-# Coordenadas diretas — capturadas com scripts/posicao_mouse.py
-# Resolucao: 1366x768, sistema maximizado
-# Atualizar aqui quando mudar resolucao ou layout do Oracle Forms
+# coordenadas — capturar com: python scripts/posicao_mouse.py
+#
+# QUANDO usar coordenada vs template:
+#   Campo pequeno / na mesma linha que outros → coordenada direta (aqui)
+#   Botão único e estável                     → template OpenCV
+#   Label de campo grande                     → template OpenCV (click_near)
+#
+# STATUS: todos com { x: 0, y: 0 } = ainda não capturado.
+# Substituir pelos valores reais com o SI3 maximizado na resolução de produção.
 # ---------------------------------------------------------------------------
 coordenadas:
 
-  # AI05 — LOV campo Tipo do endereco
-  # btn_lov: botao [...] ao lado do campo Tipo
-  # campo_localizar / btn_localizar / btn_ok: dentro do popup da LOV
-  lov_tipo_endereco:
-    btn_lov_x: 197
-    btn_lov_y: 433
-    campo_localizar_x: 193
-    campo_localizar_y: 913
-    btn_localizar_x: 177
-    btn_localizar_y: 361
-    btn_ok_x: 295
-    btn_ok_y: 911
+  # Aba Dados Gerais
+  campo_data_nascimento:        { x: 0, y: 0 }   # ← capturar
+  campo_hora_nascimento:        { x: 0, y: 0 }   # ← capturar
+  campo_sexo:                   { x: 0, y: 0 }   # ← capturar
+  campo_cor_etnia:              { x: 0, y: 0 }   # ← capturar
+  campo_nacionalidade:          { x: 0, y: 0 }   # ← capturar
+  campo_naturalidade_uf:        { x: 0, y: 0 }   # ← capturar
+  campo_naturalidade_municipio: { x: 0, y: 0 }   # ← capturar
+  campo_conjuge:                { x: 0, y: 0 }   # ← capturar
+  campo_responsavel:            { x: 0, y: 0 }   # ← capturar
+  campo_nome_mae:               { x: 0, y: 0 }   # ← capturar (fallback CP12)
 
-  # AI09 — campo Obs
-  obs:
-    x: 108
-    y: 346
+  # Dropdowns CP13–CP18 — coordenada para ABRIR o dropdown
+  campo_religiao:               { x: 0, y: 0 }   # ← capturar
+  campo_estado_civil:           { x: 0, y: 0 }   # ← capturar
+  campo_ocupacao:               { x: 0, y: 0 }   # ← capturar
+  campo_situacao_familiar:      { x: 0, y: 0 }   # ← capturar
+  campo_tipo_deficiencia:       { x: 0, y: 0 }   # ← capturar
+  campo_escolaridade:           { x: 0, y: 0 }   # ← capturar
+  campo_frequenta_escola:       { x: 0, y: 0 }   # ← capturar (S/N ao lado de escolaridade)
 
-  # AI10 — campo Tipo da Origem do Paciente
-  tipo_origem:
-    x: 50
-    y: 408
+  # Aba Documentos CP19
+  campo_cpf:                    { x: 0, y: 0 }   # ← capturar — célula Conteúdo linha CIC (linha 2)
+  campo_rg:                     { x: 0, y: 0 }   # ← capturar — célula Conteúdo linha RG  (linha 1)
+  campo_cns:                    { x: 0, y: 0 }   # ← capturar — célula Conteúdo linha CNS (linha 3)
 
-  # AI11 — dropdown Origem da Solicitacao de Internacao
-  dropdown_origem_solicitacao:
-    x: 643
-    y: 458
+  # Aba Endereços CP20
+  campo_cep:                    { x: 0, y: 0 }   # ← capturar
+  campo_logradouro:             { x: 0, y: 0 }   # ← capturar
+  campo_numero_endereco:        { x: 0, y: 0 }   # ← capturar
+  campo_uf_endereco:            { x: 0, y: 0 }   # ← capturar
+  campo_municipio_endereco:     { x: 0, y: 0 }   # ← capturar
+  campo_bairro:                 { x: 0, y: 0 }   # ← capturar
+  campo_referencia_endereco:    { x: 0, y: 0 }   # ← capturar (opcional)
 
-  # AI12 — campo Matricula do Responsavel
-  matricula_responsavel:
-    x: 220
-    y: 527
+  # Aba Comunicação CP21
+  campo_celular:                { x: 0, y: 0 }   # ← capturar
+  campo_email:                  { x: 0, y: 0 }   # ← capturar
 
-  # AI14 — campo Numero dentro do popup Info. Compl.
-  numero_medico_popup:
-    x: 159
-    y: 159
+# ---------------------------------------------------------------------------
+# regioes_ocr — calibrar com o Paint após primeira execução
+#
+# COMO CALIBRAR:
+#   1. Rodar o teste — steps com WARNING "Região não calibrada" → ainda pendente
+#   2. Abrir o screenshot do step em evidence/ no Paint
+#   3. Cursor no CANTO SUPERIOR-ESQUERDO do campo → x1, y1
+#   4. Cursor no CANTO INFERIOR-DIREITO do campo  → x2, y2
+#   5. Substituir { x1: 0, y1: 0, x2: 0, y2: 0 } pelos valores reais
+#
+# Quando (0,0,0,0): assert pulado com WARNING — não falha.
+# Quando calibrado: assert ativo — step falha se valor não for encontrado.
+#
+# PRIORIDADE:
+#   1. matricula   → CP22 obrigatório para salvar estado_jornada.json
+#   2. nome        → CP02, detecta erro de foco logo no início
+#   3. cpf         → CP19, documento crítico
+#   4. demais na sequência dos steps
+# ---------------------------------------------------------------------------
+regioes_ocr:
 
-  # AI16 — botao Retornar
-  btn_retornar:
-    x: 779
-    y: 239
+  # Aba Dados Gerais
+  nome:                    { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar (prioridade 2)
+  data_nascimento:         { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar
+  hora_nascimento:         { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar
+  sexo:                    { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar
+  cor_etnia:               { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar
+  nacionalidade:           { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar
+  naturalidade_uf:         { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar
+  naturalidade_municipio:  { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar
+  nome_mae:                { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar
+  frequenta_escola:        { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar
+
+  # Aba Documentos — células da coluna "Conteúdo" na grade Documentos do Paciente
+  # Calibrar abrindo CP19_documentos.png no Paint e anotando a célula de cada linha
+  rg:                      { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar — célula Conteúdo linha RG  (linha 1)
+  cpf:                     { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar — célula Conteúdo linha CIC (linha 2) — prioridade 3
+  cns:                     { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar — célula Conteúdo linha CNS (linha 3)
+
+  # Aba Comunicação
+  celular:                 { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar
+  email:                   { x1: 0, y1: 0, x2: 0, y2: 0 }   # ← calibrar
+
+  # Matrícula gerada — calibrar PRIMEIRO (prioridade 1)
+  matricula:               { x1: 10, y1: 100, x2: 320, y2: 160 }  # ← calibrar

@@ -57,7 +57,7 @@ class ConfigLoader:
     _VAR_PATTERN = re.compile(r'\$\{([^}:]+)(?::-(.*?))?\}')
 
     # Pasta raiz dos configs — relativa à raiz do projeto
-    _CONFIGS_DIR = Path("vtae/configs")
+    _CONFIGS_DIR = Path("configs")
 
     # Ambientes válidos
     _AMBIENTES_VALIDOS = {"dev", "homologacao", "producao"}
@@ -233,7 +233,8 @@ class ConfigLoader:
             credenciais=credenciais_cfg,
             flows=data.get("flows", []),
             dados_schema=dados_schema,
-            coordenadas=data.get("coordenadas", {}),  # ← v0.5.4: centraliza coords do config.yaml
+            coordenadas=data.get("coordenadas", {}),
+            regioes_ocr=data.get("regioes_ocr", {}),  # ← v0.5.6: regiões OCR do config.yaml
         )
 
     # ──────────────────────────────────────────────────────────────────────────

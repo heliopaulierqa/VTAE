@@ -1,5 +1,6 @@
 # configs/si3/si3_ambulatorio/config.yaml
-# AdmissaoAmbulatorioFlow — v0.5.7b — cenarios de provedor
+# AdmissaoAmbulatorioFlow — v0.5.8b
+# Cenarios de provedor + lista de procedimentos configuravel
 
 sistema: si3_ambulatorio
 tipo: desktop
@@ -24,14 +25,12 @@ dados:
   especialidade:      'CAR - CARDIO GERAL'
   obs:                'ADMISSAO REALIZADA COM FERRAMENTA DE AUTOMACAO DE TESTES'
   origem_tipo:        'RESIDENCIA'
-  medico_nome:        'MEDICO'
-  codigo_proc:        'CARDIO'
-  complemento_proc:   'CASO NOVO'
-  profissional_proc:  'MEDICO'
 
-  # Cenario ativo — trocar para testar outro provedor:
-  #   sus | particular | incor_sis | convenio_allianz | convenio_unimed
-  cenario_provedor: 'ALLIANZ'
+  # ----------------------------------------------------------------
+  # Cenario de provedor ativo
+  # Opcoes: sus | particular | incor_sis | convenio_allianz | convenio_unimed
+  # ----------------------------------------------------------------
+  cenario_provedor: 'sus'
 
   cenarios_provedor:
 
@@ -65,37 +64,87 @@ dados:
       numero_carteirinha:   '54354354353'
       validade_carteirinha: '30/07/2028'
 
+  # ----------------------------------------------------------------
+  # Lista de procedimentos
+  # Cada item: codigo, complemento, area_executora, profissional
+  #   area_executora: '' = clica OK direto no popup sem digitar
+  #   area_executora: 'COMISSAO CIENTIFICA' = filtra e seleciona
+  # Adicionar mais itens aqui quando AB12 estiver estabilizado
+  # ----------------------------------------------------------------
+  procedimentos:
+
+    - codigo:         'SCF-CONS'
+      complemento:    'CASO NOVO'
+      area_executora: ''
+      profissional:   'MEDICO'
+
+    # Descomentar para testar multiplos procedimentos apos AB12 estabilizar:
+    # - codigo:         'ECG'
+    #   complemento:    'SEGUIMENTO'
+    #   area_executora: 'COMISSAO CIENTIFICA'
+    #   profissional:   'MEDICO'
+
 coordenadas:
 
-  # AB04 — Tipo Endereco + salvar
-  campo_tipo_endereco_amb:    { x: 149, y: 434 }
+  # AB01 — campo "Localizar no Menu" na tela de Menu Principal
+  campo_localizar_menu:         { x: 635, y: 580 }
 
   # AB02 — campo Identificador na tela de pesquisa do Ambulatorio
-  campo_identificador_amb:    { x: 530, y: 180 }
+  campo_identificador_amb:      { x: 530, y: 180 }
+
+  # AB04 — campo Tipo na aba Enderecos
+  campo_tipo_endereco_amb:      { x: 149, y: 434 }
 
   # AB08 — Declarante / Especialidade
-  campo_declarante:           { x: 47,  y: 282 }
-  campo_especialidade:        { x: 340, y: 280 }
+  campo_declarante:             { x: 47,  y: 282 }
+  campo_especialidade:          { x: 340, y: 280 }
 
   # AB09 — Obs
-  campo_obs_amb:              { x: 74,  y: 348 }
+  campo_obs_amb:                { x: 74,  y: 348 }
 
   # AB10 — Origem do Paciente
-  campo_origem_tipo:          { x: 57,  y: 408 }
+  campo_origem_tipo:            { x: 57,  y: 408 }
 
-  # AB11 — Medico Responsavel (campo Nome)
-  campo_medico_nome:          { x: 235, y: 471 }
+  # AB11 — LOV Medico Responsavel
+  btn_lov_medico:               { x: 694, y: 469 }   # botao LOV ao lado do campo Nome
+  campo_localizar_medico:       { x: 286, y: 539 }   # campo Localizar no popup
+  btn_localizar_medico:         { x: 485, y: 753 }   # botao Localizar no popup
+  item_medico_informatica:      { x: 407, y: 620 }   # linha MEDICO (SOH PARA USO DA INFORMATICA)
 
   # AB12 — Lista de Procedimentos
-  campo_codigo_proc:          { x: 59,  y: 242 }
-  campo_complemento_proc:     { x: 481, y: 240 }
-  campo_profissional_proc:    { x: 591, y: 240 }
+  # LOV Codigo
+  btn_lov_codigo_proc:          { x: 122, y: 237 }   # CALIBRAR — botao LOV ao lado do campo Codigo
+  campo_localizar_proc:         { x: 102, y: 355 }   # CALIBRAR — campo Localizar no popup de codigo
+  btn_localizar_proc:           { x: 394, y: 570 }   # CALIBRAR — botao Localizar no popup
+  btn_ok_proc:                  { x: 481,   y: 521   }   # CALIBRAR — botao OK no popup de codigo
+
+  # Popup area executora (aparece apos selecionar codigo)
+  campo_localizar_area:         { x: 882,   y: 523   }   # CALIBRAR — campo Localizar no popup area
+  btn_localizar_area:           { x: 907,   y: 736   }   # CALIBRAR — botao Localizar no popup area
+  btn_ok_area_executora:        { x: 1000,   y: 736  }   # CALIBRAR — botao OK no popup area executora
+
+  # LOV Complemento
+  btn_lov_complemento:          { x: 556,   y: 236   }   # CALIBRAR — botao LOV ao lado do campo Complemento
+  campo_localizar_complemento:  { x: 539,   y: 308   }   # CALIBRAR — campo Localizar no popup complemento
+  btn_localizar_complemento:    { x: 580,   y: 598   }   # CALIBRAR — botao Localizar no popup complemento
+  btn_ok_complemento:           { x: 676,   y: 594   }   # CALIBRAR — botao OK no popup complemento
+
+  # LOV Profissional
+  btn_lov_profissional_proc:    { x: 729,   y: 239   }   # CALIBRAR — botao LOV ao lado do campo Profissional
+  campo_localizar_profissional: { x: 702,   y: 524   }   # CALIBRAR — campo Localizar no popup profissional
+  btn_localizar_profissional:   { x: 896,   y: 732   }   # CALIBRAR — botao Localizar no popup profissional
+  btn_ok_profissional:          { x: 999,   y: 737   }   # CALIBRAR — botao OK no popup profissional
+  item_profissional_proc:       { x: 727, y: 603 }  # calibrar — linha MEDICO no popup de profissional
+
+  # Proxima linha na grade de procedimentos (para 2o procedimento em diante)
+  proxima_linha_proc:           { x: 90,   y: 262   }   # CALIBRAR — campo Codigo na segunda linha
 
   # AB15 — Sair
-  btn_sair_1:                 { x: 509, y: 62  }
-  btn_sair_2:                 { x: 20,  y: 574 }
+  btn_sair_1:                   { x: 509, y: 62  }
+  btn_sair_2:                   { x: 20,  y: 574 }
 
 regioes_ocr:
 
   # AB14 — Nr Admissao — calibrar com Paint apos primeira execucao
-  nr_admissao_amb:    { x1: 10, y1: 40, x2: 200, y2: 70 }
+  nr_admissao_amb:     { x1: 260, y1: 127, x2: 298, y2: 140 }
+  campo_tipo_endereco: { x1: 128, y1: 430, x2: 179, y2: 442 }

@@ -201,22 +201,33 @@ class CadastroPacienteFlow:
                 break
         return encontrou_popup
 
-    def _step(self, step_id: str, descricao: str, fn, observer) -> StepResult:
+    def _step(self, step_id: str, descricao: str, fn, observer,
+              confirm_template: str = None) -> StepResult:
         """
-        Wrapper padrao para todos os steps.
+        Wrapper padrao para todos os steps com observabilidade (Fase A).
+
+        confirm_template: quando informado, a fn() ja executou wait_template
+        internamente e lanca AssertionError se a tela esperada nao aparecer.
+        O StepResult.validated reflete essa validacao:
+            True  → acao executou E tela confirmada
+            False → step falhou (excecao capturada)
+            None  → step executou sem validacao (comportamento legado)
+
         Nao verifica popup automaticamente — cada step e responsavel
         por tratar popups esperados dentro do proprio fn().
-        Classifica CausaFalha automaticamente pelo tipo de excecao.
         """
         if observer:
             observer.log_step_start(step_id, descricao)
         start = time.monotonic()
+        validated = None
         try:
             screenshot_path = fn()
+            validated = True if confirm_template else None
             step = StepResult(
                 step_id=step_id, success=True,
                 duration_ms=(time.monotonic() - start) * 1000,
                 screenshot_path=screenshot_path,
+                validated=validated,
             )
         except AssertionError as e:
             msg = str(e).lower()
@@ -227,8 +238,8 @@ class CadastroPacienteFlow:
             step = StepResult(
                 step_id=step_id, success=False,
                 duration_ms=(time.monotonic() - start) * 1000,
-                error=str(e),
-                causa_falha=causa,
+                error=str(e), causa_falha=causa,
+                validated=False,
             )
         except Exception as e:
             causa = CausaFalha.DESCONHECIDA
@@ -243,11 +254,13 @@ class CadastroPacienteFlow:
                 causa = CausaFalha.COORDENADA
             elif "estado_ausente" in msg:
                 causa = CausaFalha.ESTADO_AUSENTE
+            elif "observabilidade" in msg:
+                causa = CausaFalha.OCR_LEITURA
             step = StepResult(
                 step_id=step_id, success=False,
                 duration_ms=(time.monotonic() - start) * 1000,
-                error=str(e),
-                causa_falha=causa,
+                error=str(e), causa_falha=causa,
+                validated=False,
             )
         if observer:
             observer.log_step_result(step)
@@ -260,10 +273,16 @@ class CadastroPacienteFlow:
     def _step_menu(self, ctx, observer=None) -> StepResult:
         def fn():
             ctx.runner.double_click(f"{self._TPL}/menu_cadastro_paciente.png", threshold=0.7)
-            ctx.runner.wait_template(f"{self._TPL}/campo_nome_pesquisa.png",
+            apareceu = ctx.runner.wait_template(f"{self._TPL}/campo_nome_pesquisa.png",
                                      timeout=15.0, threshold=0.7)
+            if not apareceu:
+                raise AssertionError(
+                    "Falha de Observabilidade: campo_nome_pesquisa.png nao apareceu apos abrir menu. "
+                    "Tela de pesquisa de paciente pode nao ter carregado."
+                )
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP01_menu.png")
-        return self._step("CP01", "duplo clique em Cadastro de Pacientes", fn, observer)
+        return self._step("CP01", "duplo clique em Cadastro de Pacientes", fn, observer,
+                          confirm_template=f"{self._TPL}/campo_nome_pesquisa.png")
 
     def _step_pesquisar(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
@@ -277,11 +296,17 @@ class CadastroPacienteFlow:
     def _step_novo(self, ctx, observer=None) -> StepResult:
         def fn():
             ctx.runner.safe_click(f"{self._TPL}/btn_novo.png", threshold=0.7)
-            ctx.runner.wait_template(f"{self._TPL}/campo_nome_social.png",
+            apareceu = ctx.runner.wait_template(f"{self._TPL}/campo_nome_social.png",
                                      timeout=15.0, threshold=0.7)
+            if not apareceu:
+                raise AssertionError(
+                    "Falha de Observabilidade: campo_nome_social.png nao apareceu apos clicar Novo. "
+                    "Formulario de cadastro pode nao ter aberto."
+                )
             time.sleep(0.5)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP03_novo.png")
-        return self._step("CP03", "clicar em Novo", fn, observer)
+        return self._step("CP03", "clicar em Novo", fn, observer,
+                          confirm_template=f"{self._TPL}/campo_nome_social.png")
 
     # ----------------------------------------------------------------
     # Steps CP04-CP18: Formulario principal
@@ -444,10 +469,19 @@ class CadastroPacienteFlow:
 
     def _step_documentos(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
+            self._clicar_aba(ctx, "aba_documentos.png", "aba_documentos")
             time.sleep(0.5)
+            # confirm_template: aba Documentos deve estar visível
+            apareceu = ctx.runner.wait_template(f"{self._TPL}/aba_documentos.png",
+                                                timeout=8.0, threshold=0.7)
+            if not apareceu:
+                raise AssertionError(
+                    "Falha de Observabilidade: aba_documentos.png nao visivel apos clicar na aba. "
+                    "Aba Documentos pode nao ter sido ativada."
+                )
 
-            pyautogui.click(262, 424); time.sleep(0.3)
             pyperclip.copy(dados.get("rg", "44643579X"))
+            pyautogui.click(262, 424); time.sleep(0.3)
             pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
             pyautogui.click(637, 427); time.sleep(0.3)
@@ -474,12 +508,21 @@ class CadastroPacienteFlow:
             pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP19_docs.png")
-        return self._step("CP19", "Aba Documentos: RG + CPF + CNS", fn, observer)
+        return self._step("CP19", "Aba Documentos: RG + CPF + CNS", fn, observer,
+                          confirm_template=f"{self._TPL}/aba_documentos.png")
 
     def _step_enderecos(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
             self._clicar_aba(ctx, "aba_enderecos.png", "aba_enderecos")
             time.sleep(0.5)
+            # confirm_template: aba Enderecos deve estar visível
+            apareceu = ctx.runner.wait_template(f"{self._TPL}/aba_enderecos.png",
+                                                timeout=8.0, threshold=0.7)
+            if not apareceu:
+                raise AssertionError(
+                    "Falha de Observabilidade: aba_enderecos.png nao visivel apos clicar na aba. "
+                    "Aba Enderecos pode nao ter sido ativada."
+                )
             end = dados.get("endereco", {})
 
             self._preencher_coord(ctx, "campo_cep", end.get("cep", "01310100"))
@@ -518,12 +561,21 @@ class CadastroPacienteFlow:
                 pyautogui.press("tab"); time.sleep(0.3)
 
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP20_endereco.png")
-        return self._step("CP20", "Aba Enderecos", fn, observer)
+        return self._step("CP20", "Aba Enderecos", fn, observer,
+                          confirm_template=f"{self._TPL}/aba_enderecos.png")
 
     def _step_comunicacao(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
             self._clicar_aba(ctx, "aba_comunicacao.png", "aba_comunicacao")
             time.sleep(0.5)
+            # confirm_template: aba Comunicacao deve estar visível
+            apareceu = ctx.runner.wait_template(f"{self._TPL}/aba_comunicacao.png",
+                                                timeout=8.0, threshold=0.7)
+            if not apareceu:
+                raise AssertionError(
+                    "Falha de Observabilidade: aba_comunicacao.png nao visivel apos clicar na aba. "
+                    "Aba Comunicacao pode nao ter sido ativada."
+                )
 
             com = dados.get("comunicacao", {})
 
@@ -558,7 +610,8 @@ class CadastroPacienteFlow:
                 print("[CP21] Popup Oracle Forms fechado apos salvar — comportamento esperado")
 
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP21_comunicacao.png")
-        return self._step("CP21", "Aba Comunicacao: celular + e-mail", fn, observer)
+        return self._step("CP21", "Aba Comunicacao: celular + e-mail", fn, observer,
+                          confirm_template=f"{self._TPL}/aba_comunicacao.png")
 
     # ----------------------------------------------------------------
     # Step CP22: Gerar Matricula + Salvar + OCR + estado_jornada.json
@@ -583,30 +636,56 @@ class CadastroPacienteFlow:
             # 3. Screenshot para OCR
             screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}CP22_matricula.png")
 
-            # 4. Le regiao OCR do config.yaml
-            r = ctx.config.regioes_ocr["matricula"]
-            regiao_tuple = (r["x1"], r["y1"], r["x2"], r["y2"])
+            # 4. Le regioes OCR do config.yaml
+            r_mat = ctx.config.regioes_ocr["matricula"]
+            regiao_matricula = (r_mat["x1"], r_mat["y1"], r_mat["x2"], r_mat["y2"])
 
-            # 5. OCR
-            OcrHelper.salvar_debug(screenshot_path, regiao_tuple,
+            # 5. OCR — Matricula (validacao de que foi gerada)
+            OcrHelper.salvar_debug(screenshot_path, regiao_matricula,
                                    f"{ctx.evidence_dir}CP22_ocr_debug.png")
-            texto = OcrHelper.ler_regiao(screenshot_path, regiao_tuple)
-            numeros = re.findall(r"\d+", texto)
-            if not numeros:
+            texto_mat = OcrHelper.ler_regiao(screenshot_path, regiao_matricula)
+            numeros_mat = re.findall(r"\d+", texto_mat)
+            if not numeros_mat:
                 raise AssertionError(
                     f"Matricula nao gerada ou OCR nao leu.\n"
-                    f"Texto lido: '{texto}'\n"
-                    f"Regiao usada: {regiao_tuple}\n"
+                    f"Texto lido: '{texto_mat}'\n"
+                    f"Regiao usada: {regiao_matricula}\n"
                     f"Veja CP22_ocr_debug.png e ajuste regioes_ocr.matricula no config.yaml."
                 )
-            matricula = numeros[0]
+            matricula = numeros_mat[0]
             print(f"[CP22] Matricula gerada: {matricula}")
 
-            # 6. Salva via helper centralizado — disponivel para test_02+
-            _salvar_estado_jornada("paciente_id", matricula)
+            # 6. OCR — Identificador (usado como paciente_id no AB02)
+            # O Identificador fica no topo da tela, campo fixo, so digitos
+            # Regiao calibravel em regioes_ocr.identificador no config.yaml
+            # Fallback: usa a matricula se a regiao nao estiver configurada
+            paciente_id = matricula  # fallback padrao
+            if "identificador" in ctx.config.regioes_ocr:
+                r_id = ctx.config.regioes_ocr["identificador"]
+                regiao_id = (r_id["x1"], r_id["y1"], r_id["x2"], r_id["y2"])
+                OcrHelper.salvar_debug(screenshot_path, regiao_id,
+                                       f"{ctx.evidence_dir}CP22_ocr_id_debug.png")
+                texto_id = OcrHelper.ler_regiao(screenshot_path, regiao_id)
+                numeros_id = re.findall(r"\d+", texto_id)
+                if numeros_id:
+                    paciente_id = numeros_id[0]
+                    print(f"[CP22] Identificador lido: {paciente_id}")
+                else:
+                    print(f"[CP22] AVISO: OCR nao leu Identificador (texto='{texto_id}') "
+                          f"— usando matricula '{matricula}' como fallback. "
+                          f"Ajuste regioes_ocr.identificador no config.yaml.")
+            else:
+                print(f"[CP22] regioes_ocr.identificador nao configurado — "
+                      f"usando matricula '{matricula}' como paciente_id. "
+                      f"Adicione ao config.yaml para usar o Identificador.")
+
+            # 7. Salva Identificador como paciente_id — usado pelo AB02 na admissao
+            _salvar_estado_jornada("paciente_id", paciente_id)
+            _salvar_estado_jornada("matricula", matricula)  # mantém matricula separada
 
             return screenshot_path
-        return self._step("CP22", "Gerar Matricula + Salvar + OCR", fn, observer)
+        return self._step("CP22", "Gerar Matricula + Salvar + OCR", fn, observer,
+                          confirm_template="ocr:matricula")
 
     # ----------------------------------------------------------------
     # Step CP23: Sair

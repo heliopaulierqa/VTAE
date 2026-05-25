@@ -18,7 +18,13 @@ class CausaFalha(Enum):
 
 @dataclass
 class StepResult:
-    """Resultado de um step individual dentro de um flow."""
+    """Resultado de um step individual dentro de um flow.
+
+    Campos de observabilidade (Fase A):
+        validated: True  → acao executou E tela/campo foi confirmada via confirm_template ou verify_fill
+                   False → acao executou mas nao foi validada (comportamento legado)
+                   None  → step falhou antes de qualquer validacao
+    """
 
     step_id: str
     success: bool
@@ -26,14 +32,19 @@ class StepResult:
     screenshot_path: str | None = None
     error: str | None = None
     causa_falha: CausaFalha | None = None
+    validated: bool | None = None          # Fase A — foi validado apos a acao?
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
     def __str__(self) -> str:
         status = "✅" if self.success else "❌"
         base = f"{status} [{self.step_id}] {self.duration_ms:.0f}ms"
+        if self.validated is True:
+            base += " [VALIDADO]"
+        elif self.validated is False and self.success:
+            base += " [nao validado]"
         if self.error:
             base += f" | erro: {self.error}"
-        if self.causa_falha:    
+        if self.causa_falha:
             base += f" | causa: {self.causa_falha.value}"
         return base
 

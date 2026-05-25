@@ -49,8 +49,10 @@ def test_admissao_ambulatorio_jornada():
         dados=config.DADOS,
         observer=observer,
     )
-
-    observer.report(ctx)
-    ctx.print_summary()
+    try:
+     observer.report(ctx)
+     ctx.print_summary()
+    except Exception as e:
+       print(f"[WARNING] Erro ao gerar relatorio: {e}")
 
     assert result.success, f"Admissao Ambulatorial falhou: {result.failed_steps}"

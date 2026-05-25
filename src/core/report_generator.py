@@ -65,6 +65,13 @@ def _build_html(data: dict) -> str:
     failed = summary.get("failed_steps", 0)
     pct = round((passed / total * 100) if total > 0 else 0)
 
+    # Fase B — contagem de integridade para resumo executivo
+    all_steps = [s for f in flows for s in f.get("steps", [])]
+    validated_count   = sum(1 for s in all_steps if s.get("validated") is True)
+    sem_validacao     = sum(1 for s in all_steps if s.get("success") and s.get("validated") is None)
+    falha_integridade = sum(1 for s in all_steps if s.get("success") is False
+                            and s.get("error") and "observabilidade" in s.get("error", "").lower())
+
     flows_html = ""
     for flow in flows:
         flow_ok = flow.get("success", False)
@@ -84,6 +91,18 @@ def _build_html(data: dict) -> str:
             s_err = step.get("error") or ""
             s_ts = step.get("timestamp", "")[:19].replace("T", " ")
             s_img = _img_to_base64(step.get("screenshot"))
+            s_validated = step.get("validated")
+
+            # Fase B — badge de integridade
+            is_obs_falha = s_ok is False and "observabilidade" in s_err.lower()
+            if is_obs_falha:
+                badge_html = '<span class="badge badge-integridade">⚠ FALHA DE INTEGRIDADE</span>'
+            elif s_validated is True:
+                badge_html = '<span class="badge badge-validado">✔ VALIDADO</span>'
+            elif s_ok and s_validated is None:
+                badge_html = '<span class="badge badge-sem-validacao">~ sem validação</span>'
+            else:
+                badge_html = ""
 
             img_html = ""
             if s_img:
@@ -103,6 +122,7 @@ def _build_html(data: dict) -> str:
                     <span class="step-icon">{s_icon}</span>
                     <span class="step-id">{s_id}</span>
                     <span class="step-time">{s_ms}ms</span>
+                    {badge_html}
                     <span class="step-ts">{s_ts}</span>
                 </div>
                 {err_html}
@@ -281,6 +301,46 @@ def _build_html(data: dict) -> str:
     border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,.5);
   }}
 
+  /* BADGES DE INTEGRIDADE (Fase B) */
+  .badge {{
+    font-size: 0.68rem; font-weight: 600; letter-spacing: 0.04em;
+    padding: 2px 8px; border-radius: 99px; white-space: nowrap;
+  }}
+  .badge-validado {{
+    background: #E1F5EE; color: #1D9E75; border: 1px solid #a8e6cf;
+  }}
+  .badge-sem-validacao {{
+    background: #f5f4f0; color: #9b9590; border: 1px solid #ddd9d3;
+  }}
+  .badge-integridade {{
+    background: #FFF3CD; color: #856404; border: 1px solid #ffc107;
+    animation: pulse-badge 1.5s ease-in-out infinite;
+  }}
+  @keyframes pulse-badge {{
+    0%, 100% {{ opacity: 1; }}
+    50% {{ opacity: 0.65; }}
+  }}
+
+  /* RESUMO EXECUTIVO (Fase B) */
+  .integrity-summary {{
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 2rem;
+  }}
+  .integrity-summary-title {{
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+  }}
+  .integrity-row {{
+    display: flex; gap: 1.5rem; flex-wrap: wrap;
+  }}
+  .integrity-item {{
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.82rem;
+  }}
+  .integrity-dot {{
+    width: 10px; height: 10px; border-radius: 50%;
+  }}
+
   /* FOOTER */
   .footer {{
     margin-top: 3rem; text-align: center;
@@ -320,6 +380,25 @@ def _build_html(data: dict) -> str:
     <div class="metric">
       <div class="metric-label">Duração</div>
       <div class="metric-value" style="color: var(--text);">{round(duration, 1)}s</div>
+    </div>
+  </div>
+
+  <!-- RESUMO EXECUTIVO DE INTEGRIDADE (Fase B) -->
+  <div class="integrity-summary">
+    <div class="integrity-summary-title">Integridade dos steps</div>
+    <div class="integrity-row">
+      <div class="integrity-item">
+        <span class="integrity-dot" style="background:#1D9E75;"></span>
+        <strong>{validated_count}</strong>&nbsp;validados (confirm_template / OCR)
+      </div>
+      <div class="integrity-item">
+        <span class="integrity-dot" style="background:#9b9590;"></span>
+        <strong>{sem_validacao}</strong>&nbsp;sem validação (comportamento legado)
+      </div>
+      <div class="integrity-item">
+        <span class="integrity-dot" style="background:#ffc107;"></span>
+        <strong>{falha_integridade}</strong>&nbsp;falha de integridade
+      </div>
     </div>
   </div>
 

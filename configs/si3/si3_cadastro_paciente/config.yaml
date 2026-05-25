@@ -211,3 +211,4 @@ regioes_ocr:
   celular:                 { x1: 275, y1: 449, x2: 432, y2: 462 }
   email:                   { x1: 276, y1: 474, x2: 433, y2: 487 }
   matricula:               { x1: 557, y1: 148, x2: 626, y2: 172 }
+  identificador:           { x1: 465, y1: 150, x2: 519, y2: 164 }

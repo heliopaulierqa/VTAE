@@ -19,10 +19,6 @@ Exemplo de config.yaml:
       usuario: ${SISLAB_USER}
       senha: ${SISLAB_PASS}
 
-    flows:
-      - login
-      - cadastro_funcionario
-
     dados_faker:
       - campo: nome
         tipo: faker
@@ -35,21 +31,29 @@ Exemplo de config.yaml:
       - campo: cargo
         tipo: fixo
         valor: "ANALISTA DE RH"
+
+    # Dados fixos — passados diretamente ao flow via config.DADOS
+    # Suporta qualquer estrutura: strings, listas, dicts aninhados
+    dados:
+      unidade_funcional: 'SC AMBULATORIO'
+      procedimentos:
+        - codigo: 'CARDIO'
+          complemento: 'CASO NOVO'
 """
 
 from dataclasses import dataclass, field
 from typing import Literal
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------
 # Ambiente
-# ──────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------
 
 @dataclass
 class AmbienteConfig:
     """
-    Configuração de um ambiente específico (dev, homologacao, producao).
-    Contém apenas o que muda entre ambientes — principalmente a URL.
+    Configuracao de um ambiente especifico (dev, homologacao, producao).
+    Contem apenas o que muda entre ambientes — principalmente a URL.
     """
     url: str
     timeout: float = 30.0
@@ -65,50 +69,50 @@ class AmbienteConfig:
             )
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------
 # Credenciais
-# ──────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------
 
 @dataclass
 class CredenciaisConfig:
     """
     Credenciais do sistema.
-    Os valores são resolvidos pelo ConfigLoader — podem ser valores literais
-    ou referências a variáveis de ambiente no formato ${VAR_NAME}.
+    Os valores sao resolvidos pelo ConfigLoader — podem ser valores literais
+    ou referencias a variaveis de ambiente no formato ${VAR_NAME}.
     """
     usuario: str
     senha: str
 
     def __post_init__(self):
         if not self.usuario:
-            raise ValueError("CredenciaisConfig.usuario não pode ser vazio.")
+            raise ValueError("CredenciaisConfig.usuario nao pode ser vazio.")
         if not self.senha:
-            raise ValueError("CredenciaisConfig.senha não pode ser vazio.")
+            raise ValueError("CredenciaisConfig.senha nao pode ser vazio.")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------
 # Dados Faker
-# ──────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------
 
 TransformacaoTipo = Literal[
-    "sem_pontuacao",      # remove . e - (ex: CPF "123.456.789-00" → "12345678900")
-    "upper",              # maiúsculas
-    "lower",              # minúsculas
+    "sem_pontuacao",      # remove . e - (ex: CPF "123.456.789-00" -> "12345678900")
+    "upper",              # maiusculas
+    "lower",              # minusculas
     "truncar_50",         # limita a 50 caracteres
     "sem_prefixo",        # remove Dr., Dra., Sr., Sra., Prof. etc.
-    "sem_prefixo_upper",  # remove prefixo E converte para maiúsculas
+    "sem_prefixo_upper",  # remove prefixo E converte para maiusculas
 ]
 
 
 @dataclass
 class DadoFakerConfig:
     """
-    Configuração de um campo de dados dinâmicos.
+    Configuracao de um campo de dados dinamicos.
 
     Tipos:
-        faker  — usa método do Faker (ex: fake.name(), fake.cpf())
+        faker  — usa metodo do Faker (ex: fake.name(), fake.cpf())
         fixo   — valor literal fixo (ex: "ANALISTA DE RH")
-        random — valor aleatório de uma lista
+        random — valor aleatorio de uma lista
     """
     campo: str
     tipo: Literal["faker", "fixo", "random"]
@@ -139,16 +143,21 @@ class DadoFakerConfig:
             )
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Configuração completa do sistema
-# ──────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------
+# Configuracao completa do sistema
+# ----------------------------------------------------------------
 
 @dataclass
 class SystemConfig:
     """
-    Configuração completa de um sistema — resultado do ConfigLoader.
+    Configuracao completa de um sistema — resultado do ConfigLoader.
 
-    Compatível com FlowContext — expõe USER, PASSWORD, url, confidence, DADOS.
+    Compativel com FlowContext — expoe USER, PASSWORD, url, confidence, DADOS.
+
+    DADOS retorna a mesclagem de:
+      - dados_fixos: secao 'dados:' do config.yaml (strings, listas, dicts)
+      - dados gerados pelo Faker via dados_schema (secao 'dados_faker:')
+      O Faker sobrescreve dados_fixos quando ha conflito de chave.
     """
     sistema: str
     tipo: Literal["desktop", "web", "api"]
@@ -158,16 +167,17 @@ class SystemConfig:
     credenciais: CredenciaisConfig
     flows: list[str] = field(default_factory=list)
     dados_schema: list[DadoFakerConfig] = field(default_factory=list)
-    # Coordenadas diretas de campos — lidas da seção `coordenadas:` do config.yaml.
-    # Default {} garante retrocompatibilidade com sistemas que não usam coordenadas.
+    # Coordenadas diretas de campos — lidas da secao `coordenadas:` do config.yaml.
     coordenadas: dict = field(default_factory=dict)
-    # Regiões OCR — lidas da seção `regioes_ocr:` do config.yaml.
-    # Cada entrada: { x1: int, y1: int, x2: int, y2: int }
-    # Default {} garante retrocompatibilidade com sistemas que não usam OCR.
+    # Regioes OCR — lidas da secao `regioes_ocr:` do config.yaml.
     regioes_ocr: dict = field(default_factory=dict)
+    # Dados fixos — lidos da secao `dados:` do config.yaml.
+    # Suporta qualquer estrutura: strings, listas, dicts aninhados.
+    # Retrocompativel: sistemas sem secao `dados:` recebem {} por padrao.
+    dados_fixos: dict = field(default_factory=dict)
     _dados_cache: dict | None = field(default=None, repr=False)
 
-    # ── Compatibilidade com FlowContext ──────────────────────────────────────
+    # -- Compatibilidade com FlowContext --
 
     @property
     def USER(self) -> str:
@@ -193,20 +203,31 @@ class SystemConfig:
     def timeout(self) -> float:
         return self.ambiente.timeout
 
-    # ── Dados dinâmicos ──────────────────────────────────────────────────────
+    # -- Dados dinamicos --
 
     @property
     def DADOS(self) -> dict:
         """
-        Gera e retorna os dados dinâmicos conforme o schema.
-        Cache por instância — mesmos dados durante toda a execução do flow.
+        Retorna dados mesclados: dados_fixos (config.yaml secao dados:)
+        + dados gerados pelo Faker (config.yaml secao dados_faker:).
+
+        Prioridade: Faker sobrescreve dados_fixos quando ha conflito de chave.
+        Cache por instancia — mesmos dados durante toda a execucao do flow.
+
+        Exemplos de uso no flow:
+            dados["unidade_funcional"]      # string do dados:
+            dados["procedimentos"]          # lista do dados:
+            dados["cenario_provedor"]       # string do dados:
+            dados["nome"]                   # gerado pelo Faker
         """
         if self._dados_cache is None:
-            self._dados_cache = self._gerar_dados()
+            faker_gerados = self._gerar_dados()
+            # dados_fixos como base, faker sobrescreve conflitos
+            self._dados_cache = {**self.dados_fixos, **faker_gerados}
         return self._dados_cache
 
     def resetar_dados(self) -> None:
-        """Limpa o cache — próximo acesso a DADOS gera novos valores."""
+        """Limpa o cache — proximo acesso a DADOS gera novos valores."""
         self._dados_cache = None
 
     def _gerar_dados(self) -> dict:
@@ -234,7 +255,7 @@ class SystemConfig:
     @staticmethod
     def _aplicar_transformacao(valor: str,
                                 transformacao: TransformacaoTipo | None) -> str:
-        """Aplica a transformação ao valor gerado pelo Faker."""
+        """Aplica a transformacao ao valor gerado pelo Faker."""
         if transformacao is None:
             return valor
 
@@ -253,14 +274,14 @@ class SystemConfig:
         if transformacao == "sem_prefixo":
             import re
             return re.sub(
-                r'^(Dr\.|Dra\.|Sr\.|Sra\.|Prof\.|Profª\.|Profº\.|Mr\.|Mrs\.|Ms\.)\s*',
+                r'^(Dr\.|Dra\.|Sr\.|Sra\.|Prof\.|Profa\.|Profº\.|Mr\.|Mrs\.|Ms\.)\s*',
                 '', valor
             ).strip()
 
         if transformacao == "sem_prefixo_upper":
             import re
             valor = re.sub(
-                r'^(Dr\.|Dra\.|Sr\.|Sra\.|Prof\.|Profª\.|Profº\.|Mr\.|Mrs\.|Ms\.)\s*',
+                r'^(Dr\.|Dra\.|Sr\.|Sra\.|Prof\.|Profa\.|Profº\.|Mr\.|Mrs\.|Ms\.)\s*',
                 '', valor
             ).strip()
             return valor.upper()

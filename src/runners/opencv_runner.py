@@ -13,6 +13,7 @@ import pyautogui
 from src.runners.base_runner import BaseRunner
 from src.vision.template import TemplateMatcher
 from src.core.types import TemplateNotFoundError
+from src.vision.ocr import OcrHelper
 
 
 class OpenCVRunner(BaseRunner):
@@ -219,6 +220,52 @@ class OpenCVRunner(BaseRunner):
         Usa escala 1.0 — útil para grades com múltiplas linhas iguais.
         """
         return self._matcher.find_all(template, threshold)
+
+    # ──────────────────────────────────────────────
+    # verify_fill — validação pós-digitação (Fase A)
+    # ──────────────────────────────────────────────
+
+    def verify_fill(self, expected_value: str,
+                    region: tuple,
+                    timeout: float = 3.0,
+                    debug_path: str = None) -> bool:
+        """
+        Verifica via OCR se o valor esperado está presente na região após digitação.
+        Realiza múltiplas tentativas dentro do timeout para acomodar latência da UI.
+
+        Args:
+            expected_value: texto esperado no campo (comparação case-insensitive).
+            region: tupla (x1, y1, x2, y2) da área do campo na tela.
+            timeout: tempo máximo de espera em segundos (padrão 3s).
+            debug_path: caminho para salvar screenshot de debug se falhar.
+                        None = salva em /tmp/verify_fill_debug.png.
+
+        Returns:
+            True se o valor foi encontrado na região dentro do timeout.
+            False caso contrário — o caller decide se isso é StepError.
+
+        Exemplo:
+            if not ctx.runner.verify_fill("JOAO DA SILVA", region=(100, 200, 400, 220)):
+                raise StepError("Falha de Observabilidade: campo Nome nao contém o valor esperado")
+        """
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            tmp = debug_path or "/tmp/verify_fill_debug.png"
+            screenshot = self.screenshot(tmp)
+            texto = OcrHelper.ler_regiao(screenshot, region)
+            if expected_value.upper() in texto.upper():
+                return True
+            time.sleep(0.5)
+
+        # última tentativa falhou — salva screenshot de debug
+        if debug_path:
+            self.screenshot(debug_path)
+            print(f"[verify_fill] FALHOU — valor esperado: '{expected_value}' | "
+                  f"debug salvo em: {debug_path}")
+        else:
+            print(f"[verify_fill] FALHOU — valor esperado: '{expected_value}' | "
+                  f"regiao: {region}")
+        return False
 
     # ──────────────────────────────────────────────
     # click_near — anchor-based clicking (F2-C)

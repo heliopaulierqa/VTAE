@@ -1,29 +1,39 @@
 """
-ConfigLoader — lê config.yaml, resolve variáveis de ambiente e retorna SystemConfig.
+ConfigLoader — le config.yaml, resolve variaveis de ambiente e retorna SystemConfig.
 
 Uso:
-    # carrega ambiente dev (padrão)
+    # carrega ambiente dev (padrao)
     config = ConfigLoader.carregar("sislab")
 
-    # carrega ambiente específico
+    # carrega ambiente especifico
     config = ConfigLoader.carregar("sislab", ambiente="homologacao")
 
-    # nos flows — idêntico ao uso dos *_config.py antigos
+    # nos flows — identico ao uso dos *_config.py antigos
     ctx = FlowContext(runner=runner, config=config)
 
-Resolução de variáveis:
-    O YAML pode referenciar variáveis de ambiente no formato ${VAR_NAME}.
+Resolucao de variaveis:
+    O YAML pode referenciar variaveis de ambiente no formato ${VAR_NAME}.
     O ConfigLoader tenta resolver nesta ordem:
-        1. Variáveis de ambiente do sistema (os.environ)
+        1. Variaveis de ambiente do sistema (os.environ)
         2. Arquivo .env em configs/<sistema>/.env
         3. Arquivo .env raiz do projeto (.env)
-    Se não encontrar, lança ConfigError com mensagem clara.
+    Se nao encontrar, lanca ConfigError com mensagem clara.
+
+Secoes do config.yaml:
+    sistema, tipo, runner    — obrigatorios
+    ambientes                — obrigatorio
+    credenciais              — obrigatorio
+    dados_faker              — opcional: campos gerados pelo Faker
+    dados                    — opcional: dados fixos passados ao flow via config.DADOS
+                               suporta qualquer estrutura (strings, listas, dicts)
+    coordenadas              — opcional: coordenadas de tela para Oracle Forms
+    regioes_ocr              — opcional: regioes para leitura OCR
 
 Estrutura esperada:
     configs/
     └── sislab/
-        ├── config.yaml     ← configuração do sistema
-        └── .env            ← credenciais locais (gitignore)
+        ├── config.yaml
+        └── .env
 """
 
 import os
@@ -35,7 +45,7 @@ try:
     import yaml
 except ImportError:
     raise ImportError(
-        "PyYAML não instalado. Execute: pip install pyyaml"
+        "PyYAML nao instalado. Execute: pip install pyyaml"
     )
 
 from src.core.types import ConfigError
@@ -49,17 +59,17 @@ from src.config.schema import (
 
 class ConfigLoader:
     """
-    Carrega e valida configurações de sistemas a partir de arquivos YAML.
-    Resolve variáveis de ambiente e gera SystemConfig pronto para uso nos flows.
+    Carrega e valida configuracoes de sistemas a partir de arquivos YAML.
+    Resolve variaveis de ambiente e gera SystemConfig pronto para uso nos flows.
     """
 
-    # Padrão para variáveis: ${VAR_NAME} ou ${VAR_NAME:-valor_default}
+    # Padrao para variaveis: ${VAR_NAME} ou ${VAR_NAME:-valor_default}
     _VAR_PATTERN = re.compile(r'\$\{([^}:]+)(?::-(.*?))?\}')
 
-    # Pasta raiz dos configs — relativa à raiz do projeto
+    # Pasta raiz dos configs — relativa a raiz do projeto
     _CONFIGS_DIR = Path("configs")
 
-    # Ambientes válidos
+    # Ambientes validos
     _AMBIENTES_VALIDOS = {"dev", "homologacao", "producao"}
 
     @classmethod
@@ -67,7 +77,7 @@ class ConfigLoader:
                  ambiente: str = None,
                  configs_dir: Path = None) -> SystemConfig:
         """
-        Carrega a configuração de um sistema para um ambiente específico.
+        Carrega a configuracao de um sistema para um ambiente especifico.
 
         Args:
             sistema: nome do sistema (ex: "sislab", "si3", "msi3").
@@ -78,14 +88,16 @@ class ConfigLoader:
             SystemConfig pronto para uso nos flows.
 
         Raises:
-            ConfigError: se o arquivo não existir, for inválido ou variável não resolvida.
+            ConfigError: se o arquivo nao existir, for invalido ou variavel nao resolvida.
 
         Exemplo:
             config = ConfigLoader.carregar("sislab")
             config = ConfigLoader.carregar("msi3", ambiente="homologacao")
+            config = ConfigLoader.carregar("si3_ambulatorio",
+                                            configs_dir=Path("configs/si3"))
         """
 
-        # resolve ambiente: parâmetro > VTAE_ENV > "dev"
+        # resolve ambiente: parametro > VTAE_ENV > "dev"
         if ambiente is None:
             ambiente = os.environ.get("VTAE_ENV", "dev")
 
@@ -94,14 +106,14 @@ class ConfigLoader:
 
         if not config_path.exists():
             raise ConfigError(
-                f"Arquivo de configuração não encontrado: '{config_path}'\n"
+                f"Arquivo de configuracao nao encontrado: '{config_path}'\n"
                 f"Crie o arquivo com base no template em configs/<sistema>/config.yaml"
             )
 
-        # carrega variáveis de ambiente (.env local + .env raiz)
+        # carrega variaveis de ambiente (.env local + .env raiz)
         env_vars = cls._carregar_env(base_dir / sistema)
 
-        # lê e parseia o YAML
+        # le e parseia o YAML
         try:
             raw = config_path.read_text(encoding="utf-8")
             data = yaml.safe_load(raw)
@@ -109,22 +121,17 @@ class ConfigLoader:
             raise ConfigError(f"Erro ao parsear '{config_path}': {e}")
 
         if not isinstance(data, dict):
-            raise ConfigError(f"'{config_path}' deve ser um dicionário YAML.")
+            raise ConfigError(f"'{config_path}' deve ser um dicionario YAML.")
 
-        # resolve variáveis de ambiente no YAML inteiro
+        # resolve variaveis de ambiente no YAML inteiro
         data = cls._resolver_variaveis(data, env_vars, config_path)
 
-        # valida e constrói o SystemConfig
+        # valida e constroi o SystemConfig
         return cls._construir(data, sistema, ambiente, config_path)
 
     @classmethod
     def listar_sistemas(cls, configs_dir: Path = None) -> list[str]:
-        """
-        Lista os sistemas disponíveis (pastas com config.yaml).
-
-        Returns:
-            Lista de nomes de sistemas encontrados.
-        """
+        """Lista os sistemas disponiveis (pastas com config.yaml)."""
         base_dir = configs_dir or cls._CONFIGS_DIR
         if not base_dir.exists():
             return []
@@ -136,46 +143,39 @@ class ConfigLoader:
     @classmethod
     def listar_ambientes(cls, sistema: str,
                           configs_dir: Path = None) -> list[str]:
-        """
-        Lista os ambientes disponíveis para um sistema.
-
-        Returns:
-            Lista de nomes de ambientes definidos no config.yaml.
-        """
-        config = cls.carregar(sistema, configs_dir=configs_dir)
-        # re-lê o YAML só para listar ambientes sem resolver Faker
+        """Lista os ambientes disponiveis para um sistema."""
         base_dir = configs_dir or cls._CONFIGS_DIR
         raw = yaml.safe_load((base_dir / sistema / "config.yaml").read_text())
         return list(raw.get("ambientes", {}).keys())
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # Internos — construção
-    # ──────────────────────────────────────────────────────────────────────────
+    # ----------------------------------------------------------------
+    # Internos — construcao
+    # ----------------------------------------------------------------
 
     @classmethod
     def _construir(cls, data: dict, sistema: str,
                    ambiente: str, config_path: Path) -> SystemConfig:
-        """Valida o dicionário YAML e constrói o SystemConfig."""
+        """Valida o dicionario YAML e constroi o SystemConfig."""
 
-        # campos obrigatórios
+        # campos obrigatorios
         for campo in ("tipo", "runner", "credenciais"):
             if campo not in data:
                 raise ConfigError(
-                    f"'{config_path}': campo obrigatório '{campo}' não encontrado."
+                    f"'{config_path}': campo obrigatorio '{campo}' nao encontrado."
                 )
 
         # ambientes
         ambientes_raw = data.get("ambientes", {})
         if not ambientes_raw:
             raise ConfigError(
-                f"'{config_path}': seção 'ambientes' não encontrada ou vazia."
+                f"'{config_path}': secao 'ambientes' nao encontrada ou vazia."
             )
 
         if ambiente not in ambientes_raw:
-            disponíveis = list(ambientes_raw.keys())
+            disponiveis = list(ambientes_raw.keys())
             raise ConfigError(
-                f"'{config_path}': ambiente '{ambiente}' não encontrado.\n"
-                f"Disponíveis: {disponíveis}"
+                f"'{config_path}': ambiente '{ambiente}' nao encontrado.\n"
+                f"Disponiveis: {disponiveis}"
             )
 
         amb_data = ambientes_raw[ambiente]
@@ -196,14 +196,14 @@ class ConfigLoader:
         cred_data = data["credenciais"]
         if not isinstance(cred_data, dict):
             raise ConfigError(
-                f"'{config_path}': seção 'credenciais' deve ser um dicionário."
+                f"'{config_path}': secao 'credenciais' deve ser um dicionario."
             )
         credenciais_cfg = CredenciaisConfig(
             usuario=str(cred_data.get("usuario", "")),
             senha=str(cred_data.get("senha", "")),
         )
 
-        # dados faker
+        # dados faker (secao dados_faker:)
         dados_schema = []
         for item in data.get("dados_faker", []):
             if not isinstance(item, dict):
@@ -224,6 +224,13 @@ class ConfigLoader:
                     f"'{config_path}': erro em dados_faker item {item}: {e}"
                 )
 
+        # dados fixos (secao dados:) — qualquer estrutura YAML e valida
+        dados_fixos = data.get("dados", {})
+        if not isinstance(dados_fixos, dict):
+            raise ConfigError(
+                f"'{config_path}': secao 'dados' deve ser um dicionario."
+            )
+
         return SystemConfig(
             sistema=sistema,
             tipo=data["tipo"],
@@ -234,19 +241,20 @@ class ConfigLoader:
             flows=data.get("flows", []),
             dados_schema=dados_schema,
             coordenadas=data.get("coordenadas", {}),
-            regioes_ocr=data.get("regioes_ocr", {}),  # ← v0.5.6: regiões OCR do config.yaml
+            regioes_ocr=data.get("regioes_ocr", {}),
+            dados_fixos=dados_fixos,  # v0.5.7: secao dados: do config.yaml
         )
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # Internos — variáveis de ambiente
-    # ──────────────────────────────────────────────────────────────────────────
+    # ----------------------------------------------------------------
+    # Internos — variaveis de ambiente
+    # ----------------------------------------------------------------
 
     @classmethod
     def _carregar_env(cls, sistema_dir: Path) -> dict[str, str]:
         """
-        Carrega variáveis de ambiente de arquivos .env.
-        Ordem de prioridade (maior → menor):
-            1. os.environ (variáveis já definidas no sistema)
+        Carrega variaveis de ambiente de arquivos .env.
+        Ordem de prioridade (maior -> menor):
+            1. os.environ (variaveis ja definidas no sistema)
             2. configs/<sistema>/.env
             3. .env na raiz do projeto
         """
@@ -262,7 +270,7 @@ class ConfigLoader:
         if sistema_env.exists():
             env_vars.update(cls._parsear_env_file(sistema_env))
 
-        # os.environ tem prioridade máxima
+        # os.environ tem prioridade maxima
         env_vars.update(os.environ)
 
         return env_vars
@@ -271,8 +279,8 @@ class ConfigLoader:
     def _parsear_env_file(cls, path: Path) -> dict[str, str]:
         """
         Parseia um arquivo .env simples.
-        Ignora linhas em branco e comentários (#).
-        Suporta: VAR=valor, VAR="valor com espaços", VAR='valor'
+        Ignora linhas em branco e comentarios (#).
+        Suporta: VAR=valor, VAR="valor com espacos", VAR='valor'
         """
         result = {}
         try:
@@ -288,7 +296,7 @@ class ConfigLoader:
                 if key:
                     result[key] = value
         except Exception:
-            pass  # .env inválido — ignorar silenciosamente
+            pass  # .env invalido — ignorar silenciosamente
         return result
 
     @classmethod
@@ -296,7 +304,7 @@ class ConfigLoader:
                              env_vars: dict[str, str],
                              config_path: Path) -> Any:
         """
-        Resolve referências ${VAR_NAME} e ${VAR_NAME:-default} recursivamente.
+        Resolve referencias ${VAR_NAME} e ${VAR_NAME:-default} recursivamente.
         Suporta strings, dicts e listas.
         """
         if isinstance(data, str):
@@ -314,12 +322,12 @@ class ConfigLoader:
                           env_vars: dict[str, str],
                           config_path: Path) -> str:
         """
-        Resolve todas as referências ${...} em uma string.
+        Resolve todas as referencias ${...} em uma string.
         Suporta valor default: ${VAR_NAME:-valor_default}
         """
         def substituir(match):
             var_name = match.group(1).strip()
-            default = match.group(2)  # None se não tiver :-
+            default = match.group(2)  # None se nao tiver :-
 
             if var_name in env_vars:
                 return env_vars[var_name]
@@ -328,9 +336,9 @@ class ConfigLoader:
                 return default
 
             raise ConfigError(
-                f"'{config_path}': variável de ambiente '${{{var_name}}}' "
-                f"não encontrada.\n"
-                f"Defina a variável no sistema ou em configs/<sistema>/.env:\n"
+                f"'{config_path}': variavel de ambiente '${{{var_name}}}' "
+                f"nao encontrada.\n"
+                f"Defina a variavel no sistema ou em configs/<sistema>/.env:\n"
                 f"  {var_name}=seu_valor"
             )
 

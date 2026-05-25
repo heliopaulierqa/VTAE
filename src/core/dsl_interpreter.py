@@ -2,14 +2,16 @@
 DSL Interpreter — v0.5.3
 Executa testes definidos em YAML sem necessidade de código Python.
 
-Ações suportadas (v0.5.3):
+Ações suportadas (v0.5.7c):
     fill_field      — preenche campo via template (click_near) ou seletor CSS
+                      verify: true → valida preenchimento via OCR após digitar
     assert_visible  — verifica se template ou seletor está visível na tela
     assert_text     — verifica texto via OCR (desktop) ou seletor (web)
     select_dropdown — seleciona opção em dropdown por valor
     run_component   — executa componente Python reutilizável
     loop            — executa bloco de steps N vezes ou para cada item de uma lista
     if              — executa bloco 'then' se condição for verdadeira, senão 'else'
+    expect_error    — passa SE e SOMENTE SE um dos sub-steps lançar erro com texto esperado
     click           — clica em template ou seletor
     wait            — aguarda template ou seletor aparecer
     type            — digita texto no campo ativo (desktop)
@@ -104,6 +106,8 @@ class DSLInterpreter:
         "select_dropdown", "run_component",
         # v0.5.3
         "loop", "if",
+        # v0.5.7c — Fase C
+        "expect_error",
     }
 
     def __init__(self, ctx, observer=None) -> None:
@@ -183,6 +187,8 @@ class DSLInterpreter:
             "run_component":    self._action_run_component,
             "loop":             self._action_loop,
             "if":               self._action_if,
+            # v0.5.7c — Fase C
+            "expect_error":     self._action_expect_error,
         }
         return handlers[action](index, step)
 
@@ -241,6 +247,7 @@ class DSLInterpreter:
         value = self._resolve(step.get("value", ""))
         template = step.get("template")
         selector = step.get("selector")
+        verify = step.get("verify", False)
         if not template and not selector:
             raise StepError("'fill_field' requer 'template' (desktop) ou 'selector' (web).")
         if template:
@@ -251,8 +258,36 @@ class DSLInterpreter:
             else:
                 self.ctx.runner.safe_click(template)
             self.ctx.runner.type_text(value)
+            # Fase A+C — verify: true valida o preenchimento via OCR
+            if verify and value:
+                region = step.get("region")
+                if region and hasattr(self.ctx.runner, "verify_fill"):
+                    ok = self.ctx.runner.verify_fill(
+                        value,
+                        region=tuple(region),
+                        debug_path=f"{self.ctx.evidence_dir}verify_fill_{step.get('id', f'DSL{index:02d}')}.png",
+                    )
+                    if not ok:
+                        raise StepError(
+                            f"Falha de Observabilidade: campo nao contém '{value}' "
+                            f"apos preenchimento. Veja verify_fill_debug no evidence."
+                        )
         else:
             self.ctx.runner.fill(selector, value)
+            # verify via DOM para web
+            if verify and value:
+                try:
+                    page = self.ctx.runner._page
+                    actual = page.locator(selector).first.input_value(timeout=3000)
+                    if value not in actual:
+                        raise StepError(
+                            f"Falha de Observabilidade: campo '{selector}' contém '{actual}', "
+                            f"esperado '{value}'."
+                        )
+                except StepError:
+                    raise
+                except Exception:
+                    pass  # campo sem input_value (ex: contenteditable) — ignora
         return self._auto_screenshot(index, step)
 
     def _action_assert_visible(self, index: int, step: dict) -> str | None:
@@ -471,6 +506,79 @@ class DSLInterpreter:
                 )
 
         return None
+
+    def _action_expect_error(self, index: int, step: dict) -> str | None:
+        """
+        Fase C — cenários negativos.
+
+        Executa os sub-steps e PASSA se e somente se um deles lançar um erro
+        cuja mensagem contenha o texto em 'contains'.
+        Falha se todos os sub-steps passarem (sistema nao barrou a entrada invalida).
+        Falha se o erro lançado nao corresponder ao texto esperado.
+
+        YAML:
+            - id: NEG01
+              action: expect_error
+              contains: "CPF inválido"
+              steps:
+                - id: NEG01_A
+                  action: fill_field
+                  template: templates/si3/campo_cpf.png
+                  value: "11122233344"
+                  offset_x: 150
+                - id: NEG01_B
+                  action: click
+                  template: templates/si3/btn_salvar.png
+
+        Campos:
+            contains  (obrigatorio) — substring esperada na mensagem de erro (case-insensitive)
+            steps     (obrigatorio) — lista de acoes que devem provocar o erro
+            screenshot: true        — captura tela apos validar o erro (opcional)
+        """
+        contains = step.get("contains", "")
+        sub_steps = step.get("steps")
+
+        if not contains:
+            raise StepError("'expect_error' requer campo 'contains' com o texto esperado no erro.")
+        if not sub_steps:
+            raise StepError("'expect_error' requer campo 'steps' com pelo menos uma acao.")
+
+        print(f"[DSL]   expect_error: aguardando erro contendo '{contains}'")
+
+        error_caught: str | None = None
+
+        for sub_i, sub_step in enumerate(sub_steps, 1):
+            sub_action = sub_step.get("action")
+            if sub_action not in self.SUPPORTED_ACTIONS:
+                raise ValueError(f"Acao desconhecida em expect_error: '{sub_action}'.")
+            sub_result = self._execute_action(sub_i, sub_step)
+            if not sub_result.success:
+                error_caught = sub_result.error or ""
+                print(f"[DSL]   expect_error: erro capturado no sub-step {sub_i} — '{error_caught[:80]}'")
+                break  # erro encontrado — para de executar os demais sub-steps
+
+        # --- Avaliar resultado ---
+        screenshot_path = self._maybe_screenshot(index, step)
+
+        if error_caught is None:
+            # Todos os sub-steps passaram — sistema NAO barrou — cenario negativo FALHOU
+            raise StepError(
+                f"expect_error FALHOU: sistema nao gerou erro. "
+                f"Esperado erro contendo '{contains}'. "
+                f"O sistema aceitou a entrada invalida sem barrar."
+            )
+
+        if contains.lower() not in error_caught.lower():
+            # Erro ocorreu, mas nao e o esperado
+            raise StepError(
+                f"expect_error FALHOU: erro ocorreu mas nao corresponde ao esperado.\n"
+                f"  Esperado conter : '{contains}'\n"
+                f"  Erro encontrado : '{error_caught[:200]}'"
+            )
+
+        # Erro esperado confirmado — cenario negativo PASSOU
+        print(f"[DSL]   expect_error OK — sistema barrou corretamente com: '{error_caught[:80]}'")
+        return screenshot_path
 
     # ------------------------------------------------------------------
     # Internals

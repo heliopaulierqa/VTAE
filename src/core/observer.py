@@ -99,6 +99,11 @@ class ExecutionObserver:
     def log_step_result(self, step: StepResult) -> None:
         status = "OK" if step.success else "FALHOU"
         msg = f"[{step.step_id}] {status} | {step.duration_ms:.0f}ms"
+        # Fase B — badge de integridade no log
+        if step.validated is True:
+            msg += " [VALIDADO]"
+        elif step.validated is False and step.success:
+            msg += " [NAO VALIDADO]"
         if step.screenshot_path:
             msg += f" | screenshot: {step.screenshot_path}"
         if step.error:
@@ -113,13 +118,19 @@ class ExecutionObserver:
 
     def log_flow_result(self, result: FlowResult) -> None:
         status = "PASSOU" if result.success else "FALHOU"
+        validated_count = sum(1 for s in result.steps if s.validated is True)
+        sem_validacao = sum(1 for s in result.steps if s.success and s.validated is None)
+        total_ok = len(result.steps) - len(result.failed_steps)
         self._logger.info(
             f"Flow {result.flow_name} — {status} | "
-            f"{len(result.steps) - len(result.failed_steps)}/{len(result.steps)} steps OK | "
-            f"{result.total_duration_ms:.0f}ms total"
+            f"{total_ok}/{len(result.steps)} steps OK | "
+            f"{validated_count} validados"
+            + (f" | {sem_validacao} sem validacao" if sem_validacao > 0 else "")
+            + f" | {result.total_duration_ms:.0f}ms total"
         )
         for step in result.failed_steps:
-            self._logger.error(f"  Step falhou: [{step.step_id}] {step.error}")
+            causa = f" [{step.causa_falha.value}]" if step.causa_falha else ""
+            self._logger.error(f"  Step falhou: [{step.step_id}]{causa} {step.error}")
 
     def report(self, ctx) -> str:
         """
@@ -169,6 +180,7 @@ class ExecutionObserver:
                         {
                             "step_id": s.step_id,
                             "success": s.success,
+                            "validated": s.validated,          # Fase B
                             "duration_ms": round(s.duration_ms, 1),
                             "screenshot": s.screenshot_path,
                             "error": s.error,
@@ -222,22 +234,26 @@ class ExecutionObserver:
                 dur = step.get("duration_ms", 0) or 0
 
                 if sid not in historico:
-                    historico[sid] = {
-                        "pass_count": 0,
-                        "fail_count": 0,
-                        "last_failure": None,
-                        "last_causa_falha": None,
-                        "avg_duration_ms": 0.0,   # item 4
-                        "max_duration_ms": 0.0,   # item 4
-                        "total_duration_ms": 0.0, # item 4 — acumulador interno
-                        "total_execucoes": 0,     # item 4 — acumulador interno
-                    }
+                    historico[sid] = {}
 
+                # h sempre aponta para o dict do step — dentro ou fora do if
                 h = historico[sid]
+                # garante campos existem — compativel com versoes antigas do flakiness.json
+                h.setdefault("pass_count", 0)
+                h.setdefault("fail_count", 0)
+                h.setdefault("last_failure", None)
+                h.setdefault("last_causa_falha", None)
+                h.setdefault("avg_duration_ms", 0.0)
+                h.setdefault("max_duration_ms", 0.0)
+                h.setdefault("total_duration_ms", 0.0)
+                h.setdefault("total_execucoes", 0)
+                h.setdefault("validated_count", 0)
 
                 # contadores pass/fail
                 if step["success"]:
                     h["pass_count"] += 1
+                    if step.get("validated") is True:
+                        h["validated_count"] = h.get("validated_count", 0) + 1
                 else:
                     h["fail_count"] += 1
                     h["last_failure"] = report_data["finished_at"]

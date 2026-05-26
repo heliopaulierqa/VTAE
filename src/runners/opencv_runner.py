@@ -5,6 +5,7 @@ v0.3.3 — F2-A: usa TemplateMatcher com multi-scale matching.
 Log de diagnóstico mostra score máximo quando template não é encontrado.
 """
 
+import logging
 import os
 import time
 
@@ -39,15 +40,36 @@ class OpenCVRunner(BaseRunner):
         """
         Args:
             confidence: threshold de similaridade (0.0 a 1.0).
-                        0.8 = 80% de similaridade mínima.
-                        Use 0.6–0.7 para templates com variação de renderização.
-                        Use 0.85–0.95 para templates muito específicos.
+                        0.8 = 80% de similaridade minima.
+                        Use 0.6-0.7 para templates com variacao de renderizacao.
+                        Use 0.85-0.95 para templates muito especificos.
             scales: escalas para multi-scale matching.
-                    None = usa padrão (1.0, 0.9, 1.1, 0.8, 1.2).
+                    None = usa padrao (1.0, 0.9, 1.1, 0.8, 1.2).
                     Passe (1.0,) para desativar multi-scale.
         """
         self.confidence = confidence
-        self._matcher = TemplateMatcher(confidence=confidence, scales=scales)
+        self._matcher   = TemplateMatcher(confidence=confidence, scales=scales)
+        self._logger: logging.Logger | None = None  # Fase 1 — injetado pelo Observer
+
+    def set_logger(self, logger: logging.Logger) -> None:
+        """
+        Injeta o logger do Observer no runner.
+        Chamado pelo FlowContext apos instanciar o runner.
+        Quando presente, substitui print() por logger.debug() — os logs
+        chegam ao execution.log com o mesmo execution_id da execucao.
+        """
+        self._logger = logger
+
+    def _log(self, msg: str, level: str = "debug") -> None:
+        """
+        Rota o log para o logger (quando injetado) ou para print().
+        Todos os prints do runner passam por aqui — assim chegam ao
+        execution.log quando o Observer estiver presente.
+        """
+        if self._logger:
+            getattr(self._logger, level)(msg)
+        else:
+            print(msg)
 
     # ──────────────────────────────────────────────
     # Métodos abstratos obrigatórios (BaseRunner)
@@ -134,24 +156,27 @@ class OpenCVRunner(BaseRunner):
                 pyautogui.click(result.x, result.y)
                 time.sleep(0.3)
                 if result.scale != 1.0:
-                    print(f"[safe_click] match em escala {result.scale:.1f}x "
-                          f"(score={result.score:.3f}) — '{template}'")
+                    self._log(f"[safe_click] match em escala {result.scale:.1f}x "
+                              f"(score={result.score:.3f}) — '{template}'")
                 return True
 
-            # diagnóstico — mostra o melhor score encontrado
             best_score = self._matcher.find_best_score(template)
-            print(f"[safe_click] tentativa {attempt}/{retries} falhou — "
-                  f"score máximo: {best_score:.3f} (threshold: {thr:.2f}) — '{template}'")
+            self._log(f"[safe_click] tentativa {attempt}/{retries} falhou — "
+                      f"score: {best_score:.3f} (threshold: {thr:.2f}) — '{template}'")
 
             if attempt < retries:
                 time.sleep(delay)
 
+        final_score = self._matcher.find_best_score(template)
         raise TemplateNotFoundError(
-            f"Template não encontrado após {retries} tentativas: '{template}'\n"
-            f"Score máximo encontrado: {self._matcher.find_best_score(template):.3f} "
-            f"(threshold: {thr:.2f})\n"
+            f"Template nao encontrado apos {retries} tentativas: '{template}'\n"
+            f"Score maximo encontrado: {final_score:.3f} (threshold: {thr:.2f})\n"
             f"Dicas: reduza o confidence, recapture o template ou verifique "
-            f"se a janela está maximizada."
+            f"se a janela esta maximizada.",
+            template=template,
+            score=final_score,
+            threshold=thr,
+            tentativas=retries,
         )
 
     # ──────────────────────────────────────────────
@@ -179,16 +204,20 @@ class OpenCVRunner(BaseRunner):
                 return True
 
             best_score = self._matcher.find_best_score(template)
-            print(f"[double_click] tentativa {attempt}/{retries} falhou — "
-                  f"score máximo: {best_score:.3f} (threshold: {thr:.2f}) — '{template}'")
+            self._log(f"[double_click] tentativa {attempt}/{retries} falhou — "
+                      f"score: {best_score:.3f} (threshold: {thr:.2f}) — '{template}'")
 
             if attempt < retries:
                 time.sleep(delay)
 
+        final_score = self._matcher.find_best_score(template)
         raise TemplateNotFoundError(
-            f"Template não encontrado para duplo clique após {retries} tentativas: '{template}'\n"
-            f"Score máximo: {self._matcher.find_best_score(template):.3f} "
-            f"(threshold: {thr:.2f})"
+            f"Template nao encontrado para duplo clique apos {retries} tentativas: '{template}'\n"
+            f"Score maximo: {final_score:.3f} (threshold: {thr:.2f})",
+            template=template,
+            score=final_score,
+            threshold=thr,
+            tentativas=retries,
         )
 
     # ──────────────────────────────────────────────
@@ -257,14 +286,13 @@ class OpenCVRunner(BaseRunner):
                 return True
             time.sleep(0.5)
 
-        # última tentativa falhou — salva screenshot de debug
         if debug_path:
             self.screenshot(debug_path)
-            print(f"[verify_fill] FALHOU — valor esperado: '{expected_value}' | "
-                  f"debug salvo em: {debug_path}")
+            self._log(f"[verify_fill] FALHOU — valor esperado: '{expected_value}' | "
+                      f"debug salvo em: {debug_path}")
         else:
-            print(f"[verify_fill] FALHOU — valor esperado: '{expected_value}' | "
-                  f"regiao: {region}")
+            self._log(f"[verify_fill] FALHOU — valor esperado: '{expected_value}' | "
+                      f"regiao: {region}")
         return False
 
     # ──────────────────────────────────────────────
@@ -302,9 +330,13 @@ class OpenCVRunner(BaseRunner):
             time.sleep(0.3)
             return True
         except TemplateNotFoundError:
-            best_score = self._matcher.find_best_score(template)
+            final_score = self._matcher.find_best_score(template)
             raise TemplateNotFoundError(
-                f"Âncora não encontrada: '{template}'\n"
-                f"Score máximo: {best_score:.3f} "
-                f"(threshold: {threshold or self.confidence:.2f})"
+                f"Ancora nao encontrada: '{template}'\n"
+                f"Score maximo: {final_score:.3f} "
+                f"(threshold: {threshold or self.confidence:.2f})",
+                template=template,
+                score=final_score,
+                threshold=threshold or self.confidence,
+                tentativas=1,
             )

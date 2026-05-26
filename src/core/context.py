@@ -26,6 +26,15 @@ class FlowContext:
     def password(self) -> str | None:
         return self.credentials.get("password") or getattr(self.config, "PASSWORD", None)
 
+    def set_logger(self, logger) -> None:
+        """
+        Injeta o logger do Observer no runner (Fase 1).
+        Chamado pelo Observer apos criar o FlowContext.
+        So atua se o runner tiver o metodo set_logger (OpenCVRunner).
+        """
+        if hasattr(self.runner, "set_logger"):
+            self.runner.set_logger(logger)
+
     def add_result(self, result: FlowResult) -> None:
         self._results.append(result)
 

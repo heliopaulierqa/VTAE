@@ -33,6 +33,9 @@ class StepResult:
     error: str | None = None
     causa_falha: CausaFalha | None = None
     validated: bool | None = None          # Fase A — foi validado apos a acao?
+    # Fase 1 — dados do runner para diagnostico sem reexecutar
+    confidence_score: float | None = None  # melhor score de template match (0.0-1.0)
+    template_path: str | None = None       # template que falhou (quando causa=TEMPLATE_NAO_ENCONTRADO)
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
     def __str__(self) -> str:
@@ -42,6 +45,8 @@ class StepResult:
             base += " [VALIDADO]"
         elif self.validated is False and self.success:
             base += " [nao validado]"
+        if self.confidence_score is not None:
+            base += f" | score: {self.confidence_score:.3f}"
         if self.error:
             base += f" | erro: {self.error}"
         if self.causa_falha:

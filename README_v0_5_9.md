@@ -4,9 +4,9 @@
 > para sistemas web modernos, legados desktop e ambientes híbridos.
 
 ![Python](https://img.shields.io/badge/Python-3.13%2B-blue)
-![Versão](https://img.shields.io/badge/versão-0.5.7c-purple)
+![Versão](https://img.shields.io/badge/versão-0.5.9-purple)
 ![Testes](https://img.shields.io/badge/testes-372%20unitários-green)
-![Fase](https://img.shields.io/badge/fase-5c%20jornada%20ambulatório-blue)
+![Fase](https://img.shields.io/badge/fase-Obs--Fase1%20observabilidade%20real-blue)
 
 ---
 
@@ -115,6 +115,7 @@ Pré-requisitos antes de rodar:
 - SI3 aberto e **maximizado** na tela principal (Menu Principal)
 - Credenciais configuradas no `.env`
 - Tesseract instalado com pacote Portuguese
+- Resolução 1920x1080 (coordenadas calibradas para esta resolução)
 
 ```bash
 vtae run --test cadastro_paciente_jornada
@@ -126,9 +127,10 @@ Evidências salvas em: `evidence/<data>/test_cadastro_paciente_jornada/`
 
 ### Observações para outro computador
 
-- **Coordenadas dependem de resolução**: se a resolução da tela for diferente, as coordenadas no `config.yaml` precisarão ser recalibradas com `python scripts/posicao_mouse.py`
-- **Templates dependem de zoom**: se o Oracle Forms estiver com zoom diferente, recapturar os templates em `templates/si3/cadastro_paciente/`
-- **Tesseract path**: se instalado em caminho diferente do padrão, configurar a variável de ambiente `TESSDATA_PREFIX`
+- **Coordenadas dependem de resolução**: se a resolução da tela for diferente, recalibrar com `python scripts/posicao_mouse.py` e atualizar o `config.yaml`
+- **Templates dependem de zoom**: se o Oracle Forms estiver com zoom diferente, recapturar os templates na pasta correspondente
+- **Tesseract path**: se instalado em caminho diferente do padrão, configurar `TESSDATA_PREFIX`
+- **Resolução padrão do projeto**: 1920x1080 — confirmar antes de rodar em outro PC
 
 ---
 
@@ -174,12 +176,12 @@ VTAE/
 │   └── integration/
 │       └── jornadas/
 │           └── ambulatorio/
-│               ├── test_01_cadastro_paciente.py     ✅ Fase 5a
-│               └── test_02_admissao_ambulatorio.py  🔵 Fase 5c
+│               ├── test_01_cadastro_paciente.py     ✅ Fase 5a — 3x validado
+│               └── test_02_admissao_ambulatorio.py  ✅ Fase 5c — 3x validado
 ├── scripts/
 │   └── posicao_mouse.py          # captura coordenadas com contagem regressiva
 └── evidence/
-    ├── flakiness.json            # histórico global de pass/fail por step
+    ├── flakiness.json            # histórico global de pass/fail/score por step
     ├── estado_jornada.json       # compartilhado entre testes da jornada
     └── YYYY-MM-DD/<teste>/       # screenshots + logs + report.html
 ```
@@ -223,6 +225,9 @@ vtae run --test cadastro_paciente_jornada --repeat 3
 # jornada encadeada (test_01 → test_02 → ...)
 vtae run --jornada ambulatorio
 
+# jornada com repetição
+vtae run --jornada ambulatorio --repeat 3
+
 # módulo completo
 vtae run --module si3
 
@@ -234,7 +239,7 @@ vtae run --module si3 --env homologacao --retry 2
 
 # observabilidade — análise de flakiness
 vtae flakiness --top 5          # top 5 steps mais instáveis
-vtae flakiness --min-falhas 1   # steps que falharam ao menos 1x
+vtae flakiness --min-falhas 2   # só steps com 2+ falhas
 
 # utilitários
 vtae systems
@@ -245,8 +250,6 @@ vtae send --module si3 --to gestor@incor.org.br
 ---
 
 ## Utilitário — Captura de coordenadas
-
-Para capturar coordenadas de elementos na tela (necessário na criação de novos testes desktop):
 
 ```bash
 python scripts/posicao_mouse.py
@@ -291,15 +294,12 @@ runner = PlaywrightRunner(url=config.url, headless=False)
 | Sistema | Tipo | Runner | Flows | Status |
 |---|---|---|---|---|
 | SisLab | Desktop Oracle Forms | OpenCV | Login, CadastroFuncionario | ✅ |
-| SI3 | Desktop Oracle Forms | OpenCV | Login, CadastroPaciente (23 steps), AdmissaoInternacao (18 steps), AdmissaoAmbulatorio (15 steps) | ✅ / 🔵 |
+| SI3 | Desktop Oracle Forms | OpenCV | Login, CadastroPaciente (23 steps), AdmissaoInternacao (18 steps), AdmissaoAmbulatorio (15 steps) | ✅ |
 | MSI3 | Web Oracle APEX 23.1 | Playwright + OpenCV | Login, FrequenciaAplicacao, TipoAnestesia | ✅ |
 
 ---
 
-## config.yaml — estrutura completa (v0.5.7c)
-
-A partir da v0.5.7c o config.yaml suporta a seção `dados:` para dados fixos e estruturados,
-além da `dados_faker:` para dados gerados dinamicamente. Ambas são acessíveis via `config.DADOS`.
+## config.yaml — estrutura completa (v0.5.9)
 
 ```yaml
 sistema: si3_ambulatorio
@@ -321,11 +321,9 @@ dados_faker:
     metodo: name
     transformacao: sem_prefixo_upper
 
-# Dados fixos — strings, listas, dicts aninhados
-# Acessíveis via config.DADOS no flow
 dados:
   unidade_funcional: 'SC MONITORIZACAO AMBULATORIAL'
-  cenario_provedor: 'sus'   # sus | convenio_allianz | convenio_unimed | ...
+  cenario_provedor: 'sus'
   cenarios_provedor:
     sus:
       provedor: 'SUS'
@@ -339,14 +337,13 @@ dados:
       validade_carteirinha: '30/07/2028'
   procedimentos:
     - { codigo: 'SCF-CONS', complemento: 'CASO NOVO', area_executora: '', profissional: 'MEDICO' }
-    - { codigo: 'ECG', complemento: 'SEGUIMENTO', area_executora: 'COMISSAO CIENTIFICA', profissional: 'MEDICO' }
 
 coordenadas:
+  campo_localizar_menu:     { x: 635, y: 580 }
   campo_identificador_amb:  { x: 530, y: 180 }
-  campo_medico_nome:        { x: 235, y: 471 }
 
 regioes_ocr:
-  nr_admissao_amb: { x1: 10, y1: 40, x2: 200, y2: 70 }
+  nr_admissao_amb: { x1: 88, y1: 135, x2: 298, y2: 142 }
 ```
 
 **Regras:** `coordenadas`, `regioes_ocr` e `dados` ficam SEMPRE no config.yaml — nunca no flow.
@@ -360,13 +357,16 @@ regioes_ocr:
 - `type_text()` obrigatório para campos com acentos
 - `double_click` para menus
 - `click_near` para campos grandes e únicos — campos pequenos usam coordenada direta
-- **Campos de grade** (aba Documentos): usar `pyperclip.copy() + ctrl+v` — `pyautogui.write()` é ignorado
+- **Campos de grade** (aba Documentos): usar `pyperclip.copy() + ctrl+v`
 - **LOV (botão `[...]`):** `_selecionar_via_lov()` — helper padrão com popup + Localizar + OK
+- **LOV em grade de procedimentos:** `_lov_linha_tab()` — Tab Navigation, sem offset_y calculado
 - Unidade Funcional: `type_text` + 2x TAB (sigla carrega automaticamente)
 - Médico Responsável: LOV com `%medico` → duplo clique em MEDICO (SOH PARA USO DA INFORMATICA)
+- Salvar no Oracle Forms: **F10** (não Ctrl+S)
 - Popups de erro aleatórios (FRM-*, HC-INCOR): `_fechar_popups_oracle()` — fecha se aparecer, ignora se não
 - ID do paciente sempre via `.env` (LGPD — nunca hardcoded)
 - Coordenadas TODAS no `config.yaml` — nunca hardcoded no flow
+- Navegação via **Localizar no Menu** (mais estável que Favoritos)
 
 ### Oracle APEX / MSI3
 
@@ -377,35 +377,52 @@ regioes_ocr:
 
 ---
 
-## Observabilidade (v0.5.7c)
+## Observabilidade (v0.5.9 — Fase 1)
 
 Cada execução gera em `evidence/YYYY-MM-DD/<teste>/`:
 
 | Arquivo | Conteúdo |
 |---|---|
-| `execution.log` | Log estruturado com timestamps e causa de falha |
-| `execution.json` | Dados com `execution_id` UUID, ambiente (OS, hostname, resolução) |
-| `report.html` | Relatório visual com screenshots clicáveis |
-| `flakiness.json` | Global em `evidence/` — histórico de pass/fail/duração por step |
+| `execution.log` | Log estruturado — inclui prints do runner com `execution_id` |
+| `execution.json` | `execution_id`, ambiente, `confidence_score` e `template_path` por step |
+| `report.html` | Relatório visual sem dependência de internet — fontes do sistema |
+| `flakiness.json` | Histórico de pass/fail/score/duração por step |
 | `estado_jornada.json` | Compartilhado entre testes — `paciente_id`, `nr_admissao_amb` |
+
+**O que o `report.html` mostra:**
+- Seção de alertas no topo — steps críticos com score e taxa histórica de falha
+- Barra de confiança de template (verde ≥0.75 / amarelo 0.55–0.74 / vermelho <0.55)
+- Badge histórico por step — `↻ 77% histórico` visível sem abrir outro arquivo
+- Lightbox de screenshots — clique para ampliar
+- Funciona offline — sem Google Fonts, sem CDN externo
 
 **CausaFalha** classificada automaticamente:
 `TEMPLATE_NAO_ENCONTRADO | TIMEOUT | OCR_LEITURA | COORDENADA | ESTADO_AUSENTE | SISTEMA | DESCONHECIDA`
+
+**Score de template** disponível no `execution.json` e no `report.html` quando a causa é `TEMPLATE_NAO_ENCONTRADO`:
+```json
+{
+  "step_id": "AB13",
+  "success": false,
+  "causa_falha": "template_nao_encontrado",
+  "confidence_score": 0.543,
+  "template_path": "templates/si3/admissao_ambulatorio/btn_voltar.png"
+}
+```
 
 ---
 
 ## Roadmap de Observabilidade
 
-O projeto identificou falso positivo crítico (teste reporta PASSOU mas sistema ficou em tela errada).
-Detalhes completos em `Roadmap_VTAE_Observabilidade_v057.docx`.
-
 | Fase | Descrição | Status |
 |---|---|---|
-| **Obs-A** | `confirm_template` no `_step()` + `verify_fill` + `validated` no StepResult | 🔴 Fazer agora |
-| **Obs-B** | Badge integridade no report.html + screenshot before/after + resumo executivo | 🔜 |
-| **Obs-C** | `expect_error` no DSL + testes negativos + detecção OCR de erro | 🔜 |
-| **Obs-D** | CadastroPacienteFlow com observabilidade real — validar 3x | 🔜 |
-| **Obs-E** | Jornada ambulatório completa com observabilidade real | 🔜 |
+| **Obs-A** | `confirm_template` + `verify_fill` + `validated` no StepResult | ✅ |
+| **Obs-B** | Badges integridade no report.html + resumo executivo | ✅ |
+| **Obs-C** | `expect_error` no DSL | ✅ |
+| **Obs-D** | Jornada ambulatório com observabilidade real — 3x | ✅ |
+| **Obs-Fase1** | Score no StepResult + logger no runner + report.html para gestão | ✅ 26/05/2026 |
+| **Obs-Fase2** | Série temporal no flakiness + alerta automático de regressão | 🔜 |
+| **Obs-Fase3** | Steps sem validação em destaque + limpeza automática de evidências | 🔜 |
 
 ---
 
@@ -418,11 +435,9 @@ Detalhes completos em `Roadmap_VTAE_Observabilidade_v057.docx`.
 | `CF01`... | `CadastroFuncionarioFlow` | SisLab | ✅ |
 | `CP01`... | `CadastroPacienteFlow` | SI3 | ✅ 23 steps |
 | `AI01`... | `AdmissaoInternacaoFlow` | SI3 | ✅ 18 steps |
+| `AB01`... | `AdmissaoAmbulatorioFlow` | SI3 | ✅ 15 steps — 3x validado |
 | `FA01`... | `FrequenciaAplicacaoFlow` | MSI3 | ✅ |
 | `TA01`... | `TipoAnestesiaFlow` | MSI3 | ✅ |
-| `AB01`... | `AdmissaoAmbulatorioFlow` | SI3 | 🔵 15 steps, calibrando |
-| `AT01`... | `AtendimentoMedicoFlow` | SI3 | 🔜 Fase 5c |
-| `AA01`... | `AltaAmbulatorioFlow` | SI3 | 🔜 Fase 5c |
 
 ---
 
@@ -433,12 +448,10 @@ Detalhes completos em `Roadmap_VTAE_Observabilidade_v057.docx`.
 | 1–4c | Base, Clean Architecture, DSL, migração estrutural | ✅ |
 | 5a | CadastroPacienteFlow 23 steps, 3x seguidas | ✅ |
 | 5b | Observabilidade básica (CausaFalha, flakiness, execution_id, health check) | ✅ |
-| 5c | Jornada ambulatório completa (test_01–test_04) | 🔵 Em andamento |
-| Obs-A | confirm_template + verify_fill + validated (fim do falso positivo) | 🔴 Fazer agora |
-| Obs-B | report.html com valor para gestão | 🔜 |
-| Obs-C | Caminhos negativos (expect_error) | 🔜 |
-| Obs-D | CadastroPacienteFlow com observabilidade real | 🔜 |
-| Obs-E | Jornada ambulatório com observabilidade real | 🔜 |
+| 5c | Jornada ambulatório completa — 3x validada | ✅ 26/05/2026 |
+| Obs-Fase1 | Score no runner + logger + report.html para gestão | ✅ 26/05/2026 |
+| Obs-Fase2 | Série temporal + alertas automáticos de regressão | 🔜 |
+| Obs-Fase3 | Steps sem validação + limpeza automática | 🔜 |
 | 6 | YOLO fine-tuning + integração OpenCVRunner | 🔜 |
 | 7 | CI/CD Jenkins + RDP | 🔜 |
 | 8 | Portfólio profissional | 🔜 |
@@ -447,34 +460,54 @@ Detalhes completos em `Roadmap_VTAE_Observabilidade_v057.docx`.
 
 ## Changelog
 
+### v0.5.9 — 2026-05-26
+
+**Observabilidade Fase 1 — dados reais chegam ao relatório**
+- `TemplateNotFoundError` agora carrega `template`, `score`, `threshold` e `tentativas` como campos estruturados
+- `StepResult` ganhou `confidence_score` e `template_path` — persistidos no `execution.json`
+- `OpenCVRunner` — `set_logger()` e `_log()`: todos os `print()` do runner chegam ao `execution.log` com o `execution_id` da execução
+- `FlowContext.set_logger()` — repassa o logger do Observer ao runner
+- `ExecutionObserver.inject_logger(ctx)` — injeção automática no `report()`, sem mudar nenhum teste existente
+- `report_generator.py` — relatório visual para gestão sem dependência de internet:
+  - Seção de alertas no topo com score e taxa histórica
+  - Barra de confiança de template por step
+  - Badge histórico `↻ X% histórico` visível em cada step
+  - Fontes do sistema (sem Google Fonts — funciona offline)
+
+**Jornada ambulatório — Fase 5c concluída**
+- `AdmissaoAmbulatorioFlow` AB01–AB15 passando 3x seguidas
+- AB01 via Localizar no Menu (mais estável que Favoritos)
+- AB12 Tab Navigation — 1 procedimento (N procedimentos via config.yaml)
+- AB13 F10 + coordenada direta para Voltar
+- AB14 Nr. Admissão via OCR com região calibrada
+- `vtae run --jornada ambulatorio --repeat 3` — suporte a `--repeat` na jornada
+
+### v0.5.8c — 2026-05-25
+- `AdmissaoAmbulatorioFlow` AB13 corrigido — F10 + coordenada direta (score 0.543)
+- AB14 região OCR calibrada com Paint `(88, 135, 298, 142)`
+- AB01 via Localizar no Menu — estratégia estável
+
+### v0.5.8 — 2026-05-25
+- `AdmissaoAmbulatorioFlow` AB12 Tab Navigation — sem offset_y calculado
+- `_lov_linha_tab()` — LOV em grade com coordenadas fixas
+- `campo_localizar_menu` adicionado ao config.yaml
+
 ### v0.5.7c — 2026-05-22
 - `AdmissaoAmbulatorioFlow` — 15 steps AB01-AB15, AB01-AB11 passando
-- `_selecionar_via_lov()` — helper reutilizável para LOV (AB11, AB12)
-- `_resolver_cenario_provedor()` — cenários de provedor configuráveis no config.yaml
-- `dados:` no config.yaml — seção de dados fixos exposta via `config.DADOS`
-- `schema.py` atualizado — `dados_fixos` no `SystemConfig`, `DADOS` mescla fixos + Faker
-- `loader.py` atualizado — lê seção `dados:` e passa como `dados_fixos`
-- `observer.py` corrigido — `setdefault` fora do `if` (fix `KeyError: total_execucoes`)
-- AB04 com OCR — só digita RUA se campo Tipo estiver vazio
-- AB11 via LOV — `%medico` → duplo clique em MEDICO (SOH PARA USO DA INFORMATICA)
-- AB12 com lista de procedimentos configurável — cada item com código, complemento, área executora e profissional
+- `_selecionar_via_lov()` — helper reutilizável para LOV
+- `_resolver_cenario_provedor()` — cenários de provedor configuráveis
+- `dados:` no config.yaml — seção de dados fixos via `config.DADOS`
 
 ### v0.5.6c — 2026-05-21
-- `CadastroPacienteFlow` **23/23 steps passando 3x seguidas** — Fase 5a concluída ✅
-- `regioes_ocr` migrado para `config.yaml` — região OCR da matrícula configurável
-- `_fechar_popups_oracle()` — fecha popups FRM-*/HC-INCOR sem falhar o teste
+- `CadastroPacienteFlow` 23/23 steps passando 3x seguidas — Fase 5a concluída ✅
 - `--repeat N` adicionado ao CLI
-- Aba Documentos com `pyperclip` — RG + Emissor + UF + Data + CPF + CNS via `ctrl+v`
 
 ### v0.5.3 — 2026-05-08
 - `AdmissaoInternacaoFlow` — 18 steps, 21/21 passando
-- ID do paciente via `.env` (conformidade LGPD)
-- `scripts/posicao_mouse.py` — captura até 4 coordenadas com contagem regressiva
-- DSL: `loop`, `if/else`
-- 314 testes unitários verdes em 2s
+- `scripts/posicao_mouse.py` — captura até 4 coordenadas
 
 ### v0.5.0 — 2026-05-06
-- Débito técnico concluído — 189 → 314 testes unitários
+- Débito técnico — 189 → 314 testes unitários
 - `mock_sleep` autouse fixture — suite unitária: 206s → 2s
 
 ---
@@ -484,6 +517,5 @@ Detalhes completos em `Roadmap_VTAE_Observabilidade_v057.docx`.
 | Arquivo | Descrição |
 |---|---|
 | `VTAE_Prompt_Instrucao_Geral.md` | Prompt de instrução geral — estado atual do projeto |
-| `Roadmap_VTAE_Observabilidade_v057.docx` | Roadmap detalhado de observabilidade e evolução |
 | `VTAE_Documentacao_Tecnica.docx` | Arquitetura, runners, matchers, exceções, padrões |
 | `VTAE_Manual_Criacao_Testes.docx` | Passo a passo detalhado para criar novos testes |

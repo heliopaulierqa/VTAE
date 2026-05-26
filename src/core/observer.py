@@ -90,6 +90,16 @@ class ExecutionObserver:
     # API publica
     # ----------------------------------------------------------------
 
+    def inject_logger(self, ctx) -> None:
+        """
+        Injeta o logger no runner via FlowContext (Fase 1).
+        Chamar logo apos criar o FlowContext no teste de integracao:
+            observer.inject_logger(ctx)
+        Isso faz com que todos os prints do OpenCVRunner cheguem ao
+        execution.log com o mesmo execution_id desta execucao.
+        """
+        ctx.set_logger(self._logger)
+
     def log_step_start(self, step_id: str, description: str = "") -> None:
         msg = f"[{step_id}] INICIANDO"
         if description:
@@ -99,13 +109,17 @@ class ExecutionObserver:
     def log_step_result(self, step: StepResult) -> None:
         status = "OK" if step.success else "FALHOU"
         msg = f"[{step.step_id}] {status} | {step.duration_ms:.0f}ms"
-        # Fase B — badge de integridade no log
         if step.validated is True:
             msg += " [VALIDADO]"
         elif step.validated is False and step.success:
             msg += " [NAO VALIDADO]"
         if step.screenshot_path:
             msg += f" | screenshot: {step.screenshot_path}"
+        # Fase 1 — score de template match no log quando disponivel
+        if step.confidence_score is not None:
+            msg += f" | score: {step.confidence_score:.3f}"
+        if step.template_path:
+            msg += f" | template: {step.template_path}"
         if step.error:
             msg += f" | erro: {step.error}"
         if step.causa_falha:
@@ -140,7 +154,19 @@ class ExecutionObserver:
           - report.html    (relatorio visual para gestao)
 
         Retorna o caminho do HTML gerado.
+
+        Fase 1 — inject_logger automatico:
+          Injeta o logger no runner via ctx aqui, sem exigir mudanca nos testes.
+          Nao pega os logs do Login (ocorre antes do report), mas pega todos os
+          flows subsequentes se report() for chamado antes deles.
+          Para pegar 100% dos logs desde o inicio, chamar observer.inject_logger(ctx)
+          logo apos criar o FlowContext no teste.
         """
+        # Fase 1 — injetar logger no runner automaticamente (sem mudar os testes)
+        # Efeito retroativo: a partir deste ponto todos os prints do runner
+        # chegam ao execution.log com o execution_id desta execucao.
+        self.inject_logger(ctx)
+
         finished_at = datetime.now()
         duration_s = (finished_at - self.started_at).total_seconds()
 
@@ -180,11 +206,14 @@ class ExecutionObserver:
                         {
                             "step_id": s.step_id,
                             "success": s.success,
-                            "validated": s.validated,          # Fase B
+                            "validated": s.validated,
                             "duration_ms": round(s.duration_ms, 1),
                             "screenshot": s.screenshot_path,
                             "error": s.error,
                             "causa_falha": s.causa_falha.value if s.causa_falha else None,
+                            # Fase 1 — dados do runner para diagnostico sem reexecutar
+                            "confidence_score": round(s.confidence_score, 3) if s.confidence_score is not None else None,
+                            "template_path": s.template_path,
                             "timestamp": s.timestamp,
                         }
                         for s in f.steps
@@ -248,8 +277,9 @@ class ExecutionObserver:
                 h.setdefault("total_duration_ms", 0.0)
                 h.setdefault("total_execucoes", 0)
                 h.setdefault("validated_count", 0)
+                h.setdefault("last_confidence_score", None)  # Fase 1
+                h.setdefault("min_confidence_score", None)   # Fase 1 — pior score registrado
 
-                # contadores pass/fail
                 if step["success"]:
                     h["pass_count"] += 1
                     if step.get("validated") is True:
@@ -258,6 +288,12 @@ class ExecutionObserver:
                     h["fail_count"] += 1
                     h["last_failure"] = report_data["finished_at"]
                     h["last_causa_falha"] = step.get("causa_falha")
+                    # Fase 1 — registrar score no flakiness quando step falha
+                    score = step.get("confidence_score")
+                    if score is not None:
+                        h["last_confidence_score"] = score
+                        if h["min_confidence_score"] is None or score < h["min_confidence_score"]:
+                            h["min_confidence_score"] = score
 
                 # duracao media e maxima — item 4
                 h["total_execucoes"] += 1

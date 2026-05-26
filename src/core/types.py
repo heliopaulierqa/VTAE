@@ -13,7 +13,23 @@ class StepError(VtaeError):
 
 
 class TemplateNotFoundError(VtaeError):
-    """Template OpenCV não encontrado na tela após todas as tentativas."""
+    """
+    Template OpenCV nao encontrado na tela apos todas as tentativas.
+
+    Campos estruturados — chegam ao StepResult e ao execution.json:
+        template:   caminho do template que falhou
+        score:      melhor score encontrado (0.0 a 1.0)
+        threshold:  threshold exigido
+        tentativas: numero de tentativas realizadas
+    """
+    def __init__(self, message: str, template: str = "",
+                 score: float = 0.0, threshold: float = 0.0,
+                 tentativas: int = 0):
+        super().__init__(message)
+        self.template   = template
+        self.score      = score
+        self.threshold  = threshold
+        self.tentativas = tentativas
 
 
 class ConfigError(VtaeError):

@@ -140,7 +140,7 @@ coordenadas:
   proxima_linha_proc:           { x: 90,   y: 262   }   # CALIBRAR — campo Codigo na segunda linha
 
   # AB15 — Sair
-  btn_sair_1:                   { x: 509, y: 62  }
+  btn_sair_1:                   { x: 50, y: 20  }
   btn_sair_2:                   { x: 20,  y: 574 }
 
 regioes_ocr:

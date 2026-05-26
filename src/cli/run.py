@@ -1,7 +1,7 @@
 # src/cli/run.py
 """
 CLI do VTAE — vtae run, vtae systems, vtae clean, vtae send, vtae flakiness.
-v0.5.6c — vtae flakiness: ranking de steps instáveis (item 3)
+v0.5.8c — cmd_jornada suporta --repeat N
 """
 import argparse
 import json
@@ -191,21 +191,25 @@ def cmd_jornada(args):
     Executa jornada encadeada: test_01 -> test_02 -> ... -> test_N.
     Para imediatamente se qualquer teste falhar.
     Estado compartilhado via evidence/estado_jornada.json.
+    Suporta --repeat N para repetir a jornada completa N vezes.
+    Se qualquer repeticao falhar, interrompe e reporta quantas passaram.
     """
     jornada = args.jornada
     ambiente = args.ambiente or "dev"
+    repeat   = getattr(args, "repeat", 1) or 1
 
     if jornada not in JORNADAS:
         print(f"[VTAE] Jornada '{jornada}' nao encontrada. Disponiveis: {list(JORNADAS.keys())}")
         sys.exit(1)
 
     testes = JORNADAS[jornada]
+    repeat_label = f" x {repeat}" if repeat > 1 else ""
 
     print("\n" + "=" * 60)
     print("  VTAE — Visual Test Automation Engine")
     print("=" * 60)
     print(f"  Ambiente  : {ambiente}")
-    print(f"  Jornada   : {jornada}")
+    print(f"  Jornada   : {jornada}{repeat_label}")
     print(f"  Testes    : {len(testes)} step(s)")
     for i, t in enumerate(testes, 1):
         print(f"    {i}. {t}")
@@ -215,56 +219,89 @@ def cmd_jornada(args):
     if sistema:
         _health_check([sistema])
 
-    # limpa estado anterior da jornada
     estado_path = Path("evidence/estado_jornada.json")
     estado_path.parent.mkdir(parents=True, exist_ok=True)
-    estado_path.write_text("{}", encoding="utf-8")
 
-    resultados = []
     rc_final = 0
+    resumo_repeticoes = []
 
-    for i, arquivo in enumerate(testes, 1):
-        label_step = Path(arquivo).stem
-        print(f"\n[VTAE] >> Step {i}/{len(testes)}: {label_step}")
-        print("-" * 60)
+    for rep in range(1, repeat + 1):
+        if repeat > 1:
+            print(f"\n{'=' * 60}")
+            print(f"  Repeticao {rep}/{repeat}")
+            print("=" * 60)
 
-        if not Path(arquivo).exists():
-            print(f"[VTAE] FALHOU Arquivo nao encontrado: {arquivo}")
-            rc_final = 1
-            resultados.append({"step": i, "teste": label_step, "status": "NAO_ENCONTRADO"})
+        # limpa estado anterior da jornada a cada repeticao
+        estado_path.write_text("{}", encoding="utf-8")
+
+        resultados = []
+        rc_rep = 0
+
+        for i, arquivo in enumerate(testes, 1):
+            label_step = Path(arquivo).stem
+            print(f"\n[VTAE] >> Step {i}/{len(testes)}: {label_step}")
+            print("-" * 60)
+
+            if not Path(arquivo).exists():
+                print(f"[VTAE] FALHOU Arquivo nao encontrado: {arquivo}")
+                rc_rep = 1
+                resultados.append({"step": i, "teste": label_step, "status": "NAO_ENCONTRADO"})
+                break
+
+            cmd = ["python", "-m", "pytest", arquivo, "-v", "--tb=short"]
+            rc = subprocess.run(cmd).returncode
+
+            status = "PASSOU" if rc == 0 else "FALHOU"
+            resultados.append({"step": i, "teste": label_step, "status": status})
+
+            if rc != 0:
+                print(f"\n[VTAE] FALHOU Jornada interrompida no step {i}: {label_step}")
+                rc_rep = rc
+                break
+
+            # le estado apos cada step (para log)
+            try:
+                estado = json.loads(estado_path.read_text(encoding="utf-8"))
+                if estado:
+                    chaves = ", ".join(f"{k}={v}" for k, v in estado.items())
+                    print(f"[VTAE] Estado: {chaves}")
+            except Exception:
+                pass
+
+        # sumario da repeticao atual
+        print("\n" + "=" * 60)
+        if repeat > 1:
+            print(f"  Jornada '{jornada}' — repeticao {rep}/{repeat}")
+        else:
+            print(f"  Jornada '{jornada}' — resumo")
+        print("=" * 60)
+        for r in resultados:
+            icone = "OK" if r["status"] == "PASSOU" else "FALHOU"
+            print(f"  {icone} Step {r['step']}: {r['teste']} — {r['status']}")
+
+        pendentes = len(testes) - len(resultados)
+        if pendentes > 0:
+            print(f"  -- {pendentes} step(s) nao executado(s) — jornada interrompida")
+
+        status_rep = "PASSOU" if rc_rep == 0 else "FALHOU"
+        resumo_repeticoes.append({"rep": rep, "status": status_rep})
+
+        if rc_rep != 0:
+            rc_final = rc_rep
+            if repeat > 1:
+                print(f"\n[VTAE] Repeticao {rep} FALHOU — interrompendo --repeat")
             break
 
-        cmd = ["python", "-m", "pytest", arquivo, "-v", "--tb=short"]
-        rc = subprocess.run(cmd).returncode
-
-        status = "PASSOU" if rc == 0 else "FALHOU"
-        resultados.append({"step": i, "teste": label_step, "status": status})
-
-        if rc != 0:
-            print(f"\n[VTAE] FALHOU Jornada interrompida no step {i}: {label_step}")
-            rc_final = rc
-            break
-
-        # le estado apos cada step (para log)
-        try:
-            estado = json.loads(estado_path.read_text(encoding="utf-8"))
-            if estado:
-                chaves = ", ".join(f"{k}={v}" for k, v in estado.items())
-                print(f"[VTAE] Estado: {chaves}")
-        except Exception:
-            pass
-
-    # sumario final da jornada
-    print("\n" + "=" * 60)
-    print(f"  Jornada '{jornada}' — resumo")
-    print("=" * 60)
-    for r in resultados:
-        icone = "OK" if r["status"] == "PASSOU" else "FALHOU"
-        print(f"  {icone} Step {r['step']}: {r['teste']} — {r['status']}")
-
-    pendentes = len(testes) - len(resultados)
-    if pendentes > 0:
-        print(f"  -- {pendentes} step(s) nao executado(s) — jornada interrompida")
+    # sumario global de todas as repeticoes (so exibe se repeat > 1)
+    if repeat > 1:
+        print("\n" + "=" * 60)
+        print(f"  Jornada '{jornada}' — resumo das {repeat} repeticoes")
+        print("=" * 60)
+        for r in resumo_repeticoes:
+            icone = "OK" if r["status"] == "PASSOU" else "FALHOU"
+            print(f"  {icone} Repeticao {r['rep']}: {r['status']}")
+        passou = sum(1 for r in resumo_repeticoes if r["status"] == "PASSOU")
+        print(f"\n  {passou}/{repeat} repeticoes passaram")
 
     _gerar_summary(f"jornada_{jornada}", ambiente)
 
@@ -328,7 +365,6 @@ def cmd_flakiness(args):
     print("-" * 70)
 
     for taxa, fail, total, avg_ms, max_ms, ultima, causa, sid in linhas:
-        # indicador visual de severidade
         if taxa >= 30:
             indicador = "!!"
         elif taxa >= 10:
@@ -336,7 +372,6 @@ def cmd_flakiness(args):
         else:
             indicador = "  "
 
-        # formata data — pega apenas YYYY-MM-DD HH:MM
         data_curta = ultima[:16] if ultima != "-" else "-"
 
         print(f"  {indicador} {sid:<8} {fail:<8} {total:<8} {taxa:<8.1f} "
@@ -344,7 +379,6 @@ def cmd_flakiness(args):
 
     print("-" * 70)
 
-    # estatisticas globais
     total_steps = len(historico)
     steps_com_falha = sum(1 for d in historico.values() if d["fail_count"] > 0)
     steps_flaky = sum(
@@ -439,7 +473,6 @@ def main():
     p_send.add_argument("--to", action="append", required=True)
     p_send.add_argument("--env", dest="ambiente", default="dev")
 
-    # item 3: vtae flakiness
     p_flak = sub.add_parser("flakiness")
     p_flak.add_argument("--min-falhas", type=int, default=0,
                         help="Mostrar apenas steps com pelo menos N falhas")

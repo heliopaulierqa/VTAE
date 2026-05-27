@@ -1,0 +1,97 @@
+# configs/si3/si3_agendamento/config.yaml
+# AgendamentoFlow — v0.5.9
+#
+# REGRA: todos os dados de teste ficam aqui.
+# O flow nao tem nenhum valor default — se um campo faltar aqui, o step falha
+# com mensagem clara indicando qual chave esta ausente no config.yaml.
+
+sistema: si3_agendamento
+tipo: desktop
+runner: opencv
+
+ambientes:
+  dev:
+    url: ''
+    confidence: 0.75
+    headless: false
+    timeout: 30
+
+credenciais:
+  usuario: ${SI3_USER}
+  senha:   ${SI3_PASS}
+
+dados_faker: []
+
+dados:
+  # --- AG01: navegacao via menu ---
+  # Termo digitado no campo "Localizar no Menu" para abrir o modulo
+  termo_menu_ag: 'AGENDAR'
+
+  # --- AG02: Provedor ---
+  provedor_ag: 'SUS'
+
+  # --- AG03: Plano ---
+  plano_ag: 'SUS'
+
+  # --- AG04: Codigo do procedimento ---
+  codigo_proc_ag: 'CARDIO'
+
+  # --- AG05: Complemento ---
+  complemento_ag: 'SEGUIMENTO'
+
+  # --- AG06: Area Executora ---
+  # Termo digitado no popup de busca de area executora - CLINICA DE AMBULATORIO GERAL - Mas pode-se escolher qualque outro
+  area_executora_ag: 'UNGRA'
+
+  # --- AG07: Executante ---
+  # Termo digitado no popup de busca do executante
+  # Usar '%' como wildcard — ex: '%MEDICO' retorna todos com MEDICO no nome, mas pode-se usar outro executante
+  termo_executante_ag: '1208.2'
+
+  # --- AG09: Horario ---
+  # Offset em horas adicionado a hora atual para calcular o horario do agendamento
+  # Regra do plano de teste: agendar sempre 3h a frente da hora atual
+  horas_offset_ag: 3
+
+coordenadas:
+  # Reutilizado do si3_ambulatorio (mesma posicao na tela de Menu Principal)
+  campo_localizar_menu:       { x: 624, y: 578 }
+
+  # Tela de Agendar — campos principais
+  campo_provedor_ag:          { x: 39,  y: 145 }
+  campo_plano_ag:             { x: 526, y: 145 }
+  campo_codigo_proc_ag:       { x: 30,  y: 213 }
+  campo_complemento_ag:       { x: 392, y: 213 }
+
+  # Popup Area Executora
+  campo_busca_area_ag:        { x: 748, y: 212 }
+  btn_ok_area_ag:             { x: 1055, y: 574 }
+
+  # LOV Executante
+  btn_lov_executante_ag:      { x: 306, y: 387 }  
+  campo_busca_executante_ag:  { x: 85,  y: 458 }
+  item_medico_executante_ag:  { x: 91,  y: 518 }
+  # Botao Agendar — canto inferior direito
+  # PENDENTE: calibrar com posicao_mouse.py
+  btn_agendar_ag:             { x: 888, y: 656 }
+  btn_fechar_info_ag:         { x: 737, y: 621 }
+  btn_ok_recursos_ag:          { x: 1095, y: 586 }  # calibrar — botão OK da tela Recursos
+
+  # Pesquisar horarios
+  btn_pesquisar_ag:           { x: 241, y: 814 }
+
+  # Selecao de horario
+  campo_data_ag:              { x: 738, y: 334 }
+  campo_hora_ag:              { x: 851, y: 335 }
+  btn_ok_horario_ag:          { x: 820, y: 505 }
+
+  # Localizar paciente e confirmar
+  campo_id_paciente_ag:       { x: 34,  y: 151 }
+  btn_confirmar_ag:           { x: 833, y: 617 }
+
+regioes_ocr:
+  campo_executante_ag:
+    x1: 15
+    y1: 379
+    x2: 233
+    y2: 395

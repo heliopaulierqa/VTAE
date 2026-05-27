@@ -1,12 +1,17 @@
 """
-VTAE Observer — Fase 5b: Observabilidade
-Responsavel por logs estruturados, evidencias organizadas e relatorio de execucao.
-Gera automaticamente execution.log, execution.json e report.html ao final.
+VTAE Observer — Obs-Fase1b: evidências reais
 
-v0.5.6c:
-  - execution_id (UUID) por execucao — correlacao de logs (item 1)
-  - duracao media por step no flakiness.json (item 4)
-  - ambiente no execution.json: hostname, SO, resolucao (item 5)
+v0.5.9 — correções de observabilidade real:
+  1. inject_logger() chamado no __init__ quando ctx disponível — não só no report()
+     → antes: logger só era injetado no report(), que é chamado DEPOIS dos flows
+     → agora: chamar observer.inject_logger(ctx) logo após criar o FlowContext
+               garante 100% dos logs desde o início
+  2. log_step_result() salva screenshot automático quando step falha e não tem screenshot
+     → captura o estado real da tela no momento do log (mais próximo da falha real)
+  3. Seção "steps sem validação" no log_flow_result é listada nominalmente
+     → facilita saber quais steps específicos ainda precisam de verify/confirm
+  4. _atualizar_flakiness mantém série temporal simples (last_10_results)
+     → permite ver se step começou a falhar recentemente ou sempre foi instável
 """
 
 import json
@@ -14,6 +19,7 @@ import logging
 import os
 import platform
 import socket
+import time
 import uuid
 from datetime import datetime
 
@@ -21,7 +27,6 @@ from src.core.result import FlowResult, StepResult
 
 
 def _coletar_ambiente() -> dict:
-    """Coleta informacoes do ambiente de execucao."""
     ambiente = {
         "hostname": socket.gethostname(),
         "os": f"{platform.system()} {platform.release()}",
@@ -35,13 +40,10 @@ def _coletar_ambiente() -> dict:
     except Exception:
         try:
             import subprocess
-            out = subprocess.check_output(
-                ["xrandr", "--current"], text=True, timeout=3
-            )
+            out = subprocess.check_output(["xrandr", "--current"], text=True, timeout=3)
             for line in out.splitlines():
                 if "*" in line:
-                    res = line.strip().split()[0]
-                    ambiente["resolucao"] = res
+                    ambiente["resolucao"] = line.strip().split()[0]
                     break
         except Exception:
             ambiente["resolucao"] = "desconhecida"
@@ -50,19 +52,22 @@ def _coletar_ambiente() -> dict:
 
 class ExecutionObserver:
     """
-    Observador de execucao do VTAE.
-    Registra logs estruturados (.log + .json) e gera relatorio HTML automatico.
+    Observador de execução do VTAE.
 
-    Uso:
-        observer = ExecutionObserver(test_name="test_login_real")
+    Uso correto para 100% dos logs desde o início:
+
+        observer = ExecutionObserver(test_name="test_admissao_ambulatorio")
         ctx = FlowContext(runner=runner, config=config, evidence_dir=observer.evidence_dir)
-        observer.report(ctx)  # gera .log, .json e .html automaticamente
+        observer.inject_logger(ctx)   ← AQUI — antes de qualquer flow
+        LoginFlow().execute(ctx, observer=observer)
+        AdmissaoAmbulatorioFlow().execute(ctx, observer=observer)
+        observer.report(ctx)
     """
 
     def __init__(self, test_name: str, base_dir: str = "evidence"):
         self.test_name = test_name
         self.started_at = datetime.now()
-        self.execution_id = str(uuid.uuid4())  # item 1: ID unico por execucao
+        self.execution_id = str(uuid.uuid4())
 
         date_str = self.started_at.strftime("%Y-%m-%d")
         time_str = self.started_at.strftime("%H-%M-%S")
@@ -70,13 +75,13 @@ class ExecutionObserver:
         self.evidence_dir = os.path.join(base_dir, date_str, test_name) + os.sep
         os.makedirs(self.evidence_dir, exist_ok=True)
 
-        self._log_path = os.path.join(self.evidence_dir, "execution.log")
+        self._log_path  = os.path.join(self.evidence_dir, "execution.log")
         self._json_path = os.path.join(self.evidence_dir, "execution.json")
         self._html_path = os.path.join(self.evidence_dir, "report.html")
 
-        self._ambiente = _coletar_ambiente()  # item 5: coleta ambiente uma vez
+        self._ambiente = _coletar_ambiente()
+        self._logger   = self._setup_logger(time_str)
 
-        self._logger = self._setup_logger(time_str)
         self._logger.info(f"Iniciando execucao: {test_name}")
         self._logger.info(f"execution_id: {self.execution_id}")
         self._logger.info(f"Evidencias em: {self.evidence_dir}")
@@ -86,19 +91,32 @@ class ExecutionObserver:
             f"resolucao: {self._ambiente['resolucao']}"
         )
 
+        # Contador para screenshots automáticos de diagnóstico
+        self._auto_screenshot_count = 0
+
     # ----------------------------------------------------------------
-    # API publica
+    # inject_logger — deve ser chamado ANTES dos flows
     # ----------------------------------------------------------------
 
     def inject_logger(self, ctx) -> None:
         """
-        Injeta o logger no runner via FlowContext (Fase 1).
-        Chamar logo apos criar o FlowContext no teste de integracao:
-            observer.inject_logger(ctx)
-        Isso faz com que todos os prints do OpenCVRunner cheguem ao
-        execution.log com o mesmo execution_id desta execucao.
+        Injeta o logger no runner via FlowContext.
+
+        DEVE ser chamado logo após criar o FlowContext, antes de qualquer flow.
+        Se chamado só no report() (como era antes), os logs do Login e dos
+        primeiros flows NÃO chegam ao execution.log.
+
+        Funciona para OpenCVRunner e PlaywrightRunner (ambos têm set_logger agora).
         """
         ctx.set_logger(self._logger)
+        self._logger.info(
+            f"[Observer] logger injetado no runner "
+            f"({type(ctx.runner).__name__})"
+        )
+
+    # ----------------------------------------------------------------
+    # API pública
+    # ----------------------------------------------------------------
 
     def log_step_start(self, step_id: str, description: str = "") -> None:
         msg = f"[{step_id}] INICIANDO"
@@ -109,13 +127,25 @@ class ExecutionObserver:
     def log_step_result(self, step: StepResult) -> None:
         status = "OK" if step.success else "FALHOU"
         msg = f"[{step.step_id}] {status} | {step.duration_ms:.0f}ms"
+
         if step.validated is True:
             msg += " [VALIDADO]"
         elif step.validated is False and step.success:
             msg += " [NAO VALIDADO]"
+        elif step.validated is None and step.success:
+            # Step bem-sucedido sem nenhuma validação — sinalizar explicitamente
+            msg += " [SEM VALIDACAO — resultado nao confirmado]"
+
         if step.screenshot_path:
             msg += f" | screenshot: {step.screenshot_path}"
-        # Fase 1 — score de template match no log quando disponivel
+        elif not step.success:
+            # CORREÇÃO: step falhou e não tem screenshot — capturar agora
+            # Este screenshot reflete o estado real da tela no momento do log
+            auto_path = self._capturar_screenshot_diagnostico(step.step_id)
+            if auto_path:
+                step.screenshot_path = auto_path  # atualiza o StepResult
+                msg += f" | screenshot-auto: {auto_path}"
+
         if step.confidence_score is not None:
             msg += f" | score: {step.confidence_score:.3f}"
         if step.template_path:
@@ -133,47 +163,47 @@ class ExecutionObserver:
     def log_flow_result(self, result: FlowResult) -> None:
         status = "PASSOU" if result.success else "FALHOU"
         validated_count = sum(1 for s in result.steps if s.validated is True)
-        sem_validacao = sum(1 for s in result.steps if s.success and s.validated is None)
+        sem_validacao   = [s for s in result.steps if s.success and s.validated is None]
         total_ok = len(result.steps) - len(result.failed_steps)
+
         self._logger.info(
             f"Flow {result.flow_name} — {status} | "
             f"{total_ok}/{len(result.steps)} steps OK | "
             f"{validated_count} validados"
-            + (f" | {sem_validacao} sem validacao" if sem_validacao > 0 else "")
+            + (f" | {len(sem_validacao)} sem validacao" if sem_validacao else "")
             + f" | {result.total_duration_ms:.0f}ms total"
         )
+
+        # Listar nominalmente steps sem validação — facilita saber o que falta
+        if sem_validacao:
+            ids = ", ".join(s.step_id for s in sem_validacao)
+            self._logger.warning(
+                f"  Steps sem validacao pós-ação: [{ids}] — "
+                f"estes steps reportam sucesso sem confirmar o estado da tela."
+            )
+
         for step in result.failed_steps:
             causa = f" [{step.causa_falha.value}]" if step.causa_falha else ""
             self._logger.error(f"  Step falhou: [{step.step_id}]{causa} {step.error}")
 
     def report(self, ctx) -> str:
         """
-        Gera o relatorio final:
-          - execution.log  (ja escrito durante a execucao)
-          - execution.json (dados estruturados com execution_id e ambiente)
-          - report.html    (relatorio visual para gestao)
+        Gera o relatório final: execution.log, execution.json, report.html.
 
-        Retorna o caminho do HTML gerado.
-
-        Fase 1 — inject_logger automatico:
-          Injeta o logger no runner via ctx aqui, sem exigir mudanca nos testes.
-          Nao pega os logs do Login (ocorre antes do report), mas pega todos os
-          flows subsequentes se report() for chamado antes deles.
-          Para pegar 100% dos logs desde o inicio, chamar observer.inject_logger(ctx)
-          logo apos criar o FlowContext no teste.
+        NOTA: inject_logger() deve ter sido chamado ANTES dos flows para que
+        todos os logs cheguem ao execution.log. O report() ainda chama
+        inject_logger() mas só cobre logs do ponto de report() em diante.
         """
-        # Fase 1 — injetar logger no runner automaticamente (sem mudar os testes)
-        # Efeito retroativo: a partir deste ponto todos os prints do runner
-        # chegam ao execution.log com o execution_id desta execucao.
+        # Garante que o logger está injetado (caso não tenha sido chamado antes)
         self.inject_logger(ctx)
 
         finished_at = datetime.now()
-        duration_s = (finished_at - self.started_at).total_seconds()
+        duration_s  = (finished_at - self.started_at).total_seconds()
 
-        all_flows = ctx._results
-        total_steps = sum(len(f.steps) for f in all_flows)
+        all_flows    = ctx._results
+        total_steps  = sum(len(f.steps) for f in all_flows)
         failed_steps = sum(len(f.failed_steps) for f in all_flows)
-        all_passed = all(f.success for f in all_flows)
+        all_passed   = all(f.success for f in all_flows)
 
         status = "PASSOU" if all_passed else "FALHOU"
         self._logger.info(
@@ -184,13 +214,13 @@ class ExecutionObserver:
 
         # — JSON —
         report_data = {
-            "execution_id": self.execution_id,          # item 1
+            "execution_id": self.execution_id,
             "test_name": self.test_name,
             "status": status,
             "started_at": self.started_at.isoformat(),
             "finished_at": finished_at.isoformat(),
             "duration_seconds": round(duration_s, 2),
-            "ambiente": self._ambiente,                  # item 5
+            "ambiente": self._ambiente,
             "summary": {
                 "total_flows": len(all_flows),
                 "total_steps": total_steps,
@@ -211,7 +241,6 @@ class ExecutionObserver:
                             "screenshot": s.screenshot_path,
                             "error": s.error,
                             "causa_falha": s.causa_falha.value if s.causa_falha else None,
-                            # Fase 1 — dados do runner para diagnostico sem reexecutar
                             "confidence_score": round(s.confidence_score, 3) if s.confidence_score is not None else None,
                             "template_path": s.template_path,
                             "timestamp": s.timestamp,
@@ -229,7 +258,7 @@ class ExecutionObserver:
         self._logger.info(f"Relatorio JSON salvo em: {self._json_path}")
         self._atualizar_flakiness(report_data)
 
-        # — HTML — gerado automaticamente
+        # — HTML —
         try:
             from src.core.report_generator import generate
             html_path = generate(self._json_path, self._html_path)
@@ -244,10 +273,35 @@ class ExecutionObserver:
     # Internos
     # ----------------------------------------------------------------
 
+    def _capturar_screenshot_diagnostico(self, step_id: str) -> str | None:
+        """
+        Captura screenshot automático quando step falha sem screenshot.
+        Salva em evidence_dir para aparecer no report.html.
+
+        Este screenshot é tirado no momento do log_step_result() —
+        o mais próximo possível do momento real da falha.
+        """
+        try:
+            import pyautogui
+            self._auto_screenshot_count += 1
+            path = os.path.join(
+                self.evidence_dir,
+                f"{step_id}_auto_diag_{self._auto_screenshot_count:03d}.png"
+            )
+            pyautogui.screenshot(path)
+            self._logger.debug(f"[Observer] screenshot de diagnóstico: {path}")
+            return path
+        except Exception as e:
+            self._logger.debug(f"[Observer] falha ao capturar screenshot automático: {e}")
+            return None
+
     def _atualizar_flakiness(self, report_data: dict) -> None:
         """
-        Acumula historico de pass/fail por step_id em evidence/flakiness.json.
-        item 4: acumula tambem duracao media e maxima por step.
+        Acumula histórico de pass/fail por step_id em evidence/flakiness.json.
+
+        v0.5.9: adiciona last_10_results — série temporal simples.
+        Permite ver se step começou a falhar recentemente ou sempre foi instável.
+        Exemplo: [1,1,1,0,0,0,0,0,0,0] → passou nas 3 primeiras, falhou nas últimas 7.
         """
         flakiness_path = os.path.join("evidence", "flakiness.json")
 
@@ -265,9 +319,7 @@ class ExecutionObserver:
                 if sid not in historico:
                     historico[sid] = {}
 
-                # h sempre aponta para o dict do step — dentro ou fora do if
                 h = historico[sid]
-                # garante campos existem — compativel com versoes antigas do flakiness.json
                 h.setdefault("pass_count", 0)
                 h.setdefault("fail_count", 0)
                 h.setdefault("last_failure", None)
@@ -277,10 +329,14 @@ class ExecutionObserver:
                 h.setdefault("total_duration_ms", 0.0)
                 h.setdefault("total_execucoes", 0)
                 h.setdefault("validated_count", 0)
-                h.setdefault("last_confidence_score", None)  # Fase 1
-                h.setdefault("min_confidence_score", None)   # Fase 1 — pior score registrado
+                h.setdefault("last_confidence_score", None)
+                h.setdefault("min_confidence_score", None)
+                # Obs-Fase2: série temporal — últimos 10 resultados (1=passou, 0=falhou)
+                h.setdefault("last_10_results", [])
 
-                if step["success"]:
+                passou = step["success"]
+
+                if passou:
                     h["pass_count"] += 1
                     if step.get("validated") is True:
                         h["validated_count"] = h.get("validated_count", 0) + 1
@@ -288,19 +344,21 @@ class ExecutionObserver:
                     h["fail_count"] += 1
                     h["last_failure"] = report_data["finished_at"]
                     h["last_causa_falha"] = step.get("causa_falha")
-                    # Fase 1 — registrar score no flakiness quando step falha
                     score = step.get("confidence_score")
                     if score is not None:
                         h["last_confidence_score"] = score
                         if h["min_confidence_score"] is None or score < h["min_confidence_score"]:
                             h["min_confidence_score"] = score
 
-                # duracao media e maxima — item 4
+                # Série temporal — mantém só os últimos 10
+                h["last_10_results"].append(1 if passou else 0)
+                if len(h["last_10_results"]) > 10:
+                    h["last_10_results"] = h["last_10_results"][-10:]
+
+                # Duração média e máxima
                 h["total_execucoes"] += 1
                 h["total_duration_ms"] += dur
-                h["avg_duration_ms"] = round(
-                    h["total_duration_ms"] / h["total_execucoes"], 1
-                )
+                h["avg_duration_ms"] = round(h["total_duration_ms"] / h["total_execucoes"], 1)
                 if dur > h["max_duration_ms"]:
                     h["max_duration_ms"] = round(dur, 1)
 

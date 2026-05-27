@@ -214,13 +214,34 @@ def _build_html(data: dict) -> str:
                     f'↻ {taxa_hist}% histórico</span>'
                 )
 
+            # Série temporal — últimos 10 resultados (Obs-Fase2)
+            # Visualiza se step começou a falhar recentemente ou sempre foi instável
+            serie_html = ""
+            last_10 = fdata.get("last_10_results", [])
+            if len(last_10) >= 2:
+                dots = ""
+                for r in last_10:
+                    cor = "#1D9E75" if r == 1 else "#E24B4A"
+                    dots += f'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{cor};margin:0 1px;" title="{"OK" if r==1 else "FALHOU"}"></span>'
+                serie_html = (
+                    f'<div class="step-serie" title="Últimas {len(last_10)} execuções">'
+                    f'{dots}</div>'
+                )
+
             # Badge de integridade
-            is_obs_falha = not s_ok and "observabilidade" in s_err.lower()
+            # "sem validação" agora usa cor laranja para chamar mais atenção —
+            # steps bem-sucedidos sem verify/confirm são observabilidade cosmética
+            is_obs_falha = not s_ok and (
+                "observabilidade" in s_err.lower() or
+                "verify_fill" in s_err.lower() or
+                "verify_lov" in s_err.lower()
+            )
             if is_obs_falha:
                 badge_html = '<span class="badge badge-integridade">⚠ FALHA DE INTEGRIDADE</span>'
             elif s_validated is True:
                 badge_html = '<span class="badge badge-validado">✔ VALIDADO</span>'
             elif s_ok and s_validated is None:
+                # Laranja pulsante — mais visível que cinza anterior
                 badge_html = '<span class="badge badge-sem-validacao">~ sem validação</span>'
             else:
                 badge_html = ""
@@ -255,6 +276,7 @@ def _build_html(data: dict) -> str:
                     <span class="step-time">{s_ms}ms</span>
                     {badge_html}
                     {hist_badge}
+                    {serie_html}
                     <span class="step-ts">{s_ts}</span>
                 </div>
                 {score_html}
@@ -445,6 +467,14 @@ def _build_html(data: dict) -> str:
   }}
   .img-hint {{ display: block; font-size: 0.7rem; color: var(--muted); margin-top: 3px; }}
 
+  /* SÉRIE TEMPORAL — últimas N execuções */
+  .step-serie {{
+    display: inline-flex; align-items: center; gap: 2px;
+    margin-left: 4px; padding: 2px 6px;
+    background: #f5f4f0; border-radius: 99px;
+    border: 1px solid var(--border);
+  }}
+
   /* LIGHTBOX */
   .lightbox {{
     display: none; position: fixed; inset: 0;
@@ -463,7 +493,10 @@ def _build_html(data: dict) -> str:
     padding: 2px 8px; border-radius: 99px; white-space: nowrap;
   }}
   .badge-validado {{ background: #E1F5EE; color: #1D9E75; border: 1px solid #a8e6cf; }}
-  .badge-sem-validacao {{ background: #f5f4f0; color: #9b9590; border: 1px solid #ddd9d3; }}
+  .badge-sem-validacao {{
+    background: #fff3e0; color: #b45309; border: 1px solid #f59e0b;
+    animation: pulse-badge 2s ease-in-out infinite;
+  }}
   .badge-integridade {{
     background: #FFF3CD; color: #856404; border: 1px solid #ffc107;
     animation: pulse-badge 1.5s ease-in-out infinite;

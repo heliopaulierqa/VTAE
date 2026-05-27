@@ -148,3 +148,11 @@ regioes_ocr:
   # AB14 — Nr Admissao — calibrar com Paint apos primeira execucao
   nr_admissao_amb:     { x1: 260, y1: 127, x2: 298, y2: 140 }
   campo_tipo_endereco: { x1: 128, y1: 430, x2: 179, y2: 442 }
+
+regioes_ocr:
+  campo_medico_ab:
+    x1: 320  y1: 28  x2: 320  y2: 40  # calibrar no campo Médico Responsável
+  campo_codigo_proc_ab:
+    x1: 420  y1: 320  x2: 50  y2: 235  # calibrar na coluna Código da grade
+  campo_profissional_proc_ab:
+    x1: 520  y1: 28  x2: 284  y2: 58  # calibrar na coluna Profissional da grade

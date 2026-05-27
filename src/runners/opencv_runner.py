@@ -1,8 +1,11 @@
 """
 OpenCVRunner — runner desktop via visão computacional.
 
-v0.3.3 — F2-A: usa TemplateMatcher com multi-scale matching.
-Log de diagnóstico mostra score máximo quando template não é encontrado.
+v0.5.9 — Obs-Fase1b: evidências reais
+  - verify_fill: screenshot tirado DENTRO do loop (não antes), reflete estado real
+  - verify_lov: novo método — confirma via OCR que campo LOV não ficou vazio
+  - screenshot de debug salvo com timestamp e path explícito
+  - _log unificado: todos os prints chegam ao execution.log quando logger injetado
 """
 
 import logging
@@ -20,52 +23,23 @@ from src.vision.ocr import OcrHelper
 class OpenCVRunner(BaseRunner):
     """
     Runner real para sistemas desktop usando visão computacional.
-    Implementa o mesmo contrato do BaseRunner — todos os flows
-    existentes funcionam sem nenhuma alteração.
 
-    v0.3.3 — Multi-scale template matching:
-        O TemplateMatcher agora testa o template em múltiplas escalas
-        (0.8x, 0.9x, 1.0x, 1.1x, 1.2x) antes de concluir que não encontrou.
-        Resolve falhas causadas por diferença de zoom/DPI entre a captura
-        do template e a execução do teste.
-
-    Uso:
-        runner = OpenCVRunner(confidence=0.8)
-        ctx = FlowContext(runner=runner, config=LoginConfigSisLab)
-        LoginFlow().execute(ctx, observer=observer)
+    v0.5.9 — verify_fill e verify_lov com evidências reais:
+      O screenshot de validação é tirado DENTRO do loop de tentativas,
+      garantindo que a imagem reflita o estado da tela no momento exato
+      em que o OCR leu o valor — não um frame anterior à digitação.
     """
 
-    def __init__(self, confidence: float = 0.8,
-                 scales: tuple = None):
-        """
-        Args:
-            confidence: threshold de similaridade (0.0 a 1.0).
-                        0.8 = 80% de similaridade minima.
-                        Use 0.6-0.7 para templates com variacao de renderizacao.
-                        Use 0.85-0.95 para templates muito especificos.
-            scales: escalas para multi-scale matching.
-                    None = usa padrao (1.0, 0.9, 1.1, 0.8, 1.2).
-                    Passe (1.0,) para desativar multi-scale.
-        """
+    def __init__(self, confidence: float = 0.8, scales: tuple = None):
         self.confidence = confidence
         self._matcher   = TemplateMatcher(confidence=confidence, scales=scales)
-        self._logger: logging.Logger | None = None  # Fase 1 — injetado pelo Observer
+        self._logger: logging.Logger | None = None
 
     def set_logger(self, logger: logging.Logger) -> None:
-        """
-        Injeta o logger do Observer no runner.
-        Chamado pelo FlowContext apos instanciar o runner.
-        Quando presente, substitui print() por logger.debug() — os logs
-        chegam ao execution.log com o mesmo execution_id da execucao.
-        """
+        """Injeta o logger do Observer. Chamado pelo FlowContext após instanciar."""
         self._logger = logger
 
     def _log(self, msg: str, level: str = "debug") -> None:
-        """
-        Rota o log para o logger (quando injetado) ou para print().
-        Todos os prints do runner passam por aqui — assim chegam ao
-        execution.log quando o Observer estiver presente.
-        """
         if self._logger:
             getattr(self._logger, level)(msg)
         else:
@@ -76,17 +50,6 @@ class OpenCVRunner(BaseRunner):
     # ──────────────────────────────────────────────
 
     def click_template(self, template: str, threshold: float = None) -> bool:
-        """
-        Clica no centro do melhor match do template na tela.
-        Testa múltiplas escalas automaticamente.
-
-        Args:
-            template: caminho para a imagem PNG do template.
-            threshold: override do confidence padrão.
-
-        Returns:
-            True se encontrou e clicou, False se não encontrou.
-        """
         result = self._matcher.find_best(template, threshold)
         if result:
             pyautogui.click(result.x, result.y)
@@ -95,22 +58,11 @@ class OpenCVRunner(BaseRunner):
         return False
 
     def type_text(self, text: str) -> None:
-        """
-        Digita texto no elemento atualmente focado.
-        Usa pyautogui.write — suporta unicode e acentos no Windows.
-        """
         pyautogui.write(text, interval=0.05)
 
     def wait_template(self, template: str,
                       timeout: float = 10.0,
                       threshold: float = None) -> bool:
-        """
-        Aguarda o template aparecer na tela (multi-scale).
-        Verifica a cada 0.5s por até `timeout` segundos.
-
-        Returns:
-            True se apareceu, False se expirou o timeout.
-        """
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             if self._matcher.is_visible(template, threshold):
@@ -119,12 +71,6 @@ class OpenCVRunner(BaseRunner):
         return False
 
     def screenshot(self, name: str) -> str:
-        """
-        Captura screenshot da tela inteira e salva no caminho especificado.
-
-        Returns:
-            O mesmo caminho recebido.
-        """
         folder = os.path.dirname(name)
         if folder:
             os.makedirs(folder, exist_ok=True)
@@ -132,24 +78,14 @@ class OpenCVRunner(BaseRunner):
         return name
 
     # ──────────────────────────────────────────────
-    # safe_click com retry, diagnóstico e exceção
+    # safe_click
     # ──────────────────────────────────────────────
 
     def safe_click(self, template: str,
                    threshold: float = None,
                    retries: int = 3,
                    delay: float = 0.5) -> bool:
-        """
-        Clica no template com retry automático e log de diagnóstico.
-
-        Se todas as tentativas falharem, loga o score máximo encontrado
-        para facilitar o diagnóstico (ex: "score máximo: 0.63, threshold: 0.70").
-
-        Raises:
-            RuntimeError: se o template não for encontrado após `retries` tentativas.
-        """
         thr = threshold or self.confidence
-
         for attempt in range(1, retries + 1):
             result = self._matcher.find_best(template, thr)
             if result:
@@ -159,11 +95,9 @@ class OpenCVRunner(BaseRunner):
                     self._log(f"[safe_click] match em escala {result.scale:.1f}x "
                               f"(score={result.score:.3f}) — '{template}'")
                 return True
-
             best_score = self._matcher.find_best_score(template)
             self._log(f"[safe_click] tentativa {attempt}/{retries} falhou — "
                       f"score: {best_score:.3f} (threshold: {thr:.2f}) — '{template}'")
-
             if attempt < retries:
                 time.sleep(delay)
 
@@ -173,40 +107,27 @@ class OpenCVRunner(BaseRunner):
             f"Score maximo encontrado: {final_score:.3f} (threshold: {thr:.2f})\n"
             f"Dicas: reduza o confidence, recapture o template ou verifique "
             f"se a janela esta maximizada.",
-            template=template,
-            score=final_score,
-            threshold=thr,
-            tentativas=retries,
+            template=template, score=final_score, threshold=thr, tentativas=retries,
         )
 
     # ──────────────────────────────────────────────
-    # double_click — para menus Oracle Forms
+    # double_click
     # ──────────────────────────────────────────────
 
     def double_click(self, template: str,
                      threshold: float = None,
                      retries: int = 3,
                      delay: float = 0.5) -> bool:
-        """
-        Duplo clique no centro do melhor match do template.
-        Necessário para menus do Oracle Forms.
-
-        Raises:
-            RuntimeError: se o template não for encontrado após `retries` tentativas.
-        """
         thr = threshold or self.confidence
-
         for attempt in range(1, retries + 1):
             result = self._matcher.find_best(template, thr)
             if result:
                 pyautogui.doubleClick(result.x, result.y)
                 time.sleep(0.3)
                 return True
-
             best_score = self._matcher.find_best_score(template)
             self._log(f"[double_click] tentativa {attempt}/{retries} falhou — "
                       f"score: {best_score:.3f} (threshold: {thr:.2f}) — '{template}'")
-
             if attempt < retries:
                 time.sleep(delay)
 
@@ -214,44 +135,24 @@ class OpenCVRunner(BaseRunner):
         raise TemplateNotFoundError(
             f"Template nao encontrado para duplo clique apos {retries} tentativas: '{template}'\n"
             f"Score maximo: {final_score:.3f} (threshold: {thr:.2f})",
-            template=template,
-            score=final_score,
-            threshold=thr,
-            tentativas=retries,
+            template=template, score=final_score, threshold=thr, tentativas=retries,
         )
 
     # ──────────────────────────────────────────────
-    # find_template — retorna coordenadas
+    # Utilitários
     # ──────────────────────────────────────────────
 
     def find_template(self, template: str, threshold: float = None):
-        """
-        Encontra o template e retorna objeto com .x e .y do centro.
-        Inclui .score e .scale para diagnóstico.
-
-        Returns:
-            MatchResult com .x, .y, .score, .scale — ou None.
-        """
         return self._matcher.find_best(template, threshold)
 
-    # ──────────────────────────────────────────────
-    # is_visible — sem clicar
-    # ──────────────────────────────────────────────
-
     def is_visible(self, template: str, threshold: float = None) -> bool:
-        """Verifica se o template está visível na tela sem clicar."""
         return self._matcher.is_visible(template, threshold)
 
-    def find_all(self, template: str,
-                 threshold: float = None) -> list:
-        """
-        Encontra todas as ocorrências do template na tela.
-        Usa escala 1.0 — útil para grades com múltiplas linhas iguais.
-        """
+    def find_all(self, template: str, threshold: float = None) -> list:
         return self._matcher.find_all(template, threshold)
 
     # ──────────────────────────────────────────────
-    # verify_fill — validação pós-digitação (Fase A)
+    # verify_fill — validação pós-digitação (Obs-Fase1)
     # ──────────────────────────────────────────────
 
     def verify_fill(self, expected_value: str,
@@ -260,39 +161,128 @@ class OpenCVRunner(BaseRunner):
                     debug_path: str = None) -> bool:
         """
         Verifica via OCR se o valor esperado está presente na região após digitação.
-        Realiza múltiplas tentativas dentro do timeout para acomodar latência da UI.
+
+        CORREÇÃO v0.5.9: o screenshot é tirado DENTRO do loop de tentativas.
+        A versão anterior capturava o screenshot ANTES do loop — sempre lia
+        o estado anterior à digitação, gerando falsos negativos intermitentes.
 
         Args:
-            expected_value: texto esperado no campo (comparação case-insensitive).
-            region: tupla (x1, y1, x2, y2) da área do campo na tela.
-            timeout: tempo máximo de espera em segundos (padrão 3s).
-            debug_path: caminho para salvar screenshot de debug se falhar.
-                        None = salva em /tmp/verify_fill_debug.png.
+            expected_value: texto esperado (comparação case-insensitive).
+            region: (x1, y1, x2, y2) — área do campo na tela.
+            timeout: tempo máximo de espera em segundos.
+            debug_path: caminho para screenshot de debug se falhar.
+                        Se None, salva em /tmp/verify_fill_debug_<timestamp>.png
+                        para não sobrescrever debug de steps anteriores.
 
         Returns:
-            True se o valor foi encontrado na região dentro do timeout.
-            False caso contrário — o caller decide se isso é StepError.
-
-        Exemplo:
-            if not ctx.runner.verify_fill("JOAO DA SILVA", region=(100, 200, 400, 220)):
-                raise StepError("Falha de Observabilidade: campo Nome nao contém o valor esperado")
+            True se encontrou o valor na região dentro do timeout.
+            False se expirou — o caller decide se lança StepError.
         """
         deadline = time.monotonic() + timeout
+        attempt  = 0
+
         while time.monotonic() < deadline:
-            tmp = debug_path or "/tmp/verify_fill_debug.png"
-            screenshot = self.screenshot(tmp)
-            texto = OcrHelper.ler_regiao(screenshot, region)
+            attempt += 1
+            # Screenshot tirado aqui — dentro do loop — reflete estado atual da tela
+            ts  = int(time.monotonic() * 1000)
+            tmp = f"/tmp/verify_fill_attempt_{ts}.png"
+            self.screenshot(tmp)
+            texto = OcrHelper.ler_regiao(tmp, region)
+
+            self._log(
+                f"[verify_fill] tentativa {attempt} — "
+                f"esperado: '{expected_value}' | OCR leu: '{texto.strip()}'"
+            )
+
             if expected_value.upper() in texto.upper():
+                self._log(f"[verify_fill] OK na tentativa {attempt}")
                 return True
+
             time.sleep(0.5)
 
-        if debug_path:
-            self.screenshot(debug_path)
-            self._log(f"[verify_fill] FALHOU — valor esperado: '{expected_value}' | "
-                      f"debug salvo em: {debug_path}")
-        else:
-            self._log(f"[verify_fill] FALHOU — valor esperado: '{expected_value}' | "
-                      f"regiao: {region}")
+        # Falhou — salvar screenshot de diagnóstico com timestamp único
+        ts_fail = int(time.time())
+        path_debug = debug_path or f"/tmp/verify_fill_debug_{ts_fail}.png"
+        self.screenshot(path_debug)
+        self._log(
+            f"[verify_fill] FALHOU após {attempt} tentativas — "
+            f"valor esperado: '{expected_value}' | região: {region} | "
+            f"debug: {path_debug}",
+            level="warning"
+        )
+        return False
+
+    # ──────────────────────────────────────────────
+    # verify_lov — validação pós-seleção de LOV (Obs-Fase1b)
+    # ──────────────────────────────────────────────
+
+    def verify_lov(self, campo_nome: str,
+                   region: tuple,
+                   timeout: float = 3.0,
+                   debug_path: str = None) -> bool:
+        """
+        Verifica via OCR se um campo foi preenchido após seleção via LOV.
+
+        Diferente do verify_fill (que verifica um valor exato), o verify_lov
+        verifica apenas se o campo NÃO está vazio — qualquer texto vale.
+        Isso é necessário porque o conteúdo selecionado na LOV pode ser
+        formatado de forma diferente do termo de busca original.
+
+        PROBLEMA RESOLVIDO: AG07 (Executante), AB11 (Médico), AB12 (Procedimentos)
+        retornavam sucesso com campo vazio porque não havia validação pós-LOV.
+        Com verify_lov, o step falha imediatamente se o campo ficou vazio,
+        expondo o problema real (lista vazia, termo errado, popup não fechou).
+
+        Args:
+            campo_nome: nome do campo para mensagem de diagnóstico (ex: "Executante").
+            region: (x1, y1, x2, y2) — área do campo na tela.
+            timeout: tempo máximo de espera (padrão 3s — LOV fecha rápido).
+            debug_path: caminho para screenshot de debug se falhar.
+
+        Returns:
+            True se o campo tem qualquer conteúdo após a LOV fechar.
+            False se o campo ficou vazio — indica falha real na seleção.
+
+        Uso obrigatório após qualquer LOV:
+            self._selecionar_via_lov(ctx, coords, ...)
+            if not ctx.runner.verify_lov("Executante",
+                                          region=ctx.config.regioes_ocr["campo_executante_ag"]):
+                raise AssertionError(
+                    "Falha de Observabilidade: campo Executante ficou vazio apos LOV. "
+                    "Verifique se o item foi selecionado — lista pode ter ficado vazia "
+                    "ou o popup nao fechou corretamente."
+                )
+        """
+        deadline = time.monotonic() + timeout
+        attempt  = 0
+
+        while time.monotonic() < deadline:
+            attempt += 1
+            ts  = int(time.monotonic() * 1000)
+            tmp = f"/tmp/verify_lov_attempt_{ts}.png"
+            self.screenshot(tmp)
+            texto = OcrHelper.ler_regiao(tmp, region).strip()
+
+            self._log(
+                f"[verify_lov] campo '{campo_nome}' — "
+                f"tentativa {attempt} — OCR leu: '{texto}'"
+            )
+
+            if texto:
+                self._log(f"[verify_lov] OK — campo '{campo_nome}' preenchido: '{texto}'")
+                return True
+
+            time.sleep(0.5)
+
+        # Campo ficou vazio — salvar evidência de diagnóstico
+        ts_fail = int(time.time())
+        path_debug = debug_path or f"/tmp/verify_lov_debug_{campo_nome}_{ts_fail}.png"
+        self.screenshot(path_debug)
+        self._log(
+            f"[verify_lov] FALHOU — campo '{campo_nome}' ficou VAZIO após {attempt} tentativas | "
+            f"região: {region} | debug: {path_debug}",
+            level="warning"
+        )
         return False
 
     # ──────────────────────────────────────────────
@@ -303,27 +293,6 @@ class OpenCVRunner(BaseRunner):
                    offset_x: int = 0,
                    offset_y: int = 0,
                    threshold: float = None) -> bool:
-        """
-        Encontra o template como âncora e clica na posição deslocada.
-        Útil para Oracle Forms onde o label é estável mas o campo fica
-        a uma distância fixa do label.
-
-        Args:
-            template: caminho para o template âncora.
-            offset_x: pixels à direita do centro do âncora.
-            offset_y: pixels abaixo do centro do âncora.
-            threshold: override do confidence padrão.
-
-        Returns:
-            True se o âncora foi encontrado e o clique executado.
-
-        Raises:
-            RuntimeError: se o âncora não for encontrado.
-
-        Exemplo:
-            # encontra label "Nome:" e clica 200px à direita (no campo)
-            runner.click_near("templates/si3/label_nome.png", offset_x=200)
-        """
         try:
             x, y = self._matcher.find_anchor(template, offset_x, offset_y, threshold)
             pyautogui.click(x, y)
@@ -335,8 +304,6 @@ class OpenCVRunner(BaseRunner):
                 f"Ancora nao encontrada: '{template}'\n"
                 f"Score maximo: {final_score:.3f} "
                 f"(threshold: {threshold or self.confidence:.2f})",
-                template=template,
-                score=final_score,
-                threshold=threshold or self.confidence,
-                tentativas=1,
+                template=template, score=final_score,
+                threshold=threshold or self.confidence, tentativas=1,
             )

@@ -36,6 +36,7 @@ TESTES = {
     "tipo_anestesia":            "tests/integration/msi3/test_tipo_anestesia.py",
     "cadastro_paciente_jornada": "tests/integration/jornadas/ambulatorio/test_01_cadastro_paciente.py",
     "admissao_ambulatorio_jornada": "tests/integration/jornadas/ambulatorio/test_02_admissao_ambulatorio.py",
+     "agendamento_jornada": "tests/integration/jornadas/ambulatorio_agendamento/test_02_agendamento.py",
 }
 
 # Jornadas: sequencia ordenada de testes encadeados
@@ -43,6 +44,11 @@ JORNADAS = {
     "ambulatorio": [
         "tests/integration/jornadas/ambulatorio/test_01_cadastro_paciente.py",
         "tests/integration/jornadas/ambulatorio/test_02_admissao_ambulatorio.py",
+    ],
+
+     "ambulatorio_agendamento": [
+        "tests/integration/jornadas/ambulatorio_agendamento/test_01_cadastro_paciente.py",
+        "tests/integration/jornadas/ambulatorio_agendamento/test_02_agendamento.py",
     ],
 }
 

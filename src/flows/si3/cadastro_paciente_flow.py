@@ -202,16 +202,21 @@ class CadastroPacienteFlow:
         return encontrou_popup
 
     def _step(self, step_id: str, descricao: str, fn, observer,
-              confirm_template: str = None) -> StepResult:
+              confirm_template: str = None,
+              validated: bool = None) -> StepResult:
         """
-        Wrapper padrao para todos os steps com observabilidade (Fase A).
+        Wrapper padrao para todos os steps com observabilidade.
 
-        confirm_template: quando informado, a fn() ja executou wait_template
-        internamente e lanca AssertionError se a tela esperada nao aparecer.
-        O StepResult.validated reflete essa validacao:
-            True  → acao executou E tela confirmada
-            False → step falhou (excecao capturada)
-            None  → step executou sem validacao (comportamento legado)
+        Args:
+            confirm_template: template da tela destino — validated=True automatico.
+            validated: True explicito quando fn() executou verify_lov/verify_fill
+                       internamente. Corrige bug onde validated ficava None mesmo
+                       com verify_lov/fill rodando dentro de fn().
+
+        StepResult.validated:
+            True  — acao executou E resultado confirmado (confirm_template ou verify_*)
+            False — step falhou (excecao capturada)
+            None  — step executou sem validacao pos-acao
 
         Nao verifica popup automaticamente — cada step e responsavel
         por tratar popups esperados dentro do proprio fn().
@@ -219,15 +224,15 @@ class CadastroPacienteFlow:
         if observer:
             observer.log_step_start(step_id, descricao)
         start = time.monotonic()
-        validated = None
+        _validated = None
         try:
             screenshot_path = fn()
-            validated = True if confirm_template else None
+            _validated = True if (confirm_template or validated) else None
             step = StepResult(
                 step_id=step_id, success=True,
                 duration_ms=(time.monotonic() - start) * 1000,
                 screenshot_path=screenshot_path,
-                validated=validated,
+                validated=_validated,
             )
         except AssertionError as e:
             msg = str(e).lower()

@@ -289,36 +289,29 @@ class AdmissaoAmbulatorioFlow:
             pyautogui.click(x, y); time.sleep(0.5)
 
     def _step(self, step_id: str, descricao: str, fn, observer,
-              confirm_template: str = None) -> StepResult:
+              confirm_template: str = None,
+              validated: bool = None) -> StepResult:
         """
         Wrapper de execucao de step com observabilidade (Fase A).
 
         Args:
-            confirm_template: caminho de template a validar APOS a acao.
-                              Se informado, chama wait_template(timeout=10) e falha
-                              com TEMPLATE_NAO_ENCONTRADO se a tela esperada nao aparecer.
-                              Isso elimina falso-positivo: o step so passa se a UI reagiu.
+            confirm_template: template da tela destino — validated=True automatico.
+            validated: True explicito quando fn() executou verify_lov/verify_fill
+                       internamente. Corrige bug onde validated ficava None mesmo
+                       com verify_lov rodando dentro de fn().
         """
         if observer:
             observer.log_step_start(step_id, descricao)
         start = time.monotonic()
-        validated = None
+        _validated = None
         try:
             screenshot_path = fn()
-
-            # --- Fase A: confirm_template ---
-            if confirm_template:
-                # confirm_template e validado na fn() quando possivel,
-                # mas o padrao e passar o runner via _step_XXX que tem ctx no escopo.
-                # Ver: _step_admitir_paciente, _step_unidade_funcional, etc.
-                # (confirm_template fica registrado no StepResult para rastreabilidade)
-                validated = True  # marcado True quando confirm_template foi verificado na fn()
-
+            _validated = True if (confirm_template or validated) else None
             step = StepResult(
                 step_id=step_id, success=True,
                 duration_ms=(time.monotonic() - start) * 1000,
                 screenshot_path=screenshot_path,
-                validated=validated,
+                validated=_validated,
             )
         except AssertionError as e:
             msg = str(e).lower()
@@ -677,8 +670,36 @@ class AdmissaoAmbulatorioFlow:
                 duplo_clique_item="item_medico_informatica",
             )
             time.sleep(1.5)  # aguarda CRM carregar apos selecionar medico
+
+            # verify_lov — confirma que campo Medico nao ficou vazio (Obs-Fase1b)
+            # Regiao: campo_medico_ab na secao regioes_ocr do config.yaml
+            regiao_medico = ctx.config.regioes_ocr.get("campo_medico_ab")
+            if regiao_medico:
+                regiao = (
+                    regiao_medico["x1"], regiao_medico["y1"],
+                    regiao_medico["x2"], regiao_medico["y2"],
+                )
+                preenchido = ctx.runner.verify_lov(
+                    "Medico Responsavel",
+                    region=regiao,
+                    debug_path=f"{ctx.evidence_dir}AB11_medico_verify_debug.png",
+                )
+                if not preenchido:
+                    raise AssertionError(
+                        "Falha de Observabilidade: campo Medico Responsavel ficou VAZIO apos LOV. "
+                        "Verifique se o duplo clique em item_medico_informatica funcionou — "
+                        "a lista pode ter ficado vazia (termo '%medico' nao retornou resultados) "
+                        "ou o popup nao fechou corretamente. "
+                        f"Veja AB11_medico_verify_debug.png para o estado real da tela."
+                    )
+            else:
+                print("[AB11] AVISO: regioes_ocr.campo_medico_ab nao configurado — "
+                      "verify_lov ignorado. Adicione ao config.yaml para habilitar validacao.")
+
             return ctx.runner.screenshot(f"{ctx.evidence_dir}AB11_medico.png")
-        return self._step("AB11", "selecionar Medico Responsavel via LOV", fn, observer)
+        # validated=True — verify_lov rodou dentro de fn() e confirmou campo preenchido
+        return self._step("AB11", "selecionar Medico Responsavel via LOV", fn, observer,
+                          validated=True)
 
     # ----------------------------------------------------------------
     # AB12 — Lista de Procedimentos (Tab Navigation — v0.5.8)
@@ -761,6 +782,29 @@ class AdmissaoAmbulatorioFlow:
                 )
                 time.sleep(0.5)
 
+                # verify_lov — confirma que campo Codigo nao ficou vazio (Obs-Fase1b)
+                regiao_codigo = ctx.config.regioes_ocr.get("campo_codigo_proc_ab")
+                if regiao_codigo:
+                    regiao = (
+                        regiao_codigo["x1"], regiao_codigo["y1"],
+                        regiao_codigo["x2"], regiao_codigo["y2"],
+                    )
+                    if not ctx.runner.verify_lov(
+                        f"Codigo proc {i+1}",
+                        region=regiao,
+                        debug_path=f"{ctx.evidence_dir}AB12_proc{i+1}_codigo_debug.png",
+                    ):
+                        raise AssertionError(
+                            f"Falha de Observabilidade: campo Codigo ficou VAZIO "
+                            f"apos LOV no procedimento {i+1} (codigo='{codigo}'). "
+                            f"Verifique se o template popup_procedimentos.png foi capturado "
+                            f"e se o codigo '{codigo}' existe na lista. "
+                            f"Veja AB12_proc{i+1}_codigo_debug.png."
+                        )
+                else:
+                    print(f"[AB12] AVISO: regioes_ocr.campo_codigo_proc_ab nao configurado — "
+                          f"verify_lov do codigo ignorado no proc {i+1}.")
+
                 # --- Popup Area Executora ---
                 # Sempre aparece apos selecionar o codigo — popup de posicao fixa.
                 # Se area_executora vazio: apenas clica OK sem preencher o campo de busca.
@@ -812,12 +856,38 @@ class AdmissaoAmbulatorioFlow:
                     template_popup="popup_profissional.png",
                 )
                 time.sleep(0.5)
+
+                # verify_lov — confirma que campo Profissional nao ficou vazio (Obs-Fase1b)
+                regiao_prof = ctx.config.regioes_ocr.get("campo_profissional_proc_ab")
+                if regiao_prof:
+                    regiao = (
+                        regiao_prof["x1"], regiao_prof["y1"],
+                        regiao_prof["x2"], regiao_prof["y2"],
+                    )
+                    if not ctx.runner.verify_lov(
+                        f"Profissional proc {i+1}",
+                        region=regiao,
+                        debug_path=f"{ctx.evidence_dir}AB12_proc{i+1}_prof_debug.png",
+                    ):
+                        raise AssertionError(
+                            f"Falha de Observabilidade: campo Profissional ficou VAZIO "
+                            f"apos LOV no procedimento {i+1} (profissional='{profissional}'). "
+                            f"Verifique se item_profissional_proc aponta para a linha correta "
+                            f"e se o duplo clique funcionou. "
+                            f"Veja AB12_proc{i+1}_prof_debug.png."
+                        )
+                else:
+                    print(f"[AB12] AVISO: regioes_ocr.campo_profissional_proc_ab nao configurado — "
+                          f"verify_lov do profissional ignorado no proc {i+1}.")
+
                 print(f"[AB12] Procedimento {i+1}/{len(procedimentos)} preenchido OK")
 
             # Screenshot final com todos os procedimentos preenchidos
             return ctx.runner.screenshot(f"{ctx.evidence_dir}AB12_procedimentos.png")
 
-        return self._step("AB12", "preencher Lista de Procedimentos", fn, observer)
+        # validated=True — verify_lov rodou dentro de fn() para codigo e profissional
+        return self._step("AB12", "preencher Lista de Procedimentos", fn, observer,
+                          validated=True)
 
     # ----------------------------------------------------------------
     # AB13 — Salvar (F10) + Voltar para formulario de admissao

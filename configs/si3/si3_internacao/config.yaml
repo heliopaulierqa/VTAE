@@ -19,8 +19,9 @@ ambientes:
     timeout: 30
 
 credenciais:
-  usuario: ${SI3_USER}
-  senha: ${SI3_PASS}
+  usuario:     ${SI3_USER}
+  senha:       ${SI3_PASS}
+  paciente_id: ${SI3_PACIENTE_ID:-}   # ← adicionar esta linha
 
 # ---------------------------------------------------------------------------
 # dados_faker

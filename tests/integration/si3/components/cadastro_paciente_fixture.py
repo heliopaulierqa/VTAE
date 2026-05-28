@@ -113,6 +113,20 @@ def executar_cadastro(
 
     time.sleep(pausa_inicial)
 
+    # REGRA: apenas UM cadastro por execução.
+    # Se paciente_id estiver no .env → reutiliza, pula o cadastro.
+    # Se vazio → cadastra novo paciente automaticamente.
+    # Cada jornada tem seu proprio .env — isolamento garantido.
+    paciente_id_env = getattr(config, "PACIENTE_ID", "").strip()
+
+    if paciente_id_env:
+        print(f"\n[cadastro] Reutilizando paciente_id do .env: {paciente_id_env}")
+        print(f"[cadastro] Cadastro pulado — paciente ja existe.")
+        _salvar_estado("paciente_id", paciente_id_env)
+        if proximo_passo:
+            print(f"   Próximo passo: {proximo_passo}\n")
+        return {"paciente_id": paciente_id_env}
+
     try:
         # Login
         login = LoginFlow().execute(ctx, observer=observer)
@@ -120,7 +134,7 @@ def executar_cadastro(
 
         time.sleep(pausa_pos_login)
 
-        # Cadastro completo
+        # Cadastro completo — gera paciente novo
         dados  = gerar_dados(config)
         result = CadastroPacienteFlow().execute(ctx, dados=dados, observer=observer)
 
@@ -128,7 +142,6 @@ def executar_cadastro(
 
     finally:
         # Sempre gera o relatório — mesmo se o teste falhou
-        # Isso garante que o report.html existe para diagnóstico
         try:
             observer.report(ctx)
             ctx.print_summary()

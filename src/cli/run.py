@@ -1,7 +1,7 @@
 # src/cli/run.py
 """
 CLI do VTAE — vtae run, vtae systems, vtae clean, vtae send, vtae flakiness.
-v0.5.8c — cmd_jornada suporta --repeat N
+v0.5.9c — reorganizacao por sistema e jornada clinica
 """
 import argparse
 import json
@@ -14,57 +14,66 @@ from src.cli.send import enviar_relatorio
 
 
 MODULOS = {
-    "sislab": [
-        "tests/integration/sislab/test_cadastro_funcionario_sislab.py",
-    ],
     "si3": [
-        "tests/integration/si3/test_cadastro_paciente.py",
-        "tests/integration/si3/test_admissao_internacao.py",
+        "tests/integration/si3/test_login_real.py",
     ],
     "msi3": [
-        "tests/integration/msi3/test_frequencia_aplicacao.py",
-        "tests/integration/msi3/test_tipo_anestesia.py",
+        "tests/integration/msi3/jornadas/intra_operatorio/test_frequencia_aplicacao.py",
+        "tests/integration/msi3/jornadas/intra_operatorio/test_tipo_anestesia.py",
+    ],
+    "sislab": [
+        "tests/integration/sislab/jornadas/cadastros/test_01_cadastro_funcionario.py",
     ],
 }
 
 TESTES = {
-    "login_si3":                 "tests/integration/si3/test_login_real.py",
-    "cadastro_paciente":         "tests/integration/si3/test_cadastro_paciente.py",
-    "admissao_internacao":       "tests/integration/si3/test_admissao_internacao.py",
-    "cadastro_funcionario":      "tests/integration/sislab/test_cadastro_funcionario_sislab.py",
-    "frequencia_aplicacao":      "tests/integration/msi3/test_frequencia_aplicacao.py",
-    "tipo_anestesia":            "tests/integration/msi3/test_tipo_anestesia.py",
-    "cadastro_paciente_jornada": "tests/integration/jornadas/ambulatorio/test_01_cadastro_paciente.py",
-    "admissao_ambulatorio_jornada": "tests/integration/jornadas/ambulatorio/test_02_admissao_ambulatorio.py",
-     "agendamento_jornada": "tests/integration/jornadas/ambulatorio_agendamento/test_02_agendamento.py",
+    "login_si3":                            "tests/integration/si3/test_login_real.py",
+    "cadastro_paciente_jornada":            "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_01_cadastro_paciente.py",
+    "admissao_ambulatorio_jornada":         "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_02_admissao_ambulatorio.py",
+    "agendamento_jornada":                  "tests/integration/si3/jornadas/ambulatorio/com_agendamento/test_02_agendamento.py",
+    "admissao_com_agendamento_jornada":     "tests/integration/si3/jornadas/ambulatorio/com_agendamento/test_03_admissao_com_agendamento.py",
+    "admissao_internacao_jornada":          "tests/integration/si3/jornadas/internacao/test_02_admissao_internacao.py",
+    "cadastro_paciente_internacao_jornada": "tests/integration/si3/jornadas/internacao/test_01_cadastro_paciente.py",
+    "frequencia_aplicacao":                 "tests/integration/msi3/jornadas/intra_operatorio/test_frequencia_aplicacao.py",
+    "tipo_anestesia":                       "tests/integration/msi3/jornadas/intra_operatorio/test_tipo_anestesia.py",
+    "cadastro_funcionario":                 "tests/integration/sislab/jornadas/cadastros/test_01_cadastro_funcionario.py",
 }
 
 # Jornadas: sequencia ordenada de testes encadeados
 JORNADAS = {
     "ambulatorio": [
-        "tests/integration/jornadas/ambulatorio/test_01_cadastro_paciente.py",
-        "tests/integration/jornadas/ambulatorio/test_02_admissao_ambulatorio.py",
+        "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_01_cadastro_paciente.py",
+        "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_02_admissao_ambulatorio.py",
     ],
-
-     "ambulatorio_agendamento": [
-        "tests/integration/jornadas/ambulatorio_agendamento/test_01_cadastro_paciente.py",
-        "tests/integration/jornadas/ambulatorio_agendamento/test_02_agendamento.py",
+    "ambulatorio_com_agendamento": [
+        "tests/integration/si3/jornadas/ambulatorio/com_agendamento/test_01_cadastro_paciente.py",
+        "tests/integration/si3/jornadas/ambulatorio/com_agendamento/test_02_agendamento.py",
+        "tests/integration/si3/jornadas/ambulatorio/com_agendamento/test_03_admissao_com_agendamento.py",
+    ],
+    "internacao": [
+        "tests/integration/si3/jornadas/internacao/test_01_cadastro_paciente.py",
+        "tests/integration/si3/jornadas/internacao/test_02_admissao_internacao.py",
     ],
 }
 
 # Mapa explicito: nome do teste -> sistema para o health check
 _MAPA_TESTE_SISTEMA = {
-    "login_si3":                 "si3",
-    "cadastro_paciente":         "si3",
-    "admissao_internacao":       "si3",
-    "cadastro_paciente_jornada": "si3",
-    "cadastro_funcionario":      "sislab",
-    "frequencia_aplicacao":      "msi3",
-    "tipo_anestesia":            "msi3",
+    "login_si3":                            "si3",
+    "cadastro_paciente_jornada":            "si3",
+    "admissao_ambulatorio_jornada":         "si3",
+    "agendamento_jornada":                  "si3",
+    "admissao_com_agendamento_jornada":     "si3",
+    "admissao_internacao_jornada":          "si3",
+    "cadastro_paciente_internacao_jornada": "si3",
+    "cadastro_funcionario":                 "sislab",
+    "frequencia_aplicacao":                 "msi3",
+    "tipo_anestesia":                       "msi3",
 }
 
 _MAPA_JORNADA_SISTEMA = {
-    "ambulatorio": "si3",
+    "ambulatorio":                 "si3",
+    "ambulatorio_com_agendamento": "si3",
+    "internacao":                  "si3",
 }
 
 
@@ -160,7 +169,6 @@ def cmd_run(args):
         print(f"    -> {a}")
     print("=" * 60 + "\n")
 
-    # health check
     sistemas_alvo = []
     if args.all:
         sistemas_alvo = list(MODULOS.keys())
@@ -198,7 +206,6 @@ def cmd_jornada(args):
     Para imediatamente se qualquer teste falhar.
     Estado compartilhado via evidence/estado_jornada.json.
     Suporta --repeat N para repetir a jornada completa N vezes.
-    Se qualquer repeticao falhar, interrompe e reporta quantas passaram.
     """
     jornada = args.jornada
     ambiente = args.ambiente or "dev"
@@ -237,7 +244,6 @@ def cmd_jornada(args):
             print(f"  Repeticao {rep}/{repeat}")
             print("=" * 60)
 
-        # limpa estado anterior da jornada a cada repeticao
         estado_path.write_text("{}", encoding="utf-8")
 
         resultados = []
@@ -265,7 +271,6 @@ def cmd_jornada(args):
                 rc_rep = rc
                 break
 
-            # le estado apos cada step (para log)
             try:
                 estado = json.loads(estado_path.read_text(encoding="utf-8"))
                 if estado:
@@ -274,7 +279,6 @@ def cmd_jornada(args):
             except Exception:
                 pass
 
-        # sumario da repeticao atual
         print("\n" + "=" * 60)
         if repeat > 1:
             print(f"  Jornada '{jornada}' — repeticao {rep}/{repeat}")
@@ -298,7 +302,6 @@ def cmd_jornada(args):
                 print(f"\n[VTAE] Repeticao {rep} FALHOU — interrompendo --repeat")
             break
 
-    # sumario global de todas as repeticoes (so exibe se repeat > 1)
     if repeat > 1:
         print("\n" + "=" * 60)
         print(f"  Jornada '{jornada}' — resumo das {repeat} repeticoes")
@@ -318,12 +321,6 @@ def cmd_jornada(args):
 
 
 def cmd_flakiness(args):
-    """
-    Exibe ranking de steps instáveis a partir do flakiness.json.
-    Uso: vtae flakiness
-         vtae flakiness --min-falhas 2
-         vtae flakiness --top 10
-    """
     flakiness_path = Path("evidence/flakiness.json")
 
     if not flakiness_path.exists():
@@ -343,7 +340,6 @@ def cmd_flakiness(args):
     min_falhas = args.min_falhas if hasattr(args, "min_falhas") else 0
     top = args.top if hasattr(args, "top") else 999
 
-    # calcula taxa de flakiness e ordena
     linhas = []
     for sid, dados in historico.items():
         total = dados["pass_count"] + dados["fail_count"]
@@ -359,7 +355,6 @@ def cmd_flakiness(args):
         causa = dados.get("last_causa_falha") or "-"
         linhas.append((taxa, fail, total, avg_ms, max_ms, ultima, causa, sid))
 
-    # ordena por taxa desc, depois por fail_count desc
     linhas.sort(key=lambda x: (-x[0], -x[1]))
     linhas = linhas[:top]
 
@@ -371,26 +366,16 @@ def cmd_flakiness(args):
     print("-" * 70)
 
     for taxa, fail, total, avg_ms, max_ms, ultima, causa, sid in linhas:
-        if taxa >= 30:
-            indicador = "!!"
-        elif taxa >= 10:
-            indicador = " !"
-        else:
-            indicador = "  "
-
+        indicador = "!!" if taxa >= 30 else (" !" if taxa >= 10 else "  ")
         data_curta = ultima[:16] if ultima != "-" else "-"
-
         print(f"  {indicador} {sid:<8} {fail:<8} {total:<8} {taxa:<8.1f} "
               f"{avg_ms:<10.0f} {max_ms:<10.0f} {causa:<20} {data_curta}")
 
     print("-" * 70)
-
     total_steps = len(historico)
     steps_com_falha = sum(1 for d in historico.values() if d["fail_count"] > 0)
-    steps_flaky = sum(
-        1 for d in historico.values()
-        if d["fail_count"] > 0 and d["pass_count"] > 0
-    )
+    steps_flaky = sum(1 for d in historico.values()
+                      if d["fail_count"] > 0 and d["pass_count"] > 0)
     print(f"\n  Total de steps monitorados : {total_steps}")
     print(f"  Steps com pelo menos 1 falha: {steps_com_falha}")
     print(f"  Steps flaky (falhou E passou): {steps_flaky}")
@@ -480,10 +465,8 @@ def main():
     p_send.add_argument("--env", dest="ambiente", default="dev")
 
     p_flak = sub.add_parser("flakiness")
-    p_flak.add_argument("--min-falhas", type=int, default=0,
-                        help="Mostrar apenas steps com pelo menos N falhas")
-    p_flak.add_argument("--top", type=int, default=999,
-                        help="Mostrar apenas os N steps mais instáveis")
+    p_flak.add_argument("--min-falhas", type=int, default=0)
+    p_flak.add_argument("--top", type=int, default=999)
 
     args = parser.parse_args()
     dispatch = {

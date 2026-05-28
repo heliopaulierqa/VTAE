@@ -200,3 +200,17 @@ Dicas:
 - Estrutura inicial de pastas
 - `LoginFlow`, `AdmissaoFlow`, `SuprimentosFlow` (esqueletos)
 - `LoginConfigSisLab`
+
+## [0.5.9c] — 2026-05-27
+
+### Adicionado
+- `AgendamentoFlow` — 13/13 steps passando — primeira execução completa ✅
+- `_focar_si3()` — foco automático na janela Oracle Forms antes de steps críticos
+- `_tpl_existe()` — fallback gracioso para templates ainda não capturados
+- AG08: Escape antes de clicar Agendar — fecha popup Editor (bug Oracle Forms)
+- AG09: tela Recursos tolerante — funciona com e sem tela de Recursos
+
+### Corrigido
+- Flow digitando em outra janela (VSCode) quando SI3 perdia foco
+- `btn_fechar_info_ag` comentado no config.yaml — descomentado
+- `_focar_si3` parava o flow quando `pygetwindow` não estava instalado

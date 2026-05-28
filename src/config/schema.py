@@ -175,6 +175,11 @@ class SystemConfig:
     # Suporta qualquer estrutura: strings, listas, dicts aninhados.
     # Retrocompativel: sistemas sem secao `dados:` recebem {} por padrao.
     dados_fixos: dict = field(default_factory=dict)
+    # ID do paciente — lido do .env via ${SI3_PACIENTE_ID:-}.
+    # Vazio = cadastrar novo paciente automaticamente.
+    # Preenchido = reutilizar paciente existente (pula o cadastro).
+    # Cada jornada tem seu proprio .env — isolamento garantido.
+    paciente_id: str = ""
     _dados_cache: dict | None = field(default=None, repr=False)
 
     # -- Compatibilidade com FlowContext --
@@ -202,6 +207,11 @@ class SystemConfig:
     @property
     def timeout(self) -> float:
         return self.ambiente.timeout
+
+    @property
+    def PACIENTE_ID(self) -> str:
+        """ID do paciente lido do .env. Vazio = cadastrar novo automaticamente."""
+        return self.paciente_id
 
     # -- Dados dinamicos --
 

@@ -203,6 +203,10 @@ class ConfigLoader:
             senha=str(cred_data.get("senha", "")),
         )
 
+        # paciente_id — opcional, lido do .env via ${SI3_PACIENTE_ID:-}
+        # Vazio = cadastrar novo; preenchido = reutilizar paciente existente
+        paciente_id = str(cred_data.get("paciente_id", "")).strip()
+
         # dados faker (secao dados_faker:)
         dados_schema = []
         for item in data.get("dados_faker", []):
@@ -243,6 +247,7 @@ class ConfigLoader:
             coordenadas=data.get("coordenadas", {}),
             regioes_ocr=data.get("regioes_ocr", {}),
             dados_fixos=dados_fixos,  # v0.5.7: secao dados: do config.yaml
+            paciente_id=paciente_id,  # v0.5.9c: opcional — do .env
         )
 
     # ----------------------------------------------------------------

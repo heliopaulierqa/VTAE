@@ -14,8 +14,9 @@ ambientes:
     timeout: 30
 
 credenciais:
-  usuario: ${SI3_USER}
-  senha: ${SI3_PASS}
+  usuario:     ${SI3_USER}
+  senha:       ${SI3_PASS}
+  paciente_id: ${SI3_PACIENTE_ID:-}   # ← adicionar esta linha
 
 dados_faker: []  # sem faker — dados fixos para admissao ambulatorial
 
@@ -151,8 +152,8 @@ regioes_ocr:
 
 regioes_ocr:
   campo_medico_ab:
-    x1: 320  y1: 28  x2: 320  y2: 40  # calibrar no campo Médico Responsável
+    {x1: 129,  y1: 430,  x2: 181,  y2: 440}  
   campo_codigo_proc_ab:
-    x1: 420  y1: 320  x2: 50  y2: 235  # calibrar na coluna Código da grade
+    {x1: 35,  y1: 324,  x2: 92,  y2: 246}  # calibrar na coluna Código da grade
   campo_profissional_proc_ab:
-    x1: 520  y1: 28  x2: 284  y2: 58  # calibrar na coluna Profissional da grade
+    {x1: 574,  y1: 228,  x2: 710,  y2: 244}  # calibrar na coluna Profissional da grade

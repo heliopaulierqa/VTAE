@@ -4,6 +4,110 @@ Todas as mudanças significativas do projeto são documentadas aqui.
 
 ---
 
+## [0.5.9d] — 2026-05-29
+
+### Adicionado — Fase 5f: AdmissaoInternacaoFlow validado
+
+**`src/flows/si3/admissao_internacao_flow.py`** (novo, validado)
+- AdmissaoInternacaoFlow — AI01–AI18 passando — validado em 29/05/2026
+- Jornada completa: `vtae run --jornada internacao` ✅ (cadastro + admissão)
+- Navegação via "Localizar no Menu" — padrão consolidado para todos os módulos SI3
+- Cenário SUS validado — estrutura `cenarios_provedor` suporta sus/particular/incor_sis/convenio
+- AI05: OCR condicional no campo Tipo — preenche RUA só se vazio; default seguro = assume preenchido
+- AI12: LOV Profissional Responsável — popup abre com resultado único → OK direto
+- AI14: campo Número=1 + TAB abre popup automaticamente → digita %medico → double_click no médico de informatica
+- AI15: botão Leito → confirm_template `btn_alocar_leito.png` (aparece na mesma tela)
+- AI16: Alocar Leito → popup "não existe reserva" → OK → Consultar Leito → LOV unidade
+- AI17: seleciona leito + popup "especialidade diferente" → Sim (condicional, `_tpl_existe`)
+- AI18: 3x `safe_click(btn_sair.png)` para retornar ao menu principal
+- AI19: OCR valida Nr Admissão (modo bootstrap até calibrar `regioes_ocr.nr_admissao`)
+
+**`configs/si3/si3_internacao/config.yaml`** (novo)
+- Estrutura completa com `dados:`, `coordenadas:`, `regioes_ocr:`
+- `cenarios_provedor`: sus, particular, incor_sis, convenio — alterar `cenario_provedor` para mudar cenário
+- `termo_menu_int: 'INTERNACAO'` — padrão Localizar no Menu
+- `credenciais.paciente_id: ${SI3_PACIENTE_ID:-}` — vazio=lê estado_jornada.json; preenchido=reutiliza
+
+**`templates/si3/admissao_internacao/`** (novos templates capturados)
+- `aba_endereco.png`, `btn_admitir_paciente.png`, `btn_alocar_leito.png`
+- `btn_consultar_leito.png`, `btn_info_compl.png`, `btn_leito.png`
+- `btn_nao_popup.png`, `btn_ok_popup.png`, `btn_pesquisar.png`, `btn_pesquisar_menu.png`
+- `btn_retornar.png`, `btn_sair.png`, `btn_sim_popup.png`
+- `campo_identificado.png`, `campo_matricula_responsavel.png`, `campo_nr_admissao.png`
+- `campo_numero.png`, `item_medico_informatica.png`, `menu_internacao.png`
+
+### Corrigido
+
+- **AI05 default seguro**: `campo_vazio = False` por padrão — sem OCR calibrado, não preenche (evita sobrescrever campo já preenchido)
+- **AI15 confirm_template**: corrigido de `btn_consultar_leito.png` para `btn_alocar_leito.png` — "Alocar Leito" aparece na tela que abre após clicar em "Leito"; "Consultar Leito" só aparece após clicar em "Alocar Leito"
+- **AI16 popup "já possui leito"**: fechado com OK antes de continuar
+- **AI14 LOV**: removido clique na LOV — `campo_numero=1 + TAB` abre o popup automaticamente (padrão Oracle Forms)
+- **AI12 LOV**: removida busca desnecessária — popup abre com resultado único, basta OK direto
+- **`_ler_estado()`**: corrigido para passar a chave como argumento: `_ler_estado("paciente_id")`
+- **`result.add()`**: corrigido para `result.steps.append(sr)` — API correta do FlowResult
+- **`ctx_ref`**: removido resquício de closure — `_step()` recebe `ctx=ctx` como parâmetro
+- **YAML `???`**: valores placeholder substituídos por `{ x: 0, y: 0 }` — YAML não aceita `?` em flow nodes
+
+### Padrões consolidados nesta sessão
+
+- **Navegação de módulo SI3**: digita no "Localizar no Menu" → Pesquisar → Não (popup) → double_click no item
+- **Template = menor elemento único**: nunca capturar tela inteira; usar label fixo ou botão de texto estático
+- **LOV com resultado único**: só OK, sem busca
+- **LOV com lista**: digita termo → Localizar → double_click (dispensa OK)
+- **TAB abre popup LOV em Oracle Forms**: `campo_numero=1 + TAB` é mais estável que clicar na LOV
+- **3x btn_sair.png**: padrão para retornar ao menu principal após admissão internação
+- **confirm_template por tela**: AI15→`btn_alocar_leito.png`, AI16→`btn_consultar_leito.png`
+- **Popup condicional**: sempre `_tpl_existe()` + `is_visible()` — nunca assumir que aparece
+
+### Validado
+- Jornada internação completa: cadastro_paciente + admissao_internacao ✅ 29/05/2026
+
+---
+
+## [0.5.9c] — 2026-05-28
+
+### Adicionado — Fase 5e: AdmissaoComAgendamentoFlow + reorganização jornadas
+
+- `AdmissaoComAgendamentoFlow` criado — herda 90% do AdmissaoAmbulatorioFlow
+- Reorganização de jornadas em `tests/integration/si3/jornadas/`
+- `vtae run --jornada internacao` registrado no CLI
+- Pendente: calibrar `btn_admitir_com_agendamento.png` e coordenadas
+
+---
+
+## [0.5.9b] — 2026-05-27
+
+### Adicionado — Onda 1: Observabilidade real
+
+- `confirm_template` em todos os steps de navegação
+- `validated=True` propagado no `_step()` wrapper
+- `_focar_si3()` antes de steps críticos em Oracle Forms
+- `_tpl_existe()` — fallback gracioso para templates ausentes
+- `verify_lov` em AG07, AB11, AB12
+
+### Adicionado — Fase 5d: AgendamentoFlow
+
+- AgendamentoFlow — AG01–AG13 passando — validado 3x em 27/05/2026
+- `vtae run --jornada ambulatorio_com_agendamento` funcionando
+
+---
+
+## [0.5.9a] — 2026-05-26
+
+### Adicionado — Obs-Fase1b: verify_lov + verify_fill + _dado + set_logger
+
+- `verify_lov()` — OCR confirma campo LOV não ficou vazio após seleção
+- `verify_fill()` — OCR confirma campo preenchido após digitação
+- `_dado()` — dado ausente = erro imediato com mensagem clara
+- `PlaywrightRunner.set_logger()` — logs web chegam ao execution.log
+
+### Adicionado — Fase 5c: Jornada ambulatório
+
+- AdmissaoAmbulatorioFlow — AB01–AB15 validado 3x em 26/05/2026
+- `vtae run --jornada ambulatorio` funcionando
+
+---
+
 ## [0.4.0] — 2026-05-02
 
 ### Adicionado — Fase 3 E1: Clean Architecture
@@ -20,7 +124,7 @@ Todas as mudanças significativas do projeto são documentadas aqui.
 - `src/vision/template.py` — `TemplateMatcher` isolado do `OpenCVRunner`
 - `pyproject.toml` v0.4.0 — registra `src*` e `vtae*` no editable install
 
-**Aliases em `vtae/`** — todos os módulos redirecionam para `src/` via re-export de uma linha. Testes existentes continuam funcionando sem alteração.
+**Aliases em `vtae/`** — todos os módulos redirecionam para `src/` via re-export de uma linha.
 
 **Padrão para novos sistemas** — adicionar sistema = criar 4 pastas: `src/flows/<sistema>/`, `configs/<sistema>/`, `templates/<sistema>/`, `tests/integration/<sistema>/`
 
@@ -36,7 +140,6 @@ Todas as mudanças significativas do projeto são documentadas aqui.
 **`src/runners/opencv_runner.py`**
 - `click_near(template, offset_x, offset_y)` — encontra o template âncora e clica na posição deslocada
 - Útil para Oracle Forms onde o label é estável mas o campo fica a distância fixa do label
-- Exemplo: `runner.click_near("templates/si3/label_nome.png", offset_x=200)` encontra o label e clica no campo à direita
 
 **`src/vision/template.py`**
 - `find_anchor(anchor_path, offset_x, offset_y)` — implementação do anchor no `TemplateMatcher`
@@ -48,33 +151,9 @@ Todas as mudanças significativas do projeto são documentadas aqui.
 ### Adicionado — F2-B: Heurísticas de Confiança Visual
 
 **`src/vision/template.py`**
-- Pipeline de 5 estratégias de matching — tenta cada ajuste antes de concluir que não encontrou:
-  1. Multi-scale sem ajuste (F2-A)
-  2. Contraste +30%
-  3. Brilho +20
-  4. Equalização de histograma
-  5. Escala de cinza
-- `DiagnosticReport` — quando tudo falha, exibe score de cada estratégia tentada
-- `diagnose(template_path)` — executa todas as estratégias e retorna relatório para debug
-- Log automático quando ajuste é necessário: `[TemplateMatcher] match via 'contrast' (score=0.812, scale=1.0x)`
-
-**Por que heurísticas:** Oracle Forms e sistemas legados têm renderização inconsistente — o mesmo botão pode aparecer com contraste diferente dependendo do tema Windows, DPI ou modo de compatibilidade. Os ajustes compensam essas variações sem recapturar o template.
-
-**Exemplo de DiagnosticReport:**
-```
-Template não encontrado: 'templates/sislab/funcionario/btn_novo.png'
-Threshold: 0.70
-Scores por estratégia:
-  ✗ original (multi-scale)    score=0.581
-  ✗ contrast                  score=0.623
-  ✗ brightness                score=0.598
-  ✗ equalize                  score=0.612
-  ✗ gray                      score=0.644
-Dicas:
-  - Reduza o confidence (ex: threshold=0.6)
-  - Recapture o template com o sistema no mesmo estado
-  - Verifique se a janela está maximizada
-```
+- Pipeline de 5 estratégias de matching antes de concluir não encontrado
+- `DiagnosticReport` — score de cada estratégia quando tudo falha
+- `diagnose(template_path)` — executa todas as estratégias para debug
 
 ---
 
@@ -82,23 +161,10 @@ Dicas:
 
 ### Adicionado — F2-A: Multi-scale Template Matching
 
-**`src/vision/template.py`** (novo — extraído do OpenCVRunner)
-- `TemplateMatcher` isolado — pode ser instanciado independente do runner
-- Multi-scale matching: testa o template em escalas `(1.0, 0.9, 1.1, 0.8, 1.2)` e retorna o melhor match
-- `MatchResult` dataclass — inclui posição `(x, y)`, `score`, `scale` e `adjustment`
-- `find_best_score()` — retorna melhor score independente do threshold, usado pelo diagnóstico
-- Otimização: score >= 0.9 em escala 1.0 → retorna imediatamente sem testar as outras escalas
-
-**`src/runners/opencv_runner.py`** (atualizado)
-- Delega todo o matching para `TemplateMatcher`
-- `safe_click` loga score máximo quando falha: `score máximo: 0.63 (threshold: 0.70)`
-- Loga escala usada quando diferente de 1.0: `match em escala 1.1x (score=0.847)`
-- Aceita parâmetro `scales` para customizar escalas testadas por instância
-
-**Por que multi-scale:** templates capturados em um browser/resolução podem não bater com a tela em outro momento se o zoom ou DPI for diferente.
-
-### Validado
-- 32 testes unitários verdes após F2-A, F2-B e F2-C
+**`src/vision/template.py`**
+- `TemplateMatcher` isolado — instanciável independente do runner
+- Multi-scale: testa escalas `(1.0, 0.9, 1.1, 0.8, 1.2)` e retorna melhor match
+- Otimização: score >= 0.9 em escala 1.0 → retorna imediatamente
 
 ---
 
@@ -106,50 +172,16 @@ Dicas:
 
 ### Adicionado
 
-**`vtae/flows/cadastro_paciente_flow.py`** (validado)
-- CadastroPacienteFlow — 14/14 steps passando — validado em 28/04/2026
-- Estratégia de coordenadas diretas para todos os campos
-- CP07 Nacionalidade: tratamento de 2 popups em sequência com Enter como fallback
-- CP13: leitura da matrícula gerada via `OcrHelper.ler_regiao`
-- CP14: sequência de saída em 3 etapas com coordenadas diretas
-
-**`vtae/flows/tipo_anestesia_flow.py`** (novo, validado)
-- TipoAnestesiaFlow — 9/9 steps passando — validado em 30/04/2026
-- Navegação MSI3 via sidebar "Cirurgia (NOVO)" → cards → Tipo Anestesia
-- TA04–TA06: OpenCV para cards sem href CSS, com confirmação por polling de URL
-- TA08–TA09: Playwright via frame locator — formulário em dialog `f?p=152:19:...`
-
-**`vtae/flows/cadastro_funcionario_flow_sislab.py`** (validado em 02/05/2026)
-- CadastroFuncionarioFlow — 10/10 steps passando
-- Login integrado no teste — fluxo end-to-end completo
-- Navegação por Tab após clicar em Novo — padrão Oracle Forms
-- Dropdowns Cargo e Departamento selecionados por seta (posição fixa)
-- CF09: validação por template `msg_sucesso.png`
-- CF10: verificação do nome na grade via OCR com `_REGIAO_GRADE = (0, 620, 1366, 660)`
-
-**`vtae/configs/sislab/cadastro_funcionario_config.py`** (atualizado)
-- CPF sem formatação — campo com máscara rejeita pontuação
-- Cargo e Departamento fixos (dropdowns)
+- `CadastroPacienteFlow` — 14/14 steps — validado 28/04/2026
+- `TipoAnestesiaFlow` — 9/9 steps — validado 30/04/2026
+- `CadastroFuncionarioFlow` (SisLab) — 10/10 steps — validado 02/05/2026
 
 ### Padrões consolidados
-
-- **Tab para navegar entre campos** — após clicar em Novo, foco vai para o primeiro campo automaticamente
-- **CPF sem pontuação** — enviar só dígitos para campos com máscara
-- **Validação por template** preferível a OCR para mensagens de sucesso/erro
-- **Formulários APEX em dialog** — acesso via `page.frames` iterando pelo ID do campo
-- **Polling de URL após OpenCV** — `networkidle` não funciona após cliques OpenCV no MSI3
-
----
-
-## [0.3.1] — 2026-04-28
-
-> Versão de documentação — sem alterações de código.
-
-### Atualizado
-
-- `README.md` — v0.3.1
-- `VTAE_Documentacao_v031.docx` — documentação completa do projeto
-- `VTAE_Manualv3.docx` — manual do desenvolvedor v0.3.0
+- Tab para navegar entre campos após clicar em Novo
+- CPF sem pontuação para campos com máscara
+- Validação por template preferível a OCR para mensagens de sucesso/erro
+- Formulários APEX em dialog — acesso via `page.frames`
+- Polling de URL após cliques OpenCV no MSI3
 
 ---
 
@@ -157,39 +189,18 @@ Dicas:
 
 ### Adicionado
 
-**`vtae/core/apex_helper.py`**
-- Helper centralizado para interações com Oracle APEX (MSI3)
-- Seletores validados: APEX 23.1 / Universal Theme 42
-- `verificar_sem_erro()`, `verificar_sucesso()`, `aguardar_spinner()`
-- `verificar_registro_na_grade()`, `inspecionar_pagina()`, `obter_titulo_pagina()`
-
-**`vtae/core/ocr_helper.py`**
-- Helper centralizado de OCR para sistemas desktop
-- Pré-processamento: escala de cinza → 2x → threshold adaptativo gaussiano
-- `ler_regiao()`, `ler_tela_inteira()`, `contem_qualquer_token()`, `salvar_debug()`
-
-**`vtae/flows/frequencia_aplicacao_flow.py`** (reescrito)
-- Validado em 10+ execuções consecutivas no ambiente MSI3
-
-**`vtae/flows/login_flow_msi3.py`** (atualizado)
-- Detecção de erro de credencial via `ApexHelper.verificar_sem_erro`
-
-### Corrigido
-
-- Encoding com acentos no Windows/Python 3.13 — `get_by_role("link")` no sidebar
-- Sessão APEX invalidada por navegação direta via URL
+- `apex_helper.py` — helper centralizado Oracle APEX
+- `ocr_helper.py` — helper centralizado OCR desktop
+- `FrequenciaAplicacaoFlow` — reescrito, validado 10+ execuções
+- `LoginFlowMsi3` — detecção de erro de credencial
 
 ---
 
 ## [0.2.0] — 2026
 
 ### Adicionado
-- `OpenCVRunner` — runner desktop com visão computacional
-- `PlaywrightRunner` — runner web com browser maximizado
-- `ExecutionObserver` — logs, JSON e relatório HTML automático
-- `FrequenciaAplicacaoFlow` — fluxo completo MSI3 com Playwright + OpenCV
-- `LoginFlowMsi3` — login web Oracle APEX
-- Integração com **Faker** para dados únicos
+- `OpenCVRunner`, `PlaywrightRunner`, `ExecutionObserver`
+- Integração com Faker para dados únicos
 - 32 testes unitários passando
 
 ---
@@ -199,36 +210,3 @@ Dicas:
 ### Adicionado
 - Estrutura inicial de pastas
 - `LoginFlow`, `AdmissaoFlow`, `SuprimentosFlow` (esqueletos)
-- `LoginConfigSisLab`
-
-## [0.5.9c] — 2026-05-27
-
-### Adicionado
-- `AgendamentoFlow` — 13/13 steps passando — primeira execução completa ✅
-- `_focar_si3()` — foco automático na janela Oracle Forms antes de steps críticos
-- `_tpl_existe()` — fallback gracioso para templates ainda não capturados
-- AG08: Escape antes de clicar Agendar — fecha popup Editor (bug Oracle Forms)
-- AG09: tela Recursos tolerante — funciona com e sem tela de Recursos
-
-### Corrigido
-- Flow digitando em outra janela (VSCode) quando SI3 perdia foco
-- `btn_fechar_info_ag` comentado no config.yaml — descomentado
-- `_focar_si3` parava o flow quando `pygetwindow` não estava instalado
-
-
-## [0.5.9d] — 2026-05-28
-
-### Refatorado
-- Estrutura de testes reorganizada por sistema e jornada clínica
-- si3/: components/ + jornadas/ambulatorio/(sem_agendamento|com_agendamento) + internacao/
-- msi3/: components/ + jornadas/intra_operatorio/
-- fixture cadastro_paciente movida para si3/components/
-- REGRA: SI3_PACIENTE_ID no .env — vazio=cadastra novo, preenchido=reutiliza
-- schema.py: campo paciente_id + property PACIENTE_ID
-- loader.py: lê paciente_id do .env
-- run.py: MODULOS/TESTES/JORNADAS com novos caminhos; _MAPA_JORNADA_SISTEMA atualizado
-
-### Pendências técnicas identificadas (pré-existentes)
-- test_cadastro_paciente_flow.py espera 27 steps — atualizar para 23
-- test_config_loader.py: acento em mensagem de erro
-- test_send.py: data hardcoded 2026-05-03

@@ -93,11 +93,10 @@ dados:
   # ── AI12: Profissional Responsavel pela Internacao (LOV) ─────────────
   # Termo digitado no campo Localizar da LOV — usar % como wildcard
   # CENARIO NEGATIVO: trocar para 'MEDICO INEXISTENTE' para testar erro
-  termo_medico_responsavel: '%medico'
+  #termo_medico_responsavel: '%medico'
 
   # ── AI14: Profissional do Info. Compl. de Internacao (LOV) ───────────
-  # AI14: termo digitado no campo Localizar do popup Info. Compl.
-  # Double click em MEDICO (SOH PARA USO DA INFORMATICA) — identifica que e teste
+  # Pode ser o mesmo medico ou outro — campo independente de AI12
   # CENARIO NEGATIVO: trocar para nome que nao existe
   termo_medico_compl: '%medico'
 
@@ -130,64 +129,57 @@ coordenadas:
 
   # AI07 — campo Unidade Funcional (cursor ja esta aqui ao abrir a tela)
   # Manter como fallback caso o foco nao esteja no campo
-  campo_unidade_funcional:      { x: 65, y: 206 }   # capturar
+  campo_unidade_funcional:      { x: 122, y: 204 }   # capturar
 
   # AI08 — Provedor e Plano
-  campo_provedor:               { x: 62, y: 240 }   # capturar
-  campo_plano:                  { x: 354, y: 242 }   # capturar
-  campo_carteirinha:            { x: 702, y: 240 }   # capturar (so para incor_sis e convenio)
-  campo_validade_carteirinha:   { x: 750, y: 278 }   # capturar (so para incor_sis e convenio)
+  campo_provedor:               { x: 63, y: 242  }   # capturar
+  campo_plano:                  { x: 354, y: 241 }   # capturar
+  campo_carteirinha:            { x: 671, y: 239 }   # capturar (so para incor_sis e convenio)
+  campo_validade_carteirinha:   { x: 742, y: 280 }   # capturar (so para incor_sis e convenio)
 
   # AI08b — Declarante e Especialidade
-  campo_declarante:             { x: 56, y: 284 }   # capturar
-  campo_especialidade:          { x: 353, y: 277 }   # capturar
+  campo_declarante:             { x: 44, y: 279 }   # capturar
+  campo_especialidade:          { x: 335, y: 281 }   # capturar
 
   # AI09 — Obs
-  campo_obs:                    { x: 86, y: 348 }   # capturar
+  campo_obs:                    { x: 77, y: 345 }   # capturar
 
   # AI10 — Origem do Paciente (campo Tipo)
-  campo_origem_tipo:            { x: 65, y: 410 }   # capturar
+  campo_origem_tipo:            { x: 65, y: 409 }   # capturar
 
   # AI11 — Dropdown Origem da Solicitacao
-  dropdown_origem_solicitacao:  { x: 673, y: 462 }   # capturar
+  dropdown_origem_solicitacao:  { x: 638, y: 460 }   # capturar
 
   # AI12 — LOV Profissional Responsavel pela Internacao
-  btn_lov_medico_responsavel:   { x: 826, y: 527 }   # capturar (botao [...] ao lado do campo)
-  # campo_busca_medico_resp e btn_localizar_medico_resp removidos — AI12 clica OK direto
-  btn_ok_medico_resp:           { x: 639, y: 809 }   # capturar (botao OK no popup)
-
-  # AI14 — LOV, campo Localizar e botao Localizar no popup Info. Compl.
-  btn_lov_medico_compl:         { x: 685, y: 153 }   # capturar — botao LOV ao lado do campo
-  campo_busca_medico_compl:     { x: 285, y: 228 }   # capturar
-  btn_localizar_medico_compl:   { x: 471, y: 438 }   # capturar
+  btn_lov_medico_responsavel:   { x: 830, y: 529 }   # capturar (botao [...] ao lado do campo)
+  btn_ok_medico_resp:           { x: 641, y: 816 }   # capturar (botao OK no popup)
 
   # AI13 — Botao Info. Compl. de Internacao
   # Usar template btn_info_compl.png — nao precisa de coordenada
 
   # AI14 — Campo Numero no popup Info. Compl.
-  campo_numero_compl:           { x: 155, y: 159 }   # capturar
+  campo_numero_compl:           { x: 0, y: 0 }   # capturar
 
   # AI15 — Botao Retornar (popup Info. Compl.)
-  btn_retornar_compl:           { x: 778, y: 241 }   # capturar
+  btn_retornar_compl:           { x: 0, y: 0 }   # capturar
 
   # AI16 — Botao LEITO (tela principal)
   # Usar template btn_leito.png — nao precisa de coordenada
 
   # AI17 — Tela Alocar Leito
-  btn_alocar_leito:             { x: 325, y: 532 }   # capturar
-  btn_consultar_leito:          { x: 122, y: 347 }   # capturar
-  campo_busca_unidade_leito:    { x: 89, y: 144 }   # capturar (campo Localizar no popup)
-  btn_localizar_unidade_leito:  { x: 1105, y: 585 }   # capturar
-  btn_ok_unidade_leito:         { x: 413, y: 451 }   # capturar
- 
+  btn_alocar_leito:             { x: 0, y: 0 }   # capturar
+  btn_consultar_leito:          { x: 0, y: 0 }   # capturar
+  campo_busca_unidade_leito:    { x: 0, y: 0 }   # capturar (campo Localizar no popup)
+  btn_localizar_unidade_leito:  { x: 0, y: 0 }   # capturar
+  btn_ok_unidade_leito:         { x: 0, y: 0 }   # capturar
 
   # AI18 — Lista de leitos — clicar na primeira linha
-  primeira_linha_leitos:        { x: 120, y: 198 }   # capturar
-  btn_selecionar_leito:         { x: 500, y: 448 }   # capturar
+  primeira_linha_leitos:        { x: 0, y: 0 }   # capturar
+  btn_selecionar_leito:         { x: 0, y: 0 }   # capturar
 
   # AI19 — Botao OK + Sair na tela Alocar Leito
-  btn_ok_alocar:                { x: 540, y: 556 }   # capturar
-  btn_sair_alocar:              { x: 1476, y: 351 }   # capturar
+  btn_ok_alocar:                { x: 0, y: 0 }   # capturar
+  btn_sair_alocar:              { x: 0, y: 0 }   # capturar
 
 # ─────────────────────────────────────────────────────────────────────────────
 # regioes_ocr — calibrar com Paint apos primeira execucao

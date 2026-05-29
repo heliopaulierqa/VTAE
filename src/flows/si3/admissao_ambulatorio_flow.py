@@ -463,7 +463,7 @@ class AdmissaoAmbulatorioFlow:
             if r:
                 regiao_tipo = (r["x1"], r["y1"], r["x2"], r["y2"])
             else:
-                regiao_tipo = (x - 10, y - 10, x + 120, y + 12)
+                regiao_tipo = (x - 10, y - 15, x + 160, y + 18)
 
             tipo_lido = OcrHelper.ler_regiao(screenshot_check, regiao_tipo).strip()
             print(f"[AB04] Campo Tipo lido: '{tipo_lido}' | regiao: {regiao_tipo}")
@@ -476,7 +476,7 @@ class AdmissaoAmbulatorioFlow:
                 pyautogui.hotkey("ctrl", "a")
                 ctx.runner.type_text("RUA")
                 pyautogui.press("tab"); time.sleep(0.5)
-                pyautogui.hotkey("ctrl", "s")
+                pyautogui.hotkey("f10")
                 time.sleep(1.5)
 
             # Sempre garante que btn_admitir_paciente esta visivel antes de sair do step.

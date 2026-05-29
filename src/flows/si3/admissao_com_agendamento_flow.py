@@ -115,10 +115,25 @@ class AdmissaoComAgendamentoFlow(AdmissaoAmbulatorioFlow):
 
     def _step_admitir_paciente(self, ctx, observer=None) -> StepResult:
         """
-        Na tela de agendamentos, clicar em ADMITIR.
-        Pode aparecer popup de webservice de elegibilidade — clicar Sim.
+        AB05 — Seleciona primeiro agendamento da grade e clica em Admitir.
+        Estratégia: sempre escolhe a primeira linha (de cima para baixo) — determinístico.
+        Depois trata popup de webservice de elegibilidade (pode aparecer até 2x).
         """
         def fn():
+            coords = ctx.config.coordenadas
+
+    # 1. Clicar na primeira linha da grade para selecionar o agendamento 
+            x, y = self._coord(coords, "primeira_linha_grade_ag")
+            pyautogui.click(x, y)
+            time.sleep(0.5)
+
+     # 2. Clicar em Admitir (canto inferior direito da tela de agendamentos)
+            x, y = self._coord(coords, "btn_admitir_ag")
+            pyautogui.click(x, y)
+            time.sleep(2.0)           
+
+
+
             # Tenta template especifico; fallback para btn_admitir_paciente
             import os
             tpl_admitir = f"{self._TPL}/btn_admitir_com_agendamento.png"
@@ -130,28 +145,32 @@ class AdmissaoComAgendamentoFlow(AdmissaoAmbulatorioFlow):
                 )
             time.sleep(2.0)
 
-            # Popup webservice elegibilidade — pode aparecer 2x — clicar Sim
-            # "Webservice de elegibilidade nao cadastrado para o provedor.
-            #  Deseja prosseguir com a admissao?"
+            # 3. Fechar popup webservice elegibilidade — pode aparecer até 2x
             for tentativa in range(2):
                 tpl_sim = f"{self._TPL}/btn_ok_convenio.png"
                 if ctx.runner.wait_template(tpl_sim, timeout=3.0, threshold=0.7):
-                    ctx.runner.safe_click(tpl_sim, threshold=0.7)
-                    time.sleep(1.0)
-                    print(f"[AB05] Popup elegibilidade fechado (tentativa {tentativa+1})")
+                   ctx.runner.safe_click(tpl_sim, threshold=0.7)
+                   time.sleep(1.0) 
+                   print(f"[AB05] Popup elegibilidade fechado (tentativa {tentativa + 1})")
+                else:
+                     break
 
-            # confirm_template: formulario de admissao abriu
+            # 4. Confirm: formulário de admissão abriu
             apareceu = ctx.runner.wait_template(
                 f"{self._TPL}/campo_unidade_funcional.png", timeout=10, threshold=0.65
+        )
+        if not apareceu:      
+            raise AssertionError(
+                "AB05: formulario de admissao nao abriu apos Admitir. "
+                "Verifique se a primeira linha foi selecionada corretamente "
+                "e se o popup de elegibilidade foi tratado. "
+                "Veja AB05_admitir_ag.png."
             )
-            if not apareceu:
-                raise AssertionError(
-                    "AB05: formulario de admissao nao abriu apos ADMITIR. "
-                    "Verifique se o popup de elegibilidade foi tratado corretamente."
-                )
             return ctx.runner.screenshot(f"{ctx.evidence_dir}AB05_admitir_ag.png")
-        return self._step("AB05", "clicar ADMITIR na tela de agendamentos", fn, observer,
-                          confirm_template=f"{self._TPL}/campo_unidade_funcional.png")
+        return self._step("AB05", "selecionar agendamento e clicar Admitir", fn, observer,
+                          confirm_template=f"{self._TPL}/campo_unidade_funcional.png")     
+
+           
 
     # ----------------------------------------------------------------
     # AB06 — Unidade Funcional — CLINICA DE CARDIOPATIA GERAL

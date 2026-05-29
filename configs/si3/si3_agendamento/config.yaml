@@ -54,6 +54,10 @@ dados:
   # Regra do plano de teste: agendar sempre 3h a frente da hora atual
   horas_offset_ag: 3
 
+  # --- AdmissaoComAgendamento ---
+  unidade_funcional: 'CLINICA DE CARDIOPATIA GERAL'
+  nome_medico_ab: 'MEDICO'
+
 coordenadas:
   # Reutilizado do si3_ambulatorio (mesma posicao na tela de Menu Principal)
   campo_localizar_menu:       { x: 624, y: 578 }
@@ -89,6 +93,13 @@ coordenadas:
   # Localizar paciente e confirmar
   campo_id_paciente_ag:       { x: 34,  y: 151 }
   btn_confirmar_ag:           { x: 833, y: 617 }
+
+  # AdmissaoComAgendamentoFlow
+  primeira_linha_grade_ag:    { x: 300, y: 103 }   # primeira linha da grade de agendamentos
+  btn_admitir_ag:             { x: 1101, y: 621 }  # botão Admitir da tela de agendamentos
+  campo_nome_medico_ab:       { x: 400, y: 400 }   # PENDENTE calibrar com posicao_mouse.py
+
+
 
 regioes_ocr:
   campo_executante_ag:

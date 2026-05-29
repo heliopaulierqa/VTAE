@@ -148,7 +148,7 @@ regioes_ocr:
 
   # AB14 — Nr Admissao — calibrar com Paint apos primeira execucao
   nr_admissao_amb:     { x1: 260, y1: 127, x2: 298, y2: 140 }
-  campo_tipo_endereco: { x1: 128, y1: 430, x2: 179, y2: 442 }
+  campo_tipo_endereco: { x1: 133, y1: 431, x2: 178, y2: 442 }
 
 regioes_ocr:
   campo_medico_ab:

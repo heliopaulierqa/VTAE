@@ -214,3 +214,21 @@ Dicas:
 - Flow digitando em outra janela (VSCode) quando SI3 perdia foco
 - `btn_fechar_info_ag` comentado no config.yaml — descomentado
 - `_focar_si3` parava o flow quando `pygetwindow` não estava instalado
+
+
+## [0.5.9d] — 2026-05-28
+
+### Refatorado
+- Estrutura de testes reorganizada por sistema e jornada clínica
+- si3/: components/ + jornadas/ambulatorio/(sem_agendamento|com_agendamento) + internacao/
+- msi3/: components/ + jornadas/intra_operatorio/
+- fixture cadastro_paciente movida para si3/components/
+- REGRA: SI3_PACIENTE_ID no .env — vazio=cadastra novo, preenchido=reutiliza
+- schema.py: campo paciente_id + property PACIENTE_ID
+- loader.py: lê paciente_id do .env
+- run.py: MODULOS/TESTES/JORNADAS com novos caminhos; _MAPA_JORNADA_SISTEMA atualizado
+
+### Pendências técnicas identificadas (pré-existentes)
+- test_cadastro_paciente_flow.py espera 27 steps — atualizar para 23
+- test_config_loader.py: acento em mensagem de erro
+- test_send.py: data hardcoded 2026-05-03

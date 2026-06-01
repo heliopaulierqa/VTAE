@@ -1,30 +1,32 @@
+# src/core/result.py
+"""
+Tipos de resultado do VTAE.
+v0.5.10: StepResult.description — propaga descricao do _step() para o JSON.
+         Habilita nomes legiveis nos screenshots e no execution.json.
+         Exemplo: "L01 - clicar no campo usuario e digitar"
+"""
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 
+
 class CausaFalha(Enum):
-    """Classificação da causa raiz de um step com falha."""
-    OCR_REGIAO          = "ocr_regiao"           # região OCR não calibrada ou vazia
-    OCR_LEITURA         = "ocr_leitura"          # OCR rodou mas não leu o esperado
-    TEMPLATE_NAO_ENCONTRADO = "template_nao_encontrado"  # safe_click/double_click falhou
-    TIMEOUT             = "timeout"              # wait_template excedeu o tempo
-    COORDENADA          = "coordenada"           # pyautogui.click em posição errada
-    AMBIENTE            = "ambiente"             # sistema não estava aberto/na tela correta
-    SISTEMA             = "sistema"              # erro inesperado do Oracle Forms
-    CONFIGURACAO        = "configuracao"         # campo ausente no config.yaml ou .env
-    ESTADO_AUSENTE      = "estado_ausente"       # paciente_id ou dado de jornada nao encontrado
-    DESCONHECIDA        = "desconhecida"         # exception não classificada
+    """Classificacao da causa raiz de um step com falha."""
+    OCR_REGIAO               = "ocr_regiao"
+    OCR_LEITURA              = "ocr_leitura"
+    TEMPLATE_NAO_ENCONTRADO  = "template_nao_encontrado"
+    TIMEOUT                  = "timeout"
+    COORDENADA               = "coordenada"
+    AMBIENTE                 = "ambiente"
+    SISTEMA                  = "sistema"
+    CONFIGURACAO             = "configuracao"
+    ESTADO_AUSENTE           = "estado_ausente"
+    DESCONHECIDA             = "desconhecida"
 
 
 @dataclass
 class StepResult:
-    """Resultado de um step individual dentro de um flow.
-
-    Campos de observabilidade (Fase A):
-        validated: True  → acao executou E tela/campo foi confirmada via confirm_template ou verify_fill
-                   False → acao executou mas nao foi validada (comportamento legado)
-                   None  → step falhou antes de qualquer validacao
-    """
+    """Resultado de um step individual dentro de um flow."""
 
     step_id: str
     success: bool
@@ -32,21 +34,20 @@ class StepResult:
     screenshot_path: str | None = None
     error: str | None = None
     causa_falha: CausaFalha | None = None
-    validated: bool | None = None          # Fase A — foi validado apos a acao?
-    # Fase 1 — dados do runner para diagnostico sem reexecutar
-    confidence_score: float | None = None  # melhor score de template match (0.0-1.0)
-    template_path: str | None = None       # template que falhou (quando causa=TEMPLATE_NAO_ENCONTRADO)
+    validated: bool | None = None
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
+    # NOVO v0.5.10 — descricao legivel propagada pelo BaseFlow._step()
+    # Exemplos: "clicar no campo usuario e digitar"
+    #           "abrir modulo Ambulatorio via Localizar no Menu"
+    # Gravada no execution.json e usada para nomear screenshots
+    description: str = ""
+
     def __str__(self) -> str:
-        status = "✅" if self.success else "❌"
-        base = f"{status} [{self.step_id}] {self.duration_ms:.0f}ms"
-        if self.validated is True:
-            base += " [VALIDADO]"
-        elif self.validated is False and self.success:
-            base += " [nao validado]"
-        if self.confidence_score is not None:
-            base += f" | score: {self.confidence_score:.3f}"
+        status = "OK" if self.success else "FALHOU"
+        # Inclui description no __str__ quando disponivel
+        desc = f" — {self.description}" if self.description else ""
+        base = f"[{self.step_id}]{desc} | {status} | {self.duration_ms:.0f}ms"
         if self.error:
             base += f" | erro: {self.error}"
         if self.causa_falha:
@@ -76,7 +77,7 @@ class FlowResult:
     def summary(self) -> str:
         total = len(self.steps)
         failed = len(self.failed_steps)
-        status = "✅ PASSOU" if self.success else "❌ FALHOU"
+        status = "PASSOU" if self.success else "FALHOU"
         return (
             f"\n{'='*50}\n"
             f"Flow: {self.flow_name} — {status}\n"

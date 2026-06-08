@@ -53,6 +53,7 @@ class BaseFlow:
         confirm_template: str = None,
         validated: bool = None,
         ctx=None,
+        ocr_lido: str = None,
     ) -> StepResult:
         """
         Wrapper padrao para todos os steps do VTAE.
@@ -103,6 +104,7 @@ class BaseFlow:
                 screenshot_path=screenshot_path,
                 validated=_validated,
                 description=descricao,
+                ocr_lido=ocr_lido,
             )
         except AssertionError as e:
             msg = str(e).lower()
@@ -258,6 +260,89 @@ class BaseFlow:
         except Exception as e:
             print(f"[_focar_si3] AVISO: {e}")
             return False
+
+# ----------------------------------------------------------------
+    # _clicar_aguardar() — clique robusto com confirmacao de tela
+    # ----------------------------------------------------------------
+
+    def _clicar_aguardar(
+        self,
+        ctx,
+        acao,
+        confirmacao: str,
+        timeout: float = 12.0,
+        threshold: float = 0.7,
+        retries: int = 2,
+        label: str = "",
+    ) -> bool:
+        """
+        Executa uma acao de clique e aguarda confirmacao visual da tela destino.
+        Se a tela nao aparecer no timeout, repete o clique (retry).
+
+        Uso desktop (template PNG):
+            self._clicar_aguardar(
+                ctx,
+                acao=lambda: ctx.runner.safe_click("templates/.../btn.png"),
+                confirmacao="templates/.../tela_destino.png",
+                label="AI06 admitir paciente",
+            )
+
+        Uso web (seletor CSS ou texto):
+            self._clicar_aguardar(
+                ctx,
+                acao=lambda: ctx.runner.safe_click("#btn-salvar"),
+                confirmacao="#tela-destino",
+                label="MW03 salvar formulario",
+            )
+
+        Args:
+            ctx:          FlowContext
+            acao:         callable sem argumentos — o clique a executar
+            confirmacao:  template PNG (desktop) ou seletor/texto (web)
+            timeout:      segundos para aguardar confirmacao por tentativa
+            threshold:    confianca minima para template matching
+            retries:      numero maximo de tentativas apos o clique inicial
+            label:        identificacao para mensagem de erro
+
+        Returns:
+            True se confirmacao apareceu dentro do timeout.
+
+        Raises:
+            AssertionError se esgotou retries sem confirmar.
+        """
+       # Fallback: se template nao existe ainda, executa sem confirmacao visual
+        if not os.path.exists(confirmacao):
+            print(
+                f"[_clicar_aguardar] AVISO: template ausente — {confirmacao}\n"
+                f"  Executando acao sem confirmacao visual (sleep {min(timeout, 3.0)}s).\n"
+                f"  Capturar o template para habilitar retry automatico."
+            )
+            acao()
+            time.sleep(min(timeout, 3.0))
+            return True
+
+        for tentativa in range(1, retries + 2):  # +2: tentativa inicial + retries
+            acao()
+            confirmou = ctx.runner.wait_template(
+                confirmacao, timeout=timeout, threshold=threshold
+            )
+            if confirmou:
+                return True
+            if tentativa <= retries:
+                print(
+                    f"[_clicar_aguardar] tentativa {tentativa}/{retries + 1} — "
+                    f"tela nao confirmada ({label}), reclicando..."
+                )
+                time.sleep(0.5)
+
+        raise AssertionError(
+            f"[_clicar_aguardar] Tela nao confirmada apos {retries + 1} tentativas.\n"
+            f"  Label:       {label}\n"
+            f"  Confirmacao: {confirmacao}\n"
+            f"  Timeout:     {timeout}s por tentativa\n"
+            f"Verifique se o template existe e se a tela realmente aparece."
+        )
+
 
 
 # Import local para evitar dependencia circular — StepError usado no _step()

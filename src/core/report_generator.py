@@ -199,6 +199,7 @@ def _build_html(data: dict) -> str:
             s_validated = step.get("validated")
             s_score     = step.get("confidence_score")
             s_tpl       = step.get("template_path") or ""
+            s_ocr_lido  = step.get("ocr_lido") or ""
 
             # Flakiness histórico do step
             fdata      = flakiness.get(s_id, {})
@@ -246,6 +247,15 @@ def _build_html(data: dict) -> str:
             else:
                 badge_html = ""
 
+            # OCR lido — exibe valor real lido pelo EasyOCR
+            ocr_lido_html = ""
+            if s_ocr_lido and s_validated is True:
+                ocr_lido_html = f'''
+                <div class="step-ocr-lido">
+                  <span class="ocr-label">OCR leu:</span>
+                  <span class="ocr-valor">{s_ocr_lido}</span>
+                </div>'''
+
             # Score de confiança (Fase 1) — só exibe quando falhou por template
             score_html = ""
             if not s_ok and s_score is not None:
@@ -279,6 +289,7 @@ def _build_html(data: dict) -> str:
                     {serie_html}
                     <span class="step-ts">{s_ts}</span>
                 </div>
+                {ocr_lido_html}
                 {score_html}
                 {err_html}
                 {img_html}
@@ -443,6 +454,18 @@ def _build_html(data: dict) -> str:
     margin-top: 6px; font-size: 0.76rem; color: var(--red);
     font-family: var(--mono); line-height: 1.5;
     background: #fff0f0; padding: 6px 8px; border-radius: 4px; word-break: break-word;
+  }}
+
+  /* OCR LIDO — valor lido pelo EasyOCR no verify_fill / verify_lov */
+  .step-ocr-lido {{
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 5px; font-size: 0.76rem;
+  }}
+  .ocr-label {{ color: var(--muted); white-space: nowrap; }}
+  .ocr-valor {{
+    font-family: var(--mono); font-weight: 600; color: #1D9E75;
+    background: #E1F5EE; padding: 1px 8px; border-radius: 4px;
+    border: 1px solid #a8e6cf; letter-spacing: 0.03em;
   }}
 
   /* SCORE DE CONFIANÇA (Fase 1) */

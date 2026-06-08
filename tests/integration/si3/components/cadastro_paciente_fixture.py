@@ -1,9 +1,10 @@
 # tests/integration/components/cadastro_paciente_fixture.py
 """
-Componente reutilizável — Cadastro de Paciente SI3.
+Componente reutilizavel — Cadastro de Paciente SI3.
+Versao: 0.5.12
 
-Encapsula toda a lógica de Login + CadastroPacienteFlow para que
-qualquer jornada possa cadastrar um paciente novo sem duplicar código.
+Encapsula toda a logica de Login + CadastroPacienteFlow para que
+qualquer jornada possa cadastrar um paciente novo sem duplicar codigo.
 
 Uso em qualquer test_01:
     from tests.integration.components.cadastro_paciente_fixture import (
@@ -12,14 +13,19 @@ Uso em qualquer test_01:
     )
 
     def test_cadastro_paciente_jornada():
-        executar_cadastro(proximo_passo="vtae run --test admissao_ambulatorio_jornada")
+        executar_cadastro(
+            proximo_passo="vtae run --test admissao_internacao_jornada",
+            test_name="test_cadastro_paciente_internacao_jornada",
+        )
 
-Boas práticas aplicadas:
-    - Lógica de negócio em componente, não no teste
-    - Geração de dados isolada em _gerar_dados() — testável unitariamente
+Boas praticas aplicadas:
+    - Logica de negocio em componente, nao no teste
+    - Geracao de dados isolada em gerar_dados() — testavel unitariamente
+    - observer.inject_logger(ctx) antes dos flows — logs do runner chegam ao execution.log
     - observer.report() sempre chamado, mesmo se o teste falhar (try/finally)
-    - estado_jornada.json validado ao final — garante que o próximo step tem dados
-    - Sem import de fixtures pytest — compatível com vtae run e pytest direto
+    - estado_jornada.json validado ao final — garante que o proximo step tem dados
+    - Sem import de fixtures pytest — compativel com vtae run e pytest direto
+    - paciente_id_env no .env -> reutiliza paciente existente, pula o cadastro
 """
 import json
 import pathlib
@@ -29,6 +35,7 @@ from faker import Faker
 
 from src.config import ConfigLoader
 from src.core.context import FlowContext
+from src.core.estado_jornada import salvar as _salvar_estado
 from src.core.observer import ExecutionObserver
 from src.flows.si3.cadastro_paciente_flow import CadastroPacienteFlow
 from src.flows.si3.login_flow import LoginFlow
@@ -36,17 +43,17 @@ from src.runners.opencv_runner import OpenCVRunner
 
 _fake = Faker("pt_BR")
 
-# Caminho padrão do estado compartilhado entre testes da jornada
+# Caminho padrao do estado compartilhado entre testes da jornada
 _ESTADO_PATH = pathlib.Path("evidence/estado_jornada.json")
 
 
 def gerar_dados(config) -> dict:
     """
-    Gera dados do paciente mesclando DADOS do config com campos dinâmicos.
+    Gera dados do paciente mesclando DADOS do config com campos dinamicos.
 
-    Separado em função pública para:
-      - Ser testável unitariamente (sem abrir o SI3)
-      - Permitir override em testes específicos
+    Separado em funcao publica para:
+      - Ser testavel unitariamente (sem abrir o SI3)
+      - Permitir override em testes especificos
 
     Args:
         config: SystemConfig carregado pelo ConfigLoader
@@ -85,16 +92,16 @@ def executar_cadastro(
     """
     Executa Login + CadastroPacienteFlow e valida o estado gerado.
 
-    Reutilizável em qualquer jornada que precise de um paciente novo.
+    Reutilizavel em qualquer jornada que precise de um paciente novo.
     Sempre chama observer.report() ao final, mesmo em caso de falha.
 
     Args:
-        proximo_passo:   mensagem exibida ao final indicando o próximo teste
-        test_name:       nome da execução (aparece no evidence/ e no report.html)
+        proximo_passo:   mensagem exibida ao final indicando o proximo teste
+        test_name:       nome da execucao (aparece no evidence/ e no report.html)
         configs_dir:     pasta base das configs do sistema
         config_name:     nome da config a carregar (subpasta em configs_dir)
         pausa_inicial:   segundos de pausa antes de iniciar (sair do terminal)
-        pausa_pos_login: segundos de pausa após login (sistema carregar)
+        pausa_pos_login: segundos de pausa apos login (sistema carregar)
 
     Returns:
         dict com { "paciente_id": "...", "matricula": "..." }
@@ -104,18 +111,24 @@ def executar_cadastro(
     """
     config   = ConfigLoader.carregar(config_name, configs_dir=configs_dir)
     observer = ExecutionObserver(test_name=test_name)
-    runner   = OpenCVRunner(confidence=config.confidence)
-    ctx      = FlowContext(
+    runner   = OpenCVRunner(
+        confidence=config.confidence,
+        ocr_engine=getattr(config, "ocr_engine", "easyocr"),
+    )
+    ctx = FlowContext(
         runner=runner,
         config=config,
         evidence_dir=observer.evidence_dir,
     )
 
+    # REGRA: inject_logger ANTES dos flows — logs do runner chegam ao execution.log
+    observer.inject_logger(ctx)
+
     time.sleep(pausa_inicial)
 
-    # REGRA: apenas UM cadastro por execução.
-    # Se paciente_id estiver no .env → reutiliza, pula o cadastro.
-    # Se vazio → cadastra novo paciente automaticamente.
+    # REGRA: apenas UM cadastro por execucao.
+    # Se paciente_id estiver no .env -> reutiliza, pula o cadastro.
+    # Se vazio -> cadastra novo paciente automaticamente.
     # Cada jornada tem seu proprio .env — isolamento garantido.
     paciente_id_env = getattr(config, "PACIENTE_ID", "").strip()
 
@@ -124,7 +137,7 @@ def executar_cadastro(
         print(f"[cadastro] Cadastro pulado — paciente ja existe.")
         _salvar_estado("paciente_id", paciente_id_env)
         if proximo_passo:
-            print(f"   Próximo passo: {proximo_passo}\n")
+            print(f"   Proximo passo: {proximo_passo}\n")
         return {"paciente_id": paciente_id_env}
 
     try:
@@ -141,29 +154,29 @@ def executar_cadastro(
         assert result.success, f"Cadastro falhou: {result.failed_steps}"
 
     finally:
-        # Sempre gera o relatório — mesmo se o teste falhou
+        # Sempre gera o relatorio — mesmo se o teste falhou
         try:
             observer.report(ctx)
             ctx.print_summary()
         except Exception as e:
-            print(f"[WARNING] Erro ao gerar relatório: {e}")
+            print(f"[WARNING] Erro ao gerar relatorio: {e}")
 
-    # Valida estado_jornada.json — garante que o próximo step tem dados
+    # Valida estado_jornada.json — garante que o proximo step tem dados
     assert _ESTADO_PATH.exists(), (
-        "estado_jornada.json não foi criado — verifique CP22 no CadastroPacienteFlow"
+        "estado_jornada.json nao foi criado — verifique CP22 no CadastroPacienteFlow"
     )
     conteudo = json.loads(_ESTADO_PATH.read_text(encoding="utf-8"))
     assert "paciente_id" in conteudo, (
-        "paciente_id não foi salvo no estado_jornada.json — verifique CP22"
+        "paciente_id nao foi salvo no estado_jornada.json — verifique CP22"
     )
 
     paciente_id = conteudo["paciente_id"]
     matricula   = conteudo.get("matricula", "")
 
-    print(f"\n✅ paciente_id salvo: {paciente_id}")
+    print(f"\n[cadastro] paciente_id salvo: {paciente_id}")
     if matricula:
-        print(f"   matricula: {matricula}")
+        print(f"[cadastro] matricula: {matricula}")
     if proximo_passo:
-        print(f"   Próximo passo: {proximo_passo}\n")
+        print(f"[cadastro] Proximo passo: {proximo_passo}\n")
 
     return conteudo

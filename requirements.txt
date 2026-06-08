@@ -6,7 +6,9 @@ numpy
 pyperclip          # colar via clipboard em campos de grade Oracle Forms
 
 # ── OCR ──
-pytesseract        # leitura de texto em screenshots (requer Tesseract instalado no SO)
+easyocr            # leitura de texto em screenshots (pip puro — sem instalacao no SO)
+torch              # dependencia do EasyOCR
+torchvision        # dependencia do EasyOCR
 
 # ── Web (PlaywrightRunner) ──
 playwright
@@ -25,3 +27,6 @@ pyyaml>=6.0
 
 # ── Utilitários ──
 python-dotenv      # leitura de .env (credenciais)
+
+# ── Foco de janela (Oracle Forms) ──
+pygetwindow        # controle de foco no Oracle Forms (Windows)

@@ -32,7 +32,8 @@ def test_admissao_internacao_jornada():
         configs_dir=pathlib.Path("configs/si3"),
     )
     observer = ExecutionObserver(test_name="test_admissao_internacao_jornada")
-    runner   = OpenCVRunner(confidence=config.confidence)
+    runner   = OpenCVRunner(confidence=config.confidence,
+                           ocr_engine=config.ocr_engine)
     ctx      = FlowContext(
         runner=runner,
         config=config,

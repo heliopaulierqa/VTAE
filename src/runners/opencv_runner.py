@@ -18,6 +18,7 @@ from src.runners.base_runner import BaseRunner
 from src.vision.template import TemplateMatcher
 from src.core.types import TemplateNotFoundError
 from src.vision.ocr import OcrHelper
+from src.vision.ocr_engine import OcrEngine
 
 
 class OpenCVRunner(BaseRunner):
@@ -30,10 +31,12 @@ class OpenCVRunner(BaseRunner):
       em que o OCR leu o valor — não um frame anterior à digitação.
     """
 
-    def __init__(self, confidence: float = 0.8, scales: tuple = None):
+    def __init__(self, confidence: float = 0.8, scales: tuple = None,
+                 ocr_engine: str = "tesseract"):
         self.confidence = confidence
         self._matcher   = TemplateMatcher(confidence=confidence, scales=scales)
         self._logger: logging.Logger | None = None
+        self._ocr_engine = OcrEngine(engine=ocr_engine)
 
     def set_logger(self, logger: logging.Logger) -> None:
         """Injeta o logger do Observer. Chamado pelo FlowContext após instanciar."""
@@ -158,7 +161,8 @@ class OpenCVRunner(BaseRunner):
     def verify_fill(self, expected_value: str,
                     region: tuple,
                     timeout: float = 3.0,
-                    debug_path: str = None) -> bool:
+                    debug_path: str = None) -> tuple[bool, str]:
+        """Retorna (ok, valor_lido) — valor_lido e o texto OCR do campo."""
         """
         Verifica via OCR se o valor esperado está presente na região após digitação.
 
@@ -187,7 +191,7 @@ class OpenCVRunner(BaseRunner):
             ts  = int(time.monotonic() * 1000)
             tmp = f"/tmp/verify_fill_attempt_{ts}.png"
             self.screenshot(tmp)
-            texto = OcrHelper.ler_regiao(tmp, region)
+            texto = self._ocr_engine.ler_regiao(tmp, region)
 
             self._log(
                 f"[verify_fill] tentativa {attempt} — "
@@ -196,7 +200,7 @@ class OpenCVRunner(BaseRunner):
 
             if expected_value.upper() in texto.upper():
                 self._log(f"[verify_fill] OK na tentativa {attempt}")
-                return True
+                return True, texto.strip()
 
             time.sleep(0.5)
 
@@ -210,7 +214,7 @@ class OpenCVRunner(BaseRunner):
             f"debug: {path_debug}",
             level="warning"
         )
-        return False
+        return False, ""
 
     # ──────────────────────────────────────────────
     # verify_lov — validação pós-seleção de LOV (Obs-Fase1b)
@@ -219,7 +223,8 @@ class OpenCVRunner(BaseRunner):
     def verify_lov(self, campo_nome: str,
                    region: tuple,
                    timeout: float = 3.0,
-                   debug_path: str = None) -> bool:
+                   debug_path: str = None) -> tuple[bool, str]:
+        """Retorna (ok, valor_lido) — valor_lido e o texto OCR do campo."""
         """
         Verifica via OCR se um campo foi preenchido após seleção via LOV.
 
@@ -261,7 +266,7 @@ class OpenCVRunner(BaseRunner):
             ts  = int(time.monotonic() * 1000)
             tmp = f"/tmp/verify_lov_attempt_{ts}.png"
             self.screenshot(tmp)
-            texto = OcrHelper.ler_regiao(tmp, region).strip()
+            texto = self._ocr_engine.ler_regiao(tmp, region).strip()
 
             self._log(
                 f"[verify_lov] campo '{campo_nome}' — "
@@ -270,7 +275,7 @@ class OpenCVRunner(BaseRunner):
 
             if texto:
                 self._log(f"[verify_lov] OK — campo '{campo_nome}' preenchido: '{texto}'")
-                return True
+                return True, texto
 
             time.sleep(0.5)
 
@@ -283,7 +288,7 @@ class OpenCVRunner(BaseRunner):
             f"região: {region} | debug: {path_debug}",
             level="warning"
         )
-        return False
+        return False, ""
 
     # ──────────────────────────────────────────────
     # click_near — anchor-based clicking (F2-C)

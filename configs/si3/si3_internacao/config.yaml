@@ -18,6 +18,8 @@
 sistema: si3_internacao
 tipo: desktop
 runner: opencv
+ocr_engine: easyocr  # tesseract | easyocr — controla verify_fill e verify_lov
+ocr_engine: easyocr  # tesseract | easyocr — controla verify_fill e verify_lov
 
 ambientes:
   dev:
@@ -67,7 +69,7 @@ dados:
       carteirinha: '12345678'       # trocar por faker se necessario
       validade:    '30/12/2028'
     convenio:
-      provedor:    'CONVENIO'
+      provedor:    'ALLIANZ SAUDE S/A'
       plano:       'EXCELLENCE'
       carteirinha: '123456789012'   # trocar por faker se necessario
       validade:    '30/12/2028'
@@ -104,7 +106,7 @@ dados:
   # ── AI-Leito: Alocar Leito ────────────────────────────────────────────
   # Termo digitado no campo Localizar da LOV de unidade funcional do leito
   # Digitar 'UM' ja retorna resultados — alterar para outra unidade se necessario
-  termo_unidade_leito: 'UM'
+  termo_unidade_leito: 'UII5I'
 
 # ─────────────────────────────────────────────────────────────────────────────
 # coordenadas — capturar com: python scripts/posicao_mouse.py
@@ -187,7 +189,7 @@ coordenadas:
 
   # AI19 — Botao OK + Sair na tela Alocar Leito
   btn_ok_alocar:                { x: 540, y: 556 }   # capturar
-  btn_sair_alocar:              { x: 1476, y: 351 }   # capturar
+  btn_sair_alocar:              { x: 510, y: 62 }   # capturar
 
 # ─────────────────────────────────────────────────────────────────────────────
 # regioes_ocr — calibrar com Paint apos primeira execucao
@@ -203,26 +205,92 @@ coordenadas:
 # Quando calibrado: assert ativo — step falha se valor nao for encontrado.
 # ─────────────────────────────────────────────────────────────────────────────
 regioes_ocr:
+  # ─────────────────────────────────────────────────────────────────
+  # BOOTSTRAP MODE — padrão do VTAE
+  #
+  # { x1: 0, y1: 0, x2: 0, y2: 0 } = verificação DESABILITADA
+  # valores reais                   = verificação HABILITADA
+  # ─────────────────────────────────────────────────────────────────
 
-  # AI05 — Campo Tipo na aba Endereco
-  # OCR condicional: verifica se esta vazio antes de preencher
-  campo_tipo_endereco:
+  # AI07 — Unidade Funcional — HABILITADO (calibrado 01/06/2026)
+  unidade_funcional:
     x1: 0
     y1: 0
     x2: 0
     y2: 0
 
-  # AI12 — Campo do medico responsavel (apos LOV fechar)
-  # Confirma que o campo nao ficou vazio — verify_lov obrigatorio
+  # AI08 — Provedor — HABILITADO (calibrado 01/06/2026)
+  provedor:
+    x1: 0
+    y1: 0
+    x2: 0
+    y2: 0
+
+  # AI08 — Plano — HABILITADO (calibrado 01/06/2026)
+  plano:
+    x1: 0
+    y1: 0
+    x2: 0
+    y2: 0
+
+  # AI08b — Declarante — HABILITADO (calibrado 01/06/2026)
+  declarante:
+    x1: 0
+    y1: 0
+    x2: 0
+    y2: 0
+
+  # AI08b — Especialidade — 
+  especialidade:
+    x1: 0
+    y1: 0
+    x2: 0
+    y2: 0
+
+  # AI09 — Obs — 
+  obs:
+    x1: 0
+    y1: 0
+    x2: 0
+    y2: 0
+
+  # AI10 — Origem Tipo — 
+  origem_tipo:
+    x1: 0
+    y1: 0
+    x2: 0
+    y2: 0
+
+  # AI11 — Origem Solicitacao —
+  origem_solicitacao:
+    x1: 0
+    y1: 0
+    x2: 0
+    y2: 0
+
+  # AI12 — Medico Responsavel (LOV) — 
   campo_medico_responsavel:
     x1: 0
     y1: 0
     x2: 0
     y2: 0
 
-  # AI21 — Nr Admissao (tela principal apos alocar leito)
-  # CALIBRAR PRIMEIRO: obrigatorio para validar que a admissao foi salva
+  # AI17 — Numero do leito — HABILITADO (calibrado 01/06/2026)
+  numero_leito:
+    x1: 84
+    y1: 318
+    x2: 119
+    y2: 332
+
+  # AI19 — Nr Admissao — HABILITADO (calibrado 01/06/2026)
   nr_admissao:
+    x1: 0
+    y1: 0
+    x2: 0
+    y2: 0
+
+  # AI05 — Campo Tipo Endereco — desabilitado (aguarda calibracao)
+  campo_tipo_endereco:
     x1: 0
     y1: 0
     x2: 0

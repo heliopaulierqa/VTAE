@@ -15,6 +15,8 @@ from playwright.sync_api import sync_playwright, Page, Browser, Playwright
 
 from src.runners.base_runner import BaseRunner
 from src.core.types import RunnerError
+from src.vision.ocr import OcrHelper
+from src.vision.ocr_engine import OcrEngine
 
 
 class PlaywrightRunner(BaseRunner):
@@ -34,12 +36,14 @@ class PlaywrightRunner(BaseRunner):
     """
 
     def __init__(self, url: str, headless: bool = False,
-                 timeout: float = 10.0, slow_mo: int = 100):
+                 timeout: float = 10.0, slow_mo: int = 100,
+                 ocr_engine: str = "tesseract"):
         self.url = url
         self.headless = headless
         self.default_timeout = timeout * 1000
         self.slow_mo = slow_mo
         self._logger: logging.Logger | None = None  # Obs-Fase1b
+        self._ocr_engine = OcrEngine(engine=ocr_engine)
 
         self._pw: Playwright = sync_playwright().start()
         self._browser: Browser = self._pw.chromium.launch(
@@ -209,6 +213,57 @@ class PlaywrightRunner(BaseRunner):
             "() => { window.moveTo(0,0); window.resizeTo(screen.availWidth, screen.availHeight); }"
         )
         time.sleep(0.5)
+
+
+    def verify_fill_screenshot(self, expected_value: str,
+                                region: tuple,
+                                timeout: float = 3.0,
+                                debug_path: str = None) -> bool:
+        """
+        Verifica via screenshot + OCR se o valor esperado esta visivel na regiao.
+        Usar quando o campo nao tem seletor CSS acessivel (ex: componentes APEX custom).
+        O engine OCR usado depende do ocr_engine configurado (tesseract ou easyocr).
+
+        Args:
+            expected_value: texto esperado (comparacao case-insensitive).
+            region: (x1, y1, x2, y2) — area do campo na tela.
+            timeout: tempo maximo de espera.
+            debug_path: caminho para screenshot de debug se falhar.
+
+        Returns:
+            True se encontrou o valor na regiao dentro do timeout.
+        """
+        deadline = time.monotonic() + timeout
+        attempt  = 0
+
+        while time.monotonic() < deadline:
+            attempt += 1
+            ts  = int(time.monotonic() * 1000)
+            tmp = f"/tmp/verify_fill_web_attempt_{ts}.png"
+            self.screenshot(tmp)
+            texto = self._ocr_engine.ler_regiao(tmp, region)
+
+            self._log(
+                f"[verify_fill_screenshot] tentativa {attempt} — "
+                f"esperado: \'{expected_value}\' | OCR leu: \'{texto.strip()}\'"
+            )
+
+            if expected_value.upper() in texto.upper():
+                self._log(f"[verify_fill_screenshot] OK na tentativa {attempt}")
+                return True
+
+            time.sleep(0.5)
+
+        ts_fail = int(time.time())
+        path_debug = debug_path or f"/tmp/verify_fill_web_debug_{ts_fail}.png"
+        self.screenshot(path_debug)
+        self._log(
+            f"[verify_fill_screenshot] FALHOU apos {attempt} tentativas — "
+            f"valor esperado: \'{expected_value}\' | regiao: {region} | "
+            f"debug: {path_debug}",
+            level="warning"
+        )
+        return False
 
     def close(self) -> None:
         self._browser.close()

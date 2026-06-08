@@ -43,6 +43,11 @@ class StepResult:
     # Gravada no execution.json e usada para nomear screenshots
     description: str = ""
 
+    # NOVO v0.5.11 — valor lido pelo OCR no verify_fill / verify_lov
+    # Exemplos: "6016" (numero leito), "SC AMBULATORIO" (unidade funcional)
+    # Exibido no report.html abaixo do badge VALIDADO — rastreabilidade real
+    ocr_lido: str | None = None
+
     def __str__(self) -> str:
         status = "OK" if self.success else "FALHOU"
         # Inclui description no __str__ quando disponivel

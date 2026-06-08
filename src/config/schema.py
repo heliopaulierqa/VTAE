@@ -171,6 +171,10 @@ class SystemConfig:
     coordenadas: dict = field(default_factory=dict)
     # Regioes OCR — lidas da secao `regioes_ocr:` do config.yaml.
     regioes_ocr: dict = field(default_factory=dict)
+    # Engine OCR — padrão: "easyocr" (v0.5.11 — Tesseract removido).
+    # Controla qual engine verify_fill e verify_lov usam.
+    # Definir no config.yaml: ocr_engine: easyocr
+    ocr_engine: str = "easyocr"
     # Dados fixos — lidos da secao `dados:` do config.yaml.
     # Suporta qualquer estrutura: strings, listas, dicts aninhados.
     # Retrocompativel: sistemas sem secao `dados:` recebem {} por padrao.

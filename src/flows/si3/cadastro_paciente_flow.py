@@ -1,21 +1,66 @@
 # src/flows/si3/cadastro_paciente_flow.py
 """
 CadastroPacienteFlow - Cadastro completo de paciente no SI3 (Oracle Forms).
-v0.5.10: migrado para BaseFlow.
+Versao: 0.5.12
 
-Mudancas vs versao anterior:
-  - herda BaseFlow — _step(), _dado(), _coord(), _tpl_existe(), _focar_si3() removidos
-  - _coord(ctx, nome) -> _coord(coords, nome): nao passa mais ctx, recebe coords direto
-  - dados.get("chave", "DEFAULT") substituidos por _dado() nos campos obrigatorios
-  - campos opcionais com fallback mantidos (ex: conjuge, responsavel — podem ser vazios)
-  - description propagada para StepResult via BaseFlow._step()
-  - ctx=ctx adicionado em todos os _step() calls
+Presupoe que o login ja foi executado via LoginFlow.
 
-Nota sobre campos opcionais:
-  Campos que legalmente podem ser vazios (conjuge, responsavel, tipo_deficiencia,
-  obs, complemento de endereco) continuam usando .get() com default vazio "".
-  Campos obrigatorios para o cadastro funcionem (nome, mae, cpf, data_nascimento)
-  usam _dado() — falham imediatamente se ausentes do config.yaml.
+Steps:
+    CP01  Menu cadastro paciente
+    CP02  Pesquisar nome
+    CP03  Clicar Novo
+    CP04  Nome Social
+    CP05  Data Nascimento + Hora
+    CP06  Sexo
+    CP07  Nacionalidade (2 popups)
+    CP08  Mae
+    CP09  Pai
+    CP10  Conjuge
+    CP11  Responsavel
+    CP12  Cor/Etnia
+    CP13  Religiao
+    CP14  Estado Civil
+    CP15  Ocupacao
+    CP16  Situacao Familiar
+    CP17  Tipo de Deficiencia
+    CP18  Escolaridade + Frequenta Escola
+    CP19  CPF + RG + CNS  (aba Documentos)
+    CP20  Aba Enderecos
+    CP21  Aba Comunicacao (celular + e-mail)
+    CP22  Gerar Matricula + Salvar + OCR + salvar estado_jornada.json
+    CP23  Sair — _clicar_aguardar confirma menu principal (v0.5.12)
+
+Coordenadas:
+    TODAS as coordenadas ficam no config.yaml em coordenadas:
+    Use python scripts/posicao_mouse.py para capturar cada campo
+    que nao pode ser localizado por template OpenCV.
+
+Templates em templates/si3/cadastro_paciente/:
+    menu_cadastro_paciente.png
+    campo_nome_pesquisa.png
+    btn_pesquisar.png
+    btn_novo.png
+    campo_nome_social.png
+    btn_ok.png
+    btn_ok_nacion.png
+    btn_ok_erro.png   <- popup de erro Oracle Forms (FRM-* / HC-INCOR)
+    aba_documentos.png
+    aba_enderecos.png
+    aba_comunicacao.png
+    btn_salvar.png
+    btn_gerar_matricula.png  (ou coordenada se nao tiver template)
+    titulo_menu_principal.png  <- titulo da janela Menu Principal (novo v0.5.12)
+
+Regra de popup Oracle Forms:
+    - Popups ESPERADOS (CP21 salvar, CP22 gerar matricula): fechados silenciosamente
+      pelo proprio step com _fechar_popups_oracle() — registra WARNING no log, nao falha
+    - Popups INESPERADOS: o step lanca AssertionError manualmente quando necessario
+    - O wrapper _step NAO verifica popup automaticamente — cada step e responsavel
+
+Estado da jornada:
+    - CP22 salva paciente_id via src.core.estado_jornada.salvar()
+    - test_02+ leem via src.core.estado_jornada.ler("paciente_id")
+    - Falha na leitura gera CausaFalha.ESTADO_AUSENTE
 """
 
 import re
@@ -27,7 +72,7 @@ import pyperclip
 
 from src.core.context import FlowContext
 from src.core.estado_jornada import salvar as _salvar_estado_jornada
-from src.core.result import FlowResult
+from src.core.result import CausaFalha, FlowResult, StepResult
 from src.flows.base_flow import BaseFlow
 from src.vision.ocr import OcrHelper
 
@@ -36,7 +81,7 @@ class CadastroPacienteFlow(BaseFlow):
     """
     Fluxo completo de cadastro de paciente no SI3.
     Ao final salva a matricula gerada em evidence/estado_jornada.json
-    para uso nos testes seguintes da jornada.
+    para uso nos testes seguintes da jornada do ambulatorio.
     """
 
     FLOW_NAME = "CadastroPacienteFlow"
@@ -48,33 +93,30 @@ class CadastroPacienteFlow(BaseFlow):
 
     def execute(self, ctx: FlowContext, dados: dict, observer=None) -> FlowResult:
         result = FlowResult(flow_name=self.FLOW_NAME)
-        # coords passado como argumento para _coord() — padrao BaseFlow
-        coords = ctx.config.coordenadas
-
         steps = [
             lambda: self._step_menu(ctx, observer),
-            lambda: self._step_pesquisar(ctx, dados, coords, observer),
+            lambda: self._step_pesquisar(ctx, dados, observer),
             lambda: self._step_novo(ctx, observer),
-            lambda: self._step_nome_social(ctx, dados, coords, observer),
-            lambda: self._step_data_nascimento(ctx, dados, coords, observer),
-            lambda: self._step_sexo(ctx, dados, coords, observer),
-            lambda: self._step_nacionalidade(ctx, dados, coords, observer),
-            lambda: self._step_mae(ctx, dados, coords, observer),
-            lambda: self._step_pai(ctx, dados, coords, observer),
-            lambda: self._step_conjuge(ctx, dados, coords, observer),
-            lambda: self._step_responsavel(ctx, dados, coords, observer),
-            lambda: self._step_cor_etnia(ctx, dados, coords, observer),
-            lambda: self._step_religiao(ctx, dados, coords, observer),
-            lambda: self._step_estado_civil(ctx, dados, coords, observer),
-            lambda: self._step_ocupacao(ctx, dados, coords, observer),
-            lambda: self._step_situacao_familiar(ctx, dados, coords, observer),
-            lambda: self._step_tipo_deficiencia(ctx, dados, coords, observer),
-            lambda: self._step_escolaridade(ctx, dados, coords, observer),
-            lambda: self._step_documentos(ctx, dados, coords, observer),
-            lambda: self._step_enderecos(ctx, dados, coords, observer),
-            lambda: self._step_comunicacao(ctx, dados, coords, observer),
+            lambda: self._step_nome_social(ctx, dados, observer),
+            lambda: self._step_data_nascimento(ctx, dados, observer),
+            lambda: self._step_sexo(ctx, dados, observer),
+            lambda: self._step_nacionalidade(ctx, dados, observer),
+            lambda: self._step_mae(ctx, dados, observer),
+            lambda: self._step_pai(ctx, dados, observer),
+            lambda: self._step_conjuge(ctx, dados, observer),
+            lambda: self._step_responsavel(ctx, dados, observer),
+            lambda: self._step_cor_etnia(ctx, dados, observer),
+            lambda: self._step_religiao(ctx, dados, observer),
+            lambda: self._step_estado_civil(ctx, dados, observer),
+            lambda: self._step_ocupacao(ctx, dados, observer),
+            lambda: self._step_situacao_familiar(ctx, dados, observer),
+            lambda: self._step_tipo_deficiencia(ctx, dados, observer),
+            lambda: self._step_escolaridade(ctx, dados, observer),
+            lambda: self._step_documentos(ctx, dados, observer),
+            lambda: self._step_enderecos(ctx, dados, observer),
+            lambda: self._step_comunicacao(ctx, dados, observer),
             lambda: self._step_gerar_matricula_salvar(ctx, observer),
-            lambda: self._step_sair(ctx, coords, observer),
+            lambda: self._step_sair(ctx, observer),
         ]
         for step_fn in steps:
             step = step_fn()
@@ -87,41 +129,54 @@ class CadastroPacienteFlow(BaseFlow):
         return result
 
     # ----------------------------------------------------------------
-    # Helpers privados especificos deste flow
-    # Nao vao para BaseFlow pois dependem de ctx ou sao especificos do Oracle Forms
+    # Helpers internos
     # ----------------------------------------------------------------
 
-    def _clicar_coord(self, ctx, coords, nome: str) -> None:
-        """Clique direto em coordenada. Wrapper de conveniencia."""
-        x, y = self._coord(coords, nome)
-        pyautogui.click(x, y); time.sleep(0.3)
+    def _coord(self, ctx, nome: str) -> tuple:
+        """Le coordenada do config.yaml. Lanca KeyError se nao configurada."""
+        coords = ctx.config.coordenadas
+        if nome not in coords:
+            raise KeyError(
+                f"Coordenada '{nome}' nao encontrada em config.yaml -> coordenadas:"
+                f"\nConfigure com posicao_mouse.py e adicione ao config.yaml."
+            )
+        c = coords[nome]
+        return (c["x"], c["y"])
 
-    def _preencher_coord(self, ctx, coords, nome: str, valor: str) -> None:
-        """Clique + limpar + digitar. Para campos pequenos."""
-        x, y = self._coord(coords, nome)
-        pyautogui.click(x, y); time.sleep(0.3)
+    def _clicar_coord(self, ctx, nome: str) -> None:
+        x, y = self._coord(ctx, nome)
+        pyautogui.click(x, y)
+        time.sleep(0.3)
+
+    def _preencher_coord(self, ctx, nome: str, valor: str) -> None:
+        """Clique direto + limpar + digitar. Para campos pequenos."""
+        x, y = self._coord(ctx, nome)
+        pyautogui.click(x, y)
+        time.sleep(0.3)
         pyautogui.hotkey("ctrl", "a")
-        ctx.runner.type_text(valor); time.sleep(0.2)
+        ctx.runner.type_text(valor)
+        time.sleep(0.2)
 
-    def _preencher_template(self, ctx, coords, template: str,
-                             nome_coord: str, valor: str, offset_x: int = 150) -> None:
+    def _preencher_template(self, ctx, template: str, nome_coord: str,
+                             valor: str, offset_x: int = 150) -> None:
         """click_near com fallback para coordenada. Para campos grandes e unicos."""
         try:
-            ctx.runner.click_near(f"{self._TPL}/{template}",
-                                  offset_x=offset_x, offset_y=0, threshold=0.65)
+            ctx.runner.click_near(f"{self._TPL}/{template}", offset_x=offset_x,
+                                  offset_y=0, threshold=0.65)
         except Exception:
-            x, y = self._coord(coords, nome_coord)
+            x, y = self._coord(ctx, nome_coord)
             pyautogui.click(x, y)
         time.sleep(0.3)
         pyautogui.hotkey("ctrl", "a")
-        ctx.runner.type_text(valor); time.sleep(0.2)
+        ctx.runner.type_text(valor)
+        time.sleep(0.2)
 
-    def _clicar_aba(self, ctx, coords, template: str, nome_coord: str) -> None:
+    def _clicar_aba(self, ctx, template: str, nome_coord: str) -> None:
         """Clica em aba por template com fallback para coordenada."""
         try:
             ctx.runner.safe_click(f"{self._TPL}/{template}", threshold=0.7)
         except Exception:
-            x, y = self._coord(coords, nome_coord)
+            x, y = self._coord(ctx, nome_coord)
             pyautogui.click(x, y)
         time.sleep(0.5)
 
@@ -134,90 +189,187 @@ class CadastroPacienteFlow(BaseFlow):
         for _ in range(6):
             try:
                 encontrou = ctx.runner.wait_template(
-                    f"{self._TPL}/btn_ok_erro.png", timeout=2.0, threshold=0.75,
+                    f"{self._TPL}/btn_ok_erro.png",
+                    timeout=2.0, threshold=0.75,
                 )
                 if encontrou:
                     ctx.runner.safe_click(f"{self._TPL}/btn_ok_erro.png", threshold=0.75)
-                    time.sleep(0.5); encontrou_popup = True
+                    time.sleep(0.5)
+                    encontrou_popup = True
                 else:
                     break
             except Exception:
                 break
         return encontrou_popup
 
+    def _step(self, step_id: str, descricao: str, fn, observer,
+              confirm_template: str = None,
+              validated: bool = None) -> StepResult:
+        """
+        Wrapper padrao para todos os steps com observabilidade.
+        """
+        if observer:
+            observer.log_step_start(step_id, descricao)
+        start = time.monotonic()
+        _validated = None
+        try:
+            screenshot_path = fn()
+            _validated = True if (confirm_template or validated) else None
+            step = StepResult(
+                step_id=step_id, success=True,
+                duration_ms=(time.monotonic() - start) * 1000,
+                screenshot_path=screenshot_path,
+                validated=_validated,
+                description=descricao,
+            )
+        except AssertionError as e:
+            msg = str(e).lower()
+            if "estado_ausente" in msg:
+                causa = CausaFalha.ESTADO_AUSENTE
+            else:
+                causa = CausaFalha.SISTEMA
+            step = StepResult(
+                step_id=step_id, success=False,
+                duration_ms=(time.monotonic() - start) * 1000,
+                error=str(e), causa_falha=causa,
+                validated=False,
+                description=descricao,
+            )
+        except Exception as e:
+            causa = CausaFalha.DESCONHECIDA
+            msg = str(e).lower()
+            if "template" in msg or "not found" in msg:
+                causa = CausaFalha.TEMPLATE_NAO_ENCONTRADO
+            elif "timeout" in msg:
+                causa = CausaFalha.TIMEOUT
+            elif "ocr" in msg or "matricula" in msg or "regiao" in msg:
+                causa = CausaFalha.OCR_LEITURA
+            elif "coordenada" in msg or isinstance(e, KeyError):
+                causa = CausaFalha.COORDENADA
+            elif "estado_ausente" in msg:
+                causa = CausaFalha.ESTADO_AUSENTE
+            elif "observabilidade" in msg:
+                causa = CausaFalha.OCR_LEITURA
+            step = StepResult(
+                step_id=step_id, success=False,
+                duration_ms=(time.monotonic() - start) * 1000,
+                error=str(e), causa_falha=causa,
+                validated=False,
+                description=descricao,
+            )
+        if observer:
+            observer.log_step_result(step)
+        return step
+
     # ----------------------------------------------------------------
-    # CP01–CP03: Navegacao
+    # Helper _verify_campo — validacao pos-digitacao centralizada
     # ----------------------------------------------------------------
 
-    def _step_menu(self, ctx, observer=None):
+    def _verify_campo(self, ctx, nome_regiao: str, valor: str,
+                      step_id: str, obrigatorio: bool = True) -> None:
+        """
+        Verifica via OCR se o campo foi preenchido com o valor esperado.
+        """
+        if not valor:
+            return
+        regiao = ctx.config.regioes_ocr.get(nome_regiao)
+        if not regiao or not (regiao["x1"] or regiao["y1"]):
+            print(f"[{step_id}] AVISO: regioes_ocr.{nome_regiao} nao calibrado — "
+                  f"verify_fill pulado")
+            return
+        ok, _ = ctx.runner.verify_fill(
+            valor,
+            region=(regiao["x1"], regiao["y1"], regiao["x2"], regiao["y2"]),
+            debug_path=f"{ctx.evidence_dir}{step_id}_verify_{nome_regiao}_debug.png"
+        )
+        if not ok:
+            msg = (f"[{step_id}] Campo '{nome_regiao}' nao preenchido com '{valor}'.\n"
+                   f"Veja {step_id}_verify_{nome_regiao}_debug.png.")
+            if obrigatorio:
+                raise AssertionError(msg)
+            else:
+                print(f"AVISO: {msg}")
+
+    # ----------------------------------------------------------------
+    # Steps CP01-CP03: Navegacao
+    # ----------------------------------------------------------------
+
+    def _step_menu(self, ctx, observer=None) -> StepResult:
         def fn():
             ctx.runner.double_click(f"{self._TPL}/menu_cadastro_paciente.png", threshold=0.7)
-            ctx.runner.wait_template(f"{self._TPL}/campo_nome_pesquisa.png",
+            apareceu = ctx.runner.wait_template(f"{self._TPL}/campo_nome_pesquisa.png",
                                      timeout=15.0, threshold=0.7)
+            if not apareceu:
+                raise AssertionError(
+                    "Falha de Observabilidade: campo_nome_pesquisa.png nao apareceu apos abrir menu. "
+                    "Tela de pesquisa de paciente pode nao ter carregado."
+                )
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP01_menu.png")
-        return self._step("CP01", "duplo clique em Cadastro de Pacientes",
-                          fn, observer,
-                          confirm_template=f"{self._TPL}/campo_nome_pesquisa.png",
-                          ctx=ctx)
+        return self._step("CP01", "duplo clique em Cadastro de Pacientes", fn, observer,
+                          confirm_template=f"{self._TPL}/campo_nome_pesquisa.png")
 
-    def _step_pesquisar(self, ctx, dados: dict, coords, observer=None):
+    def _step_pesquisar(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            nome = self._dado(dados, "nome", "CP02")
-            self._preencher_template(ctx, coords, "campo_nome_pesquisa.png",
-                                     "campo_nome_pesquisa", nome)
+            self._preencher_template(ctx, "campo_nome_pesquisa.png",
+                                     "campo_nome_pesquisa", dados["nome"])
             ctx.runner.safe_click(f"{self._TPL}/btn_pesquisar.png", threshold=0.7)
-            time.sleep(2.0)
+            time.sleep(3.0)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP02_pesquisa.png")
-        return self._step("CP02", "pesquisar paciente pelo nome", fn, observer, ctx=ctx)
+        return self._step("CP02", f"pesquisar: {dados['nome']}", fn, observer)
 
-    def _step_novo(self, ctx, observer=None):
+    def _step_novo(self, ctx, observer=None) -> StepResult:
         def fn():
             ctx.runner.safe_click(f"{self._TPL}/btn_novo.png", threshold=0.7)
-            ctx.runner.wait_template(f"{self._TPL}/campo_nome_social.png",
+            apareceu = ctx.runner.wait_template(f"{self._TPL}/campo_nome_social.png",
                                      timeout=15.0, threshold=0.7)
+            if not apareceu:
+                raise AssertionError(
+                    "Falha de Observabilidade: campo_nome_social.png nao apareceu apos clicar Novo. "
+                    "Formulario de cadastro pode nao ter aberto."
+                )
             time.sleep(0.5)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP03_novo.png")
-        return self._step("CP03", "clicar em Novo",
-                          fn, observer,
-                          confirm_template=f"{self._TPL}/campo_nome_social.png",
-                          ctx=ctx)
+        return self._step("CP03", "clicar em Novo", fn, observer,
+                          confirm_template=f"{self._TPL}/campo_nome_social.png")
 
     # ----------------------------------------------------------------
-    # CP04–CP18: Formulario principal
+    # Steps CP04-CP18: Formulario principal
     # ----------------------------------------------------------------
 
-    def _step_nome_social(self, ctx, dados: dict, coords, observer=None):
+    def _step_nome_social(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            # nome_social e opcional — fallback para nome
-            valor = dados.get("nome_social", "") or self._dado(dados, "nome", "CP04")
-            self._preencher_template(ctx, coords, "campo_nome_social.png",
+            valor = dados.get("nome_social", "") or dados.get("nome", "")
+            self._preencher_template(ctx, "campo_nome_social.png",
                                      "campo_nome_social", valor)
             pyautogui.press("tab")
+            self._verify_campo(ctx, "nome_social", valor, "CP04", obrigatorio=False)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP04_social.png")
-        return self._step("CP04", "preencher Nome Social", fn, observer, ctx=ctx)
+        return self._step("CP04", "Nome Social", fn, observer, validated=True)
 
-    def _step_data_nascimento(self, ctx, dados: dict, coords, observer=None):
+    def _step_data_nascimento(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            data  = self._dado(dados, "data_nascimento", "CP05")
-            hora  = dados.get("hora", "00:00")   # hora e opcional
-            self._preencher_coord(ctx, coords, "campo_data_nascimento", data)
-            self._preencher_coord(ctx, coords, "campo_hora", hora)
+            data = dados["data_nascimento"]
+            self._preencher_coord(ctx, "campo_data_nascimento", data)
+            self._preencher_coord(ctx, "campo_hora", dados.get("hora", "00:00"))
+            self._verify_campo(ctx, "data_nascimento", data, "CP05", obrigatorio=True)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP05_data.png")
-        return self._step("CP05", "preencher Data de Nascimento e Hora",
-                          fn, observer, ctx=ctx)
+        return self._step("CP05", "Data Nascimento + Hora", fn, observer, validated=True)
 
-    def _step_sexo(self, ctx, dados: dict, coords, observer=None):
+    def _step_sexo(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            sexo = self._dado(dados, "sexo", "CP06")
-            self._preencher_coord(ctx, coords, "campo_sexo", sexo)
+            valor = dados.get("sexo", "M")
+            self._preencher_coord(ctx, "campo_sexo", valor)
+            self._verify_campo(ctx, "sexo", valor, "CP06", obrigatorio=True)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP06_sexo.png")
-        return self._step("CP06", "preencher Sexo", fn, observer, ctx=ctx)
+        return self._step("CP06", f"Sexo: {dados.get('sexo', 'M')}", fn, observer,
+                          validated=True)
 
-    def _step_nacionalidade(self, ctx, dados: dict, coords, observer=None):
+    def _step_nacionalidade(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            nac = self._dado(dados, "nacionalidade", "CP07")
-            self._preencher_coord(ctx, coords, "campo_nacionalidade", nac)
-            pyautogui.press("tab"); time.sleep(2.0)
+            self._preencher_coord(ctx, "campo_nacionalidade",
+                                  dados.get("nacionalidade", "BRASILEIRA"))
+            pyautogui.press("tab")
+            time.sleep(2.0)
             encontrou = ctx.runner.wait_template(f"{self._TPL}/btn_ok.png",
                                                   timeout=8.0, threshold=0.6)
             if encontrou:
@@ -225,8 +377,11 @@ class CadastroPacienteFlow(BaseFlow):
             else:
                 pyautogui.press("enter")
             time.sleep(1.5)
-            ctx.runner.type_text("SP"); pyautogui.press("tab"); time.sleep(0.5)
-            ctx.runner.type_text("SAO PAULO"); time.sleep(0.3)
+            ctx.runner.type_text("SP")
+            pyautogui.press("tab")
+            time.sleep(0.5)
+            ctx.runner.type_text("SAO PAULO")
+            time.sleep(0.3)
             encontrou2 = ctx.runner.wait_template(f"{self._TPL}/btn_ok_nacion.png",
                                                    timeout=8.0, threshold=0.6)
             if encontrou2:
@@ -235,48 +390,49 @@ class CadastroPacienteFlow(BaseFlow):
                 pyautogui.press("enter")
             time.sleep(0.5)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP07_nacion.png")
-        return self._step("CP07", "preencher Nacionalidade", fn, observer, ctx=ctx)
+        return self._step("CP07", "Nacionalidade", fn, observer)
 
-    def _step_mae(self, ctx, dados: dict, coords, observer=None):
+    def _step_mae(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            self._preencher_coord(ctx, coords, "campo_mae", self._dado(dados, "mae", "CP08"))
+            valor = dados["mae"]
+            self._preencher_coord(ctx, "campo_mae", valor)
+            self._verify_campo(ctx, "nome_mae", valor, "CP08", obrigatorio=True)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP08_mae.png")
-        return self._step("CP08", "preencher nome da Mae", fn, observer, ctx=ctx)
+        return self._step("CP08", "Mae", fn, observer, validated=True)
 
-    def _step_pai(self, ctx, dados: dict, coords, observer=None):
+    def _step_pai(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            self._preencher_coord(ctx, coords, "campo_pai", self._dado(dados, "pai", "CP09"))
+            self._preencher_coord(ctx, "campo_pai", dados["pai"])
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP09_pai.png")
-        return self._step("CP09", "preencher nome do Pai", fn, observer, ctx=ctx)
+        return self._step("CP09", "Pai", fn, observer)
 
-    def _step_conjuge(self, ctx, dados: dict, coords, observer=None):
+    def _step_conjuge(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            # conjuge e opcional — pode ser vazio
-            self._preencher_coord(ctx, coords, "campo_conjuge", dados.get("conjuge", ""))
+            self._preencher_coord(ctx, "campo_conjuge", dados.get("conjuge", ""))
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP10_conjuge.png")
-        return self._step("CP10", "preencher Conjuge", fn, observer, ctx=ctx)
+        return self._step("CP10", "Conjuge", fn, observer)
 
-    def _step_responsavel(self, ctx, dados: dict, coords, observer=None):
+    def _step_responsavel(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            # responsavel e opcional
-            self._preencher_coord(ctx, coords, "campo_responsavel",
-                                  dados.get("responsavel", ""))
+            self._preencher_coord(ctx, "campo_responsavel", dados.get("responsavel", ""))
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP11_responsavel.png")
-        return self._step("CP11", "preencher Responsavel", fn, observer, ctx=ctx)
+        return self._step("CP11", "Responsavel", fn, observer)
 
-    def _step_cor_etnia(self, ctx, dados: dict, coords, observer=None):
+    def _step_cor_etnia(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            self._preencher_coord(ctx, coords, "campo_cor_etnia",
-                                  self._dado(dados, "cor_etnia", "CP12"))
-            pyautogui.press("tab"); time.sleep(0.3)
+            valor = dados.get("cor_etnia", "PARDA")
+            self._preencher_coord(ctx, "campo_cor_etnia", valor)
+            pyautogui.press("tab")
+            time.sleep(0.3)
+            self._verify_campo(ctx, "cor_etnia", valor, "CP12", obrigatorio=True)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP12_cor.png")
-        return self._step("CP12", "preencher Cor/Etnia", fn, observer, ctx=ctx)
+        return self._step("CP12", "Cor/Etnia", fn, observer, validated=True)
 
-    def _step_religiao(self, ctx, dados: dict, coords, observer=None):
+    def _step_religiao(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            self._preencher_coord(ctx, coords, "campo_religiao",
-                                  self._dado(dados, "religiao", "CP13"))
-            pyautogui.press("tab"); time.sleep(1.5)
+            self._preencher_coord(ctx, "campo_religiao", dados.get("religiao", "CATOLICA"))
+            pyautogui.press("tab")
+            time.sleep(1.5)
             encontrou = ctx.runner.wait_template(
                 f"{self._TPL}/btn_ok.png", timeout=8.0, threshold=0.6,
             )
@@ -286,46 +442,52 @@ class CadastroPacienteFlow(BaseFlow):
                 pyautogui.press("enter")
             time.sleep(0.5)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP13_religiao.png")
-        return self._step("CP13", "preencher Religiao", fn, observer, ctx=ctx)
+        return self._step("CP13", "Religiao", fn, observer)
 
-    def _step_estado_civil(self, ctx, dados: dict, coords, observer=None):
+    def _step_estado_civil(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            self._preencher_coord(ctx, coords, "campo_estado_civil",
-                                  self._dado(dados, "estado_civil", "CP14"))
-            pyautogui.press("tab"); time.sleep(0.3)
+            valor = dados.get("estado_civil", "SOLTEIRO")
+            self._preencher_coord(ctx, "campo_estado_civil", valor)
+            pyautogui.press("tab")
+            time.sleep(0.3)
+            self._verify_campo(ctx, "estado_civil", valor, "CP14", obrigatorio=True)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP14_civil.png")
-        return self._step("CP14", "preencher Estado Civil", fn, observer, ctx=ctx)
+        return self._step("CP14", "Estado Civil", fn, observer, validated=True)
 
-    def _step_ocupacao(self, ctx, dados: dict, coords, observer=None):
+    def _step_ocupacao(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            self._preencher_coord(ctx, coords, "campo_ocupacao",
-                                  self._dado(dados, "ocupacao", "CP15"))
-            pyautogui.press("tab"); time.sleep(0.3)
+            valor = dados.get("ocupacao", "ESTUDANTE")
+            self._preencher_coord(ctx, "campo_ocupacao", valor)
+            pyautogui.press("tab")
+            time.sleep(0.3)
+            self._verify_campo(ctx, "ocupacao", valor, "CP15", obrigatorio=True)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP15_ocupacao.png")
-        return self._step("CP15", "preencher Ocupacao", fn, observer, ctx=ctx)
+        return self._step("CP15", "Ocupacao", fn, observer, validated=True)
 
-    def _step_situacao_familiar(self, ctx, dados: dict, coords, observer=None):
+    def _step_situacao_familiar(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            self._preencher_coord(ctx, coords, "campo_situacao_familiar",
-                                  self._dado(dados, "situacao_familiar", "CP16"))
-            pyautogui.press("tab"); time.sleep(0.3)
+            self._preencher_coord(ctx, "campo_situacao_familiar",
+                                  dados.get("situacao_familiar", "SEM INFORMACAO"))
+            pyautogui.press("tab")
+            time.sleep(0.3)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP16_sit_familiar.png")
-        return self._step("CP16", "preencher Situacao Familiar", fn, observer, ctx=ctx)
+        return self._step("CP16", "Situacao Familiar", fn, observer)
 
-    def _step_tipo_deficiencia(self, ctx, dados: dict, coords, observer=None):
+    def _step_tipo_deficiencia(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            # tipo_deficiencia e opcional — pode ser vazio
-            self._preencher_coord(ctx, coords, "campo_tipo_deficiencia",
+            self._preencher_coord(ctx, "campo_tipo_deficiencia",
                                   dados.get("tipo_deficiencia", ""))
-            pyautogui.press("tab"); time.sleep(0.3)
+            pyautogui.press("tab")
+            time.sleep(0.3)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP17_defic.png")
-        return self._step("CP17", "preencher Tipo de Deficiencia", fn, observer, ctx=ctx)
+        return self._step("CP17", "Tipo de Deficiencia", fn, observer)
 
-    def _step_escolaridade(self, ctx, dados: dict, coords, observer=None):
+    def _step_escolaridade(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            self._preencher_coord(ctx, coords, "campo_escolaridade",
-                                  self._dado(dados, "escolaridade", "CP18"))
-            pyautogui.press("tab"); time.sleep(1.5)
+            self._preencher_coord(ctx, "campo_escolaridade",
+                                  dados.get("escolaridade", "SUPERIOR INCOMPLETO"))
+            pyautogui.press("tab")
+            time.sleep(1.5)
             encontrou = ctx.runner.wait_template(
                 f"{self._TPL}/btn_ok.png", timeout=8.0, threshold=0.6,
             )
@@ -335,187 +497,247 @@ class CadastroPacienteFlow(BaseFlow):
                 pyautogui.press("enter")
             time.sleep(0.5)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP18_escolar.png")
-        return self._step("CP18", "preencher Escolaridade", fn, observer, ctx=ctx)
+        return self._step("CP18", "Escolaridade", fn, observer)
 
     # ----------------------------------------------------------------
-    # CP19–CP21: Abas
+    # Steps CP19-CP21: Abas
     # ----------------------------------------------------------------
 
-    def _step_documentos(self, ctx, dados: dict, coords, observer=None):
+    def _step_documentos(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
+            self._clicar_aba(ctx, "aba_documentos.png", "aba_documentos")
             time.sleep(0.5)
-            rg  = self._dado(dados, "rg", "CP19")
-            cpf = self._dado(dados, "cpf", "CP19").replace(".", "").replace("-", "")
+            apareceu = ctx.runner.wait_template(f"{self._TPL}/aba_documentos.png",
+                                                timeout=8.0, threshold=0.7)
+            if not apareceu:
+                raise AssertionError(
+                    "Falha de Observabilidade: aba_documentos.png nao visivel apos clicar na aba."
+                )
 
+            pyperclip.copy(dados.get("rg", "44643579X"))
             pyautogui.click(262, 424); time.sleep(0.3)
-            pyperclip.copy(rg); pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
             pyautogui.click(637, 427); time.sleep(0.3)
-            pyperclip.copy("SSP"); pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            pyperclip.copy("SSP")
+            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
             pyautogui.click(780, 426); time.sleep(0.3)
-            pyperclip.copy("SP"); pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            pyperclip.copy("SP")
+            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
             pyautogui.click(868, 424); time.sleep(0.3)
             data_emissao = (date.today() - timedelta(days=30)).strftime("%d/%m/%Y")
-            pyperclip.copy(data_emissao); pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            pyperclip.copy(data_emissao)
+            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
+            cpf = dados["cpf"].replace(".", "").replace("-", "")
             pyautogui.click(262, 450); time.sleep(0.3)
-            pyperclip.copy(cpf); pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            pyperclip.copy(cpf)
+            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
             pyautogui.click(257, 476); time.sleep(0.3)
-            pyperclip.copy("726337961670004"); pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            pyperclip.copy("726337961670004")
+            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP19_docs.png")
-        return self._step("CP19", "preencher Aba Documentos: RG + CPF + CNS",
-                          fn, observer, ctx=ctx)
+        return self._step("CP19", "Aba Documentos: RG + CPF + CNS", fn, observer,
+                          confirm_template=f"{self._TPL}/aba_documentos.png")
 
-    def _step_enderecos(self, ctx, dados: dict, coords, observer=None):
+    def _step_enderecos(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            self._clicar_aba(ctx, coords, "aba_enderecos.png", "aba_enderecos")
+            self._clicar_aba(ctx, "aba_enderecos.png", "aba_enderecos")
             time.sleep(0.5)
+            apareceu = ctx.runner.wait_template(f"{self._TPL}/aba_enderecos.png",
+                                                timeout=8.0, threshold=0.7)
+            if not apareceu:
+                raise AssertionError(
+                    "Falha de Observabilidade: aba_enderecos.png nao visivel apos clicar na aba."
+                )
             end = dados.get("endereco", {})
-            cep = self._dado(end, "cep", "CP20") if end else self._dado(dados, "cep", "CP20")
 
-            self._preencher_coord(ctx, coords, "campo_cep", cep)
+            self._preencher_coord(ctx, "campo_cep", end.get("cep", "01310100"))
             pyautogui.press("tab"); time.sleep(2.5)
 
             screenshot_cep = ctx.runner.screenshot(f"{ctx.evidence_dir}CP20_cep_check.png")
-            logradouro_lido = OcrHelper.ler_regiao(
-                screenshot_cep, (214, 424, 528, 444)
-            ).strip()
+            logradouro_lido = OcrHelper.ler_regiao(screenshot_cep, (214, 424, 528, 444)).strip()
             print(f"[CP20] Logradouro apos CEP: '{logradouro_lido}'")
 
             if logradouro_lido:
-                print("[CP20] Auto-preenchimento OK — preenchendo Numero e Complemento")
-                self._preencher_coord(ctx, coords, "campo_numero_endereco",
-                                      end.get("numero", "44"))
+                print("[CP20] Auto-preenchimento OK - preenchendo apenas Numero e Complemento")
+                self._preencher_coord(ctx, "campo_numero_endereco",      end.get("numero",      "44"))
                 pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, coords, "campo_complemento_endereco",
-                                      end.get("complemento", "CADASTRO DE TESTE"))
+                self._preencher_coord(ctx, "campo_complemento_endereco", end.get("complemento", "CADASTRO DE TESTE"))
                 pyautogui.press("tab"); time.sleep(0.3)
             else:
-                print("[CP20] Auto-preenchimento falhou — preenchendo todos os campos")
-                self._preencher_coord(ctx, coords, "campo_tipo_endereco",
-                                      end.get("tipo", "AVENIDA"))
+                print("[CP20] Auto-preenchimento falhou - preenchendo todos os campos")
+                self._preencher_coord(ctx, "campo_tipo_endereco",        end.get("tipo",        "AVENIDA"))
                 pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, coords, "campo_logradouro",
-                                      end.get("logradouro", "DR. ENEAS CARVALHO DE AGUIAR"))
+                self._preencher_coord(ctx, "campo_logradouro",           end.get("logradouro",  "DR. ENEAS CARVALHO DE AGUIAR"))
                 pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, coords, "campo_numero_endereco",
-                                      end.get("numero", "44"))
+                self._preencher_coord(ctx, "campo_numero_endereco",      end.get("numero",      "44"))
                 pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, coords, "campo_complemento_endereco",
-                                      end.get("complemento", "CADASTRO DE TESTE"))
+                self._preencher_coord(ctx, "campo_complemento_endereco", end.get("complemento", "CADASTRO DE TESTE"))
                 pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, coords, "campo_pais_endereco",
-                                      end.get("pais", "BRASIL"))
+                self._preencher_coord(ctx, "campo_pais_endereco",        end.get("pais",        "BRASIL"))
                 pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, coords, "campo_uf_endereco",
-                                      end.get("uf", "SP"))
+                self._preencher_coord(ctx, "campo_uf_endereco",          end.get("uf",          "SP"))
                 pyautogui.press("tab"); time.sleep(0.3)
                 pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, coords, "campo_municipio_endereco",
-                                      end.get("municipio", "SAO PAULO"))
+                self._preencher_coord(ctx, "campo_municipio_endereco",   end.get("municipio",   "SAO PAULO"))
                 pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, coords, "campo_bairro",
-                                      end.get("bairro", "BELA VISTA"))
+                self._preencher_coord(ctx, "campo_bairro",               end.get("bairro",      "BELA VISTA"))
                 pyautogui.press("tab"); time.sleep(0.3)
-                self._preencher_coord(ctx, coords, "campo_referencia_endereco",
-                                      end.get("referencia", "PROXIMO AO CENTRO"))
+                self._preencher_coord(ctx, "campo_referencia_endereco",  end.get("referencia",  "PROXIMO AO CENTRO"))
                 pyautogui.press("tab"); time.sleep(0.3)
 
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP20_endereco.png")
-        return self._step("CP20", "preencher Aba Enderecos", fn, observer, ctx=ctx)
+        return self._step("CP20", "Aba Enderecos", fn, observer,
+                          confirm_template=f"{self._TPL}/aba_enderecos.png")
 
-    def _step_comunicacao(self, ctx, dados: dict, coords, observer=None):
+    def _step_comunicacao(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
-            self._clicar_aba(ctx, coords, "aba_comunicacao.png", "aba_comunicacao")
+            self._clicar_aba(ctx, "aba_comunicacao.png", "aba_comunicacao")
             time.sleep(0.5)
+            apareceu = ctx.runner.wait_template(f"{self._TPL}/aba_comunicacao.png",
+                                                timeout=8.0, threshold=0.7)
+            if not apareceu:
+                raise AssertionError(
+                    "Falha de Observabilidade: aba_comunicacao.png nao visivel apos clicar na aba."
+                )
+
             com = dados.get("comunicacao", {})
 
-            # Linha 1 — celular
-            self._preencher_coord(ctx, coords, "campo_comunicacao_prioridade_l1", "1")
+            # Linha 1 - celular
+            self._preencher_coord(ctx, "campo_comunicacao_prioridade_l1", "1")
             pyautogui.press("tab"); time.sleep(0.2)
-            x, y = self._coord(coords, "campo_comunicacao_lov_l1")
-            pyautogui.click(x, y); time.sleep(1.5)
+            pyautogui.click(*self._coord(ctx, "campo_comunicacao_lov_l1")); time.sleep(1.5)
             pyautogui.click(82, 142); time.sleep(0.3)
             ctx.runner.type_text("CELULAR")
             pyautogui.click(113, 354); time.sleep(1.0)
             pyautogui.click(221, 355); time.sleep(0.5)
-            self._preencher_coord(ctx, coords, "campo_comunicacao_numero_l1",
+            self._preencher_coord(ctx, "campo_comunicacao_numero_l1",
                                   com.get("celular", dados.get("celular", "")))
             pyautogui.press("tab"); time.sleep(0.3)
 
-            # Linha 2 — e-mail
-            self._preencher_coord(ctx, coords, "campo_comunicacao_prioridade_l2", "2")
+            # Linha 2 - e-mail
+            self._preencher_coord(ctx, "campo_comunicacao_prioridade_l2", "2")
             pyautogui.press("tab"); time.sleep(0.2)
-            x, y = self._coord(coords, "campo_comunicacao_lov_l2")
-            pyautogui.click(x, y); time.sleep(1.5)
+            pyautogui.click(*self._coord(ctx, "campo_comunicacao_lov_l2")); time.sleep(1.5)
             pyautogui.click(82, 142); time.sleep(0.3)
             ctx.runner.type_text("E-MAIL")
             pyautogui.click(113, 354); time.sleep(1.0)
             pyautogui.click(221, 355); time.sleep(0.5)
-            self._preencher_coord(ctx, coords, "campo_comunicacao_numero_l2",
-                                  "teste@teste.com")
+            self._preencher_coord(ctx, "campo_comunicacao_numero_l2", "teste@teste.com")
             pyautogui.press("tab"); time.sleep(0.3)
 
             # Salvar antes de gerar matricula
             pyautogui.click(58, 66); time.sleep(2.5)
+
             if self._fechar_popups_oracle(ctx):
                 print("[CP21] Popup Oracle Forms fechado apos salvar — comportamento esperado")
 
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP21_comunicacao.png")
-        return self._step("CP21", "preencher Aba Comunicacao: celular e email",
-                          fn, observer, ctx=ctx)
+        return self._step("CP21", "Aba Comunicacao: celular + e-mail", fn, observer,
+                          confirm_template=f"{self._TPL}/aba_comunicacao.png")
 
     # ----------------------------------------------------------------
-    # CP22: Gerar Matricula + Salvar + OCR + estado_jornada.json
+    # Step CP22: Gerar Matricula + Salvar + OCR + estado_jornada.json
     # ----------------------------------------------------------------
 
-    def _step_gerar_matricula_salvar(self, ctx, observer=None):
+    def _step_gerar_matricula_salvar(self, ctx, observer=None) -> StepResult:
         def fn():
+            # 1. Clicar em Gerar Matricula
             try:
                 ctx.runner.safe_click(f"{self._TPL}/btn_gerar_matricula.png", threshold=0.7)
             except Exception:
-                x, y = self._coord(ctx.config.coordenadas, "btn_gerar_matricula")
-                pyautogui.click(x, y)
+                self._clicar_coord(ctx, "btn_gerar_matricula")
             time.sleep(2.0)
 
+            # 2. Salvar
             pyautogui.click(58, 66); time.sleep(3.0)
+
             if self._fechar_popups_oracle(ctx):
                 print("[CP22] Popup Oracle Forms fechado apos salvar — comportamento esperado")
 
+            # 3. Screenshot para OCR
             screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}CP22_matricula.png")
-            r = ctx.config.regioes_ocr["matricula"]
-            regiao_tuple = (r["x1"], r["y1"], r["x2"], r["y2"])
 
-            OcrHelper.salvar_debug(screenshot_path, regiao_tuple,
+            # 4. Le regioes OCR do config.yaml
+            r_mat = ctx.config.regioes_ocr["matricula"]
+            regiao_matricula = (r_mat["x1"], r_mat["y1"], r_mat["x2"], r_mat["y2"])
+
+            # 5. OCR — Matricula
+            OcrHelper.salvar_debug(screenshot_path, regiao_matricula,
                                    f"{ctx.evidence_dir}CP22_ocr_debug.png")
-            texto   = OcrHelper.ler_regiao(screenshot_path, regiao_tuple)
-            numeros = re.findall(r"\d+", texto)
-            if not numeros:
+            texto_mat = OcrHelper.ler_regiao(screenshot_path, regiao_matricula)
+            numeros_mat = re.findall(r"\d+", texto_mat)
+            if not numeros_mat:
                 raise AssertionError(
                     f"Matricula nao gerada ou OCR nao leu.\n"
-                    f"Texto lido: '{texto}'\n"
-                    f"Regiao: {regiao_tuple}\n"
+                    f"Texto lido: '{texto_mat}'\n"
+                    f"Regiao usada: {regiao_matricula}\n"
                     f"Veja CP22_ocr_debug.png e ajuste regioes_ocr.matricula no config.yaml."
                 )
-            matricula = numeros[0]
+            matricula = numeros_mat[0]
             print(f"[CP22] Matricula gerada: {matricula}")
-            _salvar_estado_jornada("paciente_id", matricula)
+
+            # 6. OCR — Identificador
+            paciente_id = matricula  # fallback padrao
+            if "identificador" in ctx.config.regioes_ocr:
+                r_id = ctx.config.regioes_ocr["identificador"]
+                regiao_id = (r_id["x1"], r_id["y1"], r_id["x2"], r_id["y2"])
+                OcrHelper.salvar_debug(screenshot_path, regiao_id,
+                                       f"{ctx.evidence_dir}CP22_ocr_id_debug.png")
+                texto_id = OcrHelper.ler_regiao(screenshot_path, regiao_id)
+                numeros_id = re.findall(r"\d+", texto_id)
+                if numeros_id:
+                    paciente_id = numeros_id[0]
+                    print(f"[CP22] Identificador lido: {paciente_id}")
+                else:
+                    print(f"[CP22] AVISO: OCR nao leu Identificador (texto='{texto_id}') "
+                          f"— usando matricula '{matricula}' como fallback.")
+            else:
+                print(f"[CP22] regioes_ocr.identificador nao configurado — "
+                      f"usando matricula '{matricula}' como paciente_id.")
+
+            # 7. Salva estado
+            _salvar_estado_jornada("paciente_id", paciente_id)
+            _salvar_estado_jornada("matricula", matricula)
+
             return screenshot_path
-        return self._step("CP22", "gerar Matricula + Salvar + OCR",
-                          fn, observer, validated=True, ctx=ctx)
+        return self._step("CP22", "Gerar Matricula + Salvar + OCR", fn, observer,
+                          confirm_template="ocr:matricula")
 
     # ----------------------------------------------------------------
-    # CP23: Sair
+    # Step CP23: Sair
     # ----------------------------------------------------------------
 
-    def _step_sair(self, ctx, coords, observer=None):
+    def _step_sair(self, ctx, observer=None) -> StepResult:
+        """
+        Sair do cadastro e voltar ao menu principal.
+        Sair 1 e 2: coordenadas com sleep aumentado (telas intermediarias).
+        Sair 3: _clicar_aguardar confirma chegada ao menu principal.
+
+        Template necessario: titulo_menu_principal.png
+        """
         def fn():
-            self._clicar_coord(ctx, coords, "btn_sair_1"); time.sleep(1.5)
-            self._clicar_coord(ctx, coords, "btn_sair_2"); time.sleep(1.5)
-            self._clicar_coord(ctx, coords, "btn_sair_menu"); time.sleep(1.0)
+            # Sair 1 — tela de cadastro -> tela intermediaria
+            self._clicar_coord(ctx, "btn_sair_1")
+            time.sleep(2.5)
+
+            # Sair 2 — tela intermediaria -> proxima
+            self._clicar_coord(ctx, "btn_sair_2")
+            time.sleep(2.5)
+
+            # Sair 3 — confirma chegada ao menu principal
+            self._clicar_aguardar(
+                ctx,
+                acao=lambda: self._clicar_coord(ctx, "btn_sair_menu"),
+                confirmacao=f"{self._TPL}/titulo_menu_principal.png",
+                timeout=15, threshold=0.7, retries=2,
+                label="CP23 sair-3 -> menu principal",
+            )
+
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP23_menu.png")
-        return self._step("CP23", "sair para o Menu Principal", fn, observer, ctx=ctx)
+        return self._step("CP23", "sair para o Menu Principal", fn, observer)

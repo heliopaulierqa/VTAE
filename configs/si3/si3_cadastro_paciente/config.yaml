@@ -4,6 +4,7 @@
 sistema: si3_cadastro_paciente
 tipo: desktop
 runner: opencv
+ocr_engine: easyocr  # tesseract | easyocr — controla verify_fill e verify_lov
 
 ambientes:
   dev:
@@ -60,7 +61,7 @@ dados_faker:
 
   - campo: cor_etnia
     tipo: fixo
-    valor: 'PARDA'
+    valor: 'PARDA' #PARDA
 
   - campo: nacionalidade
     tipo: fixo
@@ -96,11 +97,11 @@ dados_faker:
 
   - campo: conjuge
     tipo: fixo
-    valor: ''
+    valor: 'TESTE'
 
   - campo: responsavel
     tipo: fixo
-    valor: ''
+    valor: 'TETSE'
 
   - campo: rg
     tipo: fixo
@@ -113,7 +114,7 @@ dados_faker:
   - campo: endereco
     tipo: fixo
     valor:
-      cep:         '01310100'
+      cep:         '01021000' #cep padrão: 01310100
       tipo:        'AVENIDA'
       logradouro:  'DR. ENEAS CARVALHO DE AGUIAR'
       numero:      '44'
@@ -196,19 +197,52 @@ coordenadas:
   btn_sair_menu:                    { x: 18,   y: 572 }
 
 regioes_ocr:
+  # ─────────────────────────────────────────────────────────────────
+  # BOOTSTRAP MODE — padrão do VTAE
+  #
+  # { x1: 0, y1: 0, x2: 0, y2: 0 } = verificação DESABILITADA
+  # valores reais                   = verificação HABILITADA
+  #
+  # Como habilitar:
+  #   1. Rodar o teste e abrir o screenshot do step no Paint
+  #   2. Cursor no canto superior-esquerdo do campo → x1, y1
+  #   3. Cursor no canto inferior-direito do campo  → x2, y2
+  #   4. Substituir os zeros pelos valores reais
+  #   5. Rodar novamente — o verify_fill passa a validar o campo
+  # ─────────────────────────────────────────────────────────────────
 
-  nome:                    { x1: 37,  y1: 155, x2: 440, y2: 175 }
-  data_nascimento:         { x1: 340, y1: 193, x2: 460, y2: 210 }
-  hora:                    { x1: 460, y1: 193, x2: 530, y2: 210 }
-  sexo:                    { x1: 530, y1: 193, x2: 620, y2: 210 }
-  cor_etnia:               { x1: 32,  y1: 280, x2: 174, y2: 297 }
-  nacionalidade:           { x1: 620, y1: 193, x2: 830, y2: 210 }
-  nome_mae:                { x1: 31,  y1: 238, x2: 224, y2: 253 }
-  frequenta_escola:        { x1: 863, y1: 324, x2: 960, y2: 335 }
-  rg:                      { x1: 50,  y1: 444, x2: 188, y2: 460 }
-  cpf:                     { x1: 50,  y1: 420, x2: 193, y2: 436 }
-  cns:                     { x1: 55,  y1: 466, x2: 187, y2: 482 }
-  celular:                 { x1: 275, y1: 449, x2: 432, y2: 462 }
-  email:                   { x1: 276, y1: 474, x2: 433, y2: 487 }
-  matricula:               { x1: 557, y1: 148, x2: 626, y2: 172 }
-  identificador:           { x1: 465, y1: 150, x2: 519, y2: 164 }
+  # CP04 — Nome Social/Afetivo — desabilitado (OCR instavel em campo pequeno)
+  nome_social:       { x1: 0, y1: 0, x2: 0, y2: 0 }
+
+  # CP05 — Data de Nascimento — desabilitado (OCR inverte digitos em campo pequeno)
+  data_nascimento:   { x1: 0, y1: 0, x2: 0, y2: 0 }
+
+  # CP06 — Sexo — desabilitado
+  sexo:              { x1: 0, y1: 0, x2: 0, y2: 0 }
+
+  # CP08 — Mae — desabilitado
+  nome_mae:          { x1: 0, y1: 0, x2: 0, y2: 0 }
+
+  # CP12 — Cor/Etnia — desabilitado
+  cor_etnia:         { x1: 0, y1: 0, x2: 0, y2: 0 }
+
+  # CP14 — Estado Civil — desabilitado
+  estado_civil:      { x1: 0, y1: 0, x2: 0, y2: 0 }
+
+  # CP15 — Ocupacao — desabilitado
+  ocupacao:          { x1: 0, y1: 0, x2: 0, y2: 0 }
+
+  # Campos mantidos dos anteriores (nao alterados)
+  nome:              { x1: 37,  y1: 155, x2: 440, y2: 175 }
+  hora:              { x1: 460, y1: 193, x2: 530, y2: 210 }
+  nacionalidade:     { x1: 620, y1: 193, x2: 830, y2: 210 }
+  frequenta_escola:  { x1: 863, y1: 324, x2: 960, y2: 335 }
+  rg:                { x1: 50,  y1: 444, x2: 188, y2: 460 }
+  cpf:               { x1: 50,  y1: 420, x2: 193, y2: 436 }
+  cns:               { x1: 55,  y1: 466, x2: 187, y2: 482 }
+  celular:           { x1: 275, y1: 449, x2: 432, y2: 462 }
+  email:             { x1: 276, y1: 474, x2: 433, y2: 487 }
+
+  # CP22 — HABILITADOS e validados — nao alterar
+  matricula:         { x1: 557, y1: 148, x2: 626, y2: 172 }
+  identificador:     { x1: 455, y1: 148, x2: 525, y2: 166 }

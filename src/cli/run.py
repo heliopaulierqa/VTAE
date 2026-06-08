@@ -46,8 +46,7 @@ TESTES = {
     # SisLab
     "cadastro_funcionario":               "tests/integration/sislab/jornadas/cadastros/test_01_cadastro_funcionario.py",
     # MSI3
-    "frequencia_aplicacao":               "tests/integration/msi3/jornadas/intra_operatorio/test_frequencia_aplicacao.py",
-    "tipo_anestesia":                     "tests/integration/msi3/jornadas/intra_operatorio/test_tipo_anestesia.py",
+    'tipo_anestesia':                      'tests/integration/msi3/jornadas/anestesia_pre_operatorio/test_tipo_anestesia.py',
 }
 
 # Jornadas: sequencia ordenada de testes encadeados
@@ -238,9 +237,14 @@ def cmd_jornada(args):
     if sistema:
         _health_check([sistema])
 
+    # Limpa estado UMA VEZ antes do primeiro step
+    # Nunca limpar dentro do loop — o estado_jornada.json e o canal de
+    # comunicacao entre steps (ex: paciente_id gravado pelo cadastro e
+    # lido pela admissao)
     estado_path = Path("evidence/estado_jornada.json")
     estado_path.parent.mkdir(parents=True, exist_ok=True)
     estado_path.write_text("{}", encoding="utf-8")
+    print("[VTAE] Estado da jornada limpo — pronto para o step 1.")
 
     resultados = []
     rc_final   = 0

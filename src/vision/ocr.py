@@ -2,135 +2,155 @@
 """
 Helper centralizado de OCR para o VTAE.
 
-Uso em qualquer flow:
+Engine padrão: EasyOCR (pip puro, sem dependência de instalação no SO).
+Tesseract removido na v0.5.11 — EasyOCR é mais preciso em campos pequenos,
+não requer instalação separada e é compatível com pipeline YOLO (Fase 6).
+
+Uso recomendado (via OcrEngine — runners usam automaticamente):
+    ocr_engine: easyocr  # em config.yaml — zero código no flow
+
+Uso direto (quando necessário fora dos runners):
     from src.vision.ocr import OcrHelper
-    texto = OcrHelper.ler_regiao(screenshot_path, regiao=(x1, y1, x2, y2))
+    texto = OcrHelper.ler_regiao(screenshot_path, regiao)
 """
 
-import cv2
 import numpy as np
-import pytesseract
 from PIL import Image
 from pathlib import Path
 
-# Caminho do executável Tesseract no Windows
-# Ajuste se instalou em diretório diferente
-pytesseract.pytesseract.tesseract_cmd = (
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-)
+# Singleton EasyOCR — lazy load na primeira chamada
+_easyocr_reader = None
+
+
+def _get_easyocr_reader():
+    """Retorna instancia singleton do EasyOCR (lazy load)."""
+    global _easyocr_reader
+    if _easyocr_reader is None:
+        try:
+            import easyocr
+            print("[OCR] Inicializando EasyOCR (primeira vez pode demorar ~30s)...")
+            _easyocr_reader = easyocr.Reader(["pt", "en"], gpu=False)
+            print("[OCR] EasyOCR pronto.")
+        except ImportError:
+            raise ImportError(
+                "EasyOCR nao instalado.\n"
+                "Execute: pip install easyocr\n"
+                "Ou dentro do venv: .venv\\Scripts\\pip install easyocr"
+            )
+    return _easyocr_reader
 
 
 class OcrHelper:
     """
-    Métodos estáticos de OCR reutilizáveis por qualquer flow do VTAE.
-    Todos os métodos retornam texto em CAIXA ALTA para facilitar comparações.
+    Helper centralizado de OCR — EasyOCR como engine unico.
+
+    Todos os metodos retornam texto em CAIXA ALTA para comparacoes.
+    Usado internamente pelo OcrEngine e pelos runners.
     """
 
     # ------------------------------------------------------------------ #
-    #  Pré-processamento                                                   #
+    #  Leitura principal                                                   #
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def preprocessar(img: Image.Image) -> Image.Image:
+    def ler_regiao(screenshot_path: str, regiao: tuple) -> str:
         """
-        Prepara a imagem para melhor leitura pelo Tesseract:
-          1. Converte para escala de cinza
-          2. Escala 2x (Tesseract performa melhor com imagens maiores)
-          3. Threshold adaptativo — lida com variações de contraste
-             comuns em interfaces Oracle Forms
-        """
-        arr = np.array(img)
-        gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
-        scaled = cv2.resize(gray, None, fx=2, fy=2,
-                            interpolation=cv2.INTER_CUBIC)
-        processed = cv2.adaptiveThreshold(
-            scaled, 255,
-            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY, 11, 2,
-        )
-        return Image.fromarray(processed)
+        Le o texto de uma regiao usando EasyOCR.
 
-    # ------------------------------------------------------------------ #
-    #  Leitura                                                             #
-    # ------------------------------------------------------------------ #
-
-    @staticmethod
-    def ler_regiao(screenshot_path: str, regiao: tuple,
-                   lang: str = "por") -> str:
-        """
-        Lê o texto de uma região específica de um screenshot.
+        Escala automatica baseada na altura do campo:
+          < 20px → 4x  (campos muito pequenos Oracle Forms)
+          < 35px → 3x
+          < 60px → 2x
+          >= 60px → 1x (sem escala)
 
         Args:
-            screenshot_path: caminho do screenshot completo (salvo pelo runner)
-            regiao: (x1, y1, x2, y2) — coordenadas do recorte na tela
-            lang: idioma do Tesseract (padrão: "por" para português)
+            screenshot_path: caminho do screenshot completo
+            regiao: (x1, y1, x2, y2)
 
         Returns:
             Texto reconhecido em CAIXA ALTA.
         """
         img = Image.open(screenshot_path)
         recorte = img.crop(regiao)
-        recorte_processado = OcrHelper.preprocessar(recorte)
-        texto = pytesseract.image_to_string(recorte_processado, lang=lang)
+
+        w, h = recorte.size
+        if h < 20:
+            escala = 4
+        elif h < 35:
+            escala = 3
+        elif h < 60:
+            escala = 2
+        else:
+            escala = 1
+
+        if escala > 1:
+            recorte = recorte.resize((w * escala, h * escala), Image.LANCZOS)
+
+        arr = np.array(recorte)
+        reader = _get_easyocr_reader()
+        resultados = reader.readtext(arr, detail=0, paragraph=True)
+        texto = " ".join(resultados).strip()
         return texto.upper()
 
     @staticmethod
-    def ler_tela_inteira(screenshot_path: str, lang: str = "por") -> str:
-        """
-        Lê o texto da tela inteira.
-        Útil para debug ou quando a região ainda não foi mapeada.
-
-        Returns:
-            Texto reconhecido em CAIXA ALTA.
-        """
+    def ler_tela_inteira(screenshot_path: str) -> str:
+        """Le o texto da tela inteira. Util para debug."""
         img = Image.open(screenshot_path)
-        processado = OcrHelper.preprocessar(img)
-        texto = pytesseract.image_to_string(processado, lang=lang)
-        return texto.upper()
+        arr = np.array(img)
+        reader = _get_easyocr_reader()
+        resultados = reader.readtext(arr, detail=0, paragraph=True)
+        return " ".join(resultados).strip().upper()
 
     # ------------------------------------------------------------------ #
-    #  Verificações                                                        #
+    #  Verificacoes                                                        #
     # ------------------------------------------------------------------ #
 
     @staticmethod
     def contem_texto(screenshot_path: str, texto_esperado: str,
-                     regiao: tuple = None, lang: str = "por") -> bool:
-        """
-        Verifica se um texto aparece na tela (ou numa região).
-        Comparação case-insensitive.
-        """
+                     regiao: tuple = None) -> bool:
+        """Verifica se um texto aparece na tela ou regiao. Case-insensitive."""
         if regiao:
-            texto_tela = OcrHelper.ler_regiao(screenshot_path, regiao, lang)
+            texto_tela = OcrHelper.ler_regiao(screenshot_path, regiao)
         else:
-            texto_tela = OcrHelper.ler_tela_inteira(screenshot_path, lang)
+            texto_tela = OcrHelper.ler_tela_inteira(screenshot_path)
         return texto_esperado.upper() in texto_tela
 
     @staticmethod
     def contem_qualquer_token(screenshot_path: str, tokens: list,
                               regiao: tuple = None,
-                              tamanho_minimo: int = 4,
-                              lang: str = "por"):
+                              tamanho_minimo: int = 4):
         """
         Verifica se qualquer token de uma lista aparece na tela.
-        Ignora tokens com tamanho <= tamanho_minimo (partículas, artigos).
-
-        Útil para validar nomes gerados pelo Faker, onde o Tesseract
-        pode errar um caractere mas dificilmente erra o token inteiro.
+        Ignora tokens com tamanho <= tamanho_minimo.
 
         Returns:
             (encontrado: bool, token_encontrado: str)
         """
         if regiao:
-            texto_tela = OcrHelper.ler_regiao(screenshot_path, regiao, lang)
+            texto_tela = OcrHelper.ler_regiao(screenshot_path, regiao)
         else:
-            texto_tela = OcrHelper.ler_tela_inteira(screenshot_path, lang)
+            texto_tela = OcrHelper.ler_tela_inteira(screenshot_path)
 
         tokens_validos = [t.upper() for t in tokens if len(t) > tamanho_minimo]
         for token in tokens_validos:
             if token in texto_tela:
                 return True, token
-
         return False, ""
+
+    # ------------------------------------------------------------------ #
+    #  Aliases para retrocompatibilidade                                   #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def ler_regiao_easyocr(screenshot_path: str, regiao: tuple) -> str:
+        """Alias de ler_regiao() — retrocompatibilidade."""
+        return OcrHelper.ler_regiao(screenshot_path, regiao)
+
+    @staticmethod
+    def contem_texto_easyocr(screenshot_path: str, texto_esperado: str,
+                              regiao: tuple = None) -> bool:
+        """Alias de contem_texto() — retrocompatibilidade."""
+        return OcrHelper.contem_texto(screenshot_path, texto_esperado, regiao)
 
     # ------------------------------------------------------------------ #
     #  Debug                                                               #
@@ -140,39 +160,32 @@ class OcrHelper:
     def salvar_debug(screenshot_path: str, regiao: tuple,
                      output_path: str = None) -> str:
         """
-        Salva a imagem pré-processada para inspecionar visualmente
-        o que o Tesseract está lendo.
-
-        Útil quando o OCR não encontra o texto esperado.
-
-        Returns:
-            Caminho da imagem de debug salva.
+        Salva o recorte da regiao para inspecao visual.
+        Util quando o OCR nao encontra o texto esperado.
         """
         img = Image.open(screenshot_path)
         recorte = img.crop(regiao)
-        processado = OcrHelper.preprocessar(recorte)
 
         if output_path is None:
             p = Path(screenshot_path)
             output_path = str(p.parent / f"{p.stem}_ocr_debug.png")
 
-        processado.save(output_path)
-        print(f"[OCR debug] imagem salva em: {output_path}")
+        recorte.save(output_path)
+        print(f"[OCR debug] recorte salvo em: {output_path}")
         return output_path
 
     @staticmethod
     def verificar_instalacao() -> bool:
         """
-        Verifica se o Tesseract está instalado e acessível.
+        Verifica se o EasyOCR esta instalado e funcional.
 
         Uso:
             python -c "from src.vision.ocr import OcrHelper; OcrHelper.verificar_instalacao()"
         """
         try:
-            versao = pytesseract.get_tesseract_version()
-            print(f"[OCR] Tesseract encontrado: v{versao}")
+            _get_easyocr_reader()
+            print("[OCR] EasyOCR OK — pronto para uso.")
             return True
-        except Exception as e:
-            print(f"[OCR] Tesseract NÃO encontrado: {e}")
-            print(f"[OCR] Verifique o caminho: {pytesseract.pytesseract.tesseract_cmd}")
+        except ImportError as e:
+            print(f"[OCR] EasyOCR nao disponivel: {e}")
             return False

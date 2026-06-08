@@ -4,15 +4,15 @@
 > para sistemas web modernos, legados desktop e ambientes híbridos.
 
 ![Python](https://img.shields.io/badge/Python-3.13%2B-blue)
-![Versão](https://img.shields.io/badge/versão-0.5.9d-purple)
+![Versão](https://img.shields.io/badge/versão-0.5.12-purple)
 ![Testes](https://img.shields.io/badge/testes-297%20unitários-green)
-![Fase](https://img.shields.io/badge/fase-5e%20AdmissaoComAgendamento-blue)
+![Fase](https://img.shields.io/badge/fase-5f%20concluída-brightgreen)
 
 ---
 
 ## O que é o VTAE
 
-O VTAE é um framework híbrido de automação de testes que combina visão computacional (OpenCV), controle de browser (Playwright) e OCR (Tesseract) para interagir com qualquer sistema — como um usuário humano faria.
+O VTAE é um framework híbrido de automação de testes que combina visão computacional (OpenCV), controle de browser (Playwright) e OCR (EasyOCR) para interagir com qualquer sistema — como um usuário humano faria.
 
 **O diferencial:** onde ferramentas puramente web (Playwright, Cypress, Selenium) não chegam, o VTAE chega. E onde ferramentas puramente desktop falham em aplicações web modernas, o VTAE também resolve.
 
@@ -25,23 +25,14 @@ Ideal para:
 
 ## Instalação e Configuração
 
-### 1. Pré-requisitos do sistema operacional
+### 1. Pré-requisito do sistema operacional
 
-**Python 3.13+**
+**Python 3.13+** — única dependência de SO necessária.
 ```bash
 python --version  # deve retornar 3.13.x
 ```
 
-**Tesseract OCR** (obrigatório para leitura de campos via OCR)
-- Windows: baixar em https://github.com/UB-Mannheim/tesseract/wiki
-  - Durante a instalação, marcar o pacote de idioma **"Portuguese"**
-  - Caminho padrão após instalação: `C:\Program Files\Tesseract-OCR\tesseract.exe`
-- Verificar: `tesseract --version`
-
-**pygetwindow** (obrigatório para controle de foco no Oracle Forms)
-```bash
-pip install pygetwindow
-```
+> ✅ **Tesseract removido na v0.5.11** — o VTAE usa EasyOCR (instalado via pip, sem dependência de SO).
 
 ---
 
@@ -54,7 +45,25 @@ cd VTAE
 
 ---
 
-### 3. Instalar dependências Python
+### 3. Criar e ativar ambiente virtual (.venv)
+
+**Windows:**
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+**Linux/Mac:**
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+> ✅ **Sempre use .venv** — o `.venv` está no `.gitignore` — nunca commitar.
+
+---
+
+### 4. Instalar dependências Python
 
 ```bash
 pip install -r requirements.txt
@@ -62,9 +71,11 @@ pip install -e .
 playwright install chromium
 ```
 
+> ⚠️ O EasyOCR baixa modelos (~200MB) na primeira execução. A partir da segunda, usa cache local.
+
 ---
 
-### 4. Configurar credenciais
+### 5. Configurar credenciais
 
 Cada jornada tem seu próprio `.env` isolado. **Nunca commitar no Git.**
 
@@ -72,36 +83,27 @@ Cada jornada tem seu próprio `.env` isolado. **Nunca commitar no Git.**
 # configs/si3/si3_cadastro_paciente/.env
 SI3_USER=seu_usuario
 SI3_PASS=sua_senha
-# Deixe vazio para cadastrar novo automaticamente.
-# Preencha para reutilizar paciente existente.
-# ATENÇÃO: limpe após o teste para não afetar outras execuções.
-SI3_PACIENTE_ID=
+SI3_PACIENTE_ID=   # vazio = cadastra novo; preenchido = reutiliza
 
-# configs/si3/si3_ambulatorio/.env
+# configs/si3/si3_internacao/.env
 SI3_USER=seu_usuario
 SI3_PASS=sua_senha
 SI3_PACIENTE_ID=
-
-# configs/si3/si3_agendamento/.env
-SI3_USER=seu_usuario
-SI3_PASS=sua_senha
 ```
 
 ---
 
-### 5. Verificar instalação
+### 6. Verificar instalação
 
 ```bash
-# Testes unitários
+python -c "from src.vision.ocr import OcrHelper; OcrHelper.verificar_instalacao()"
 python -m pytest tests/unit/ -v
-
-# Verificar CLI
 vtae systems
 ```
 
 ---
 
-### 6. Executar o primeiro teste
+### 7. Executar o primeiro teste
 
 Pré-requisitos:
 - SI3 aberto e **maximizado** na tela principal
@@ -109,7 +111,7 @@ Pré-requisitos:
 - Resolução 1920x1080
 
 ```bash
-vtae run --test cadastro_paciente_jornada
+vtae run --jornada internacao
 ```
 
 ---
@@ -120,16 +122,28 @@ vtae run --test cadastro_paciente_jornada
 VTAE/
 ├── src/
 │   ├── core/           # FlowContext, result, observer, types, estado_jornada
-│   ├── vision/         # TemplateMatcher (multi-scale), OcrHelper
+│   ├── vision/         # TemplateMatcher (multi-scale), OcrHelper, OcrEngine
 │   ├── runners/        # OpenCVRunner, PlaywrightRunner
 │   ├── flows/
-│   │   ├── si3/        # login, cadastro_paciente (23), admissao_internacao (18)
-│   │   │               # admissao_ambulatorio (15), agendamento (13)
-│   │   │               # admissao_com_agendamento ✅ criado
-│   │   ├── sislab/     # login, cadastro_funcionario
-│   │   └── msi3/       # login, frequencia_aplicacao, tipo_anestesia
+│   │   ├── base_flow.py       # ← BaseFlow: _step, _dado, _coord, _tpl_existe,
+│   │   │                      #             _focar_si3, _clicar_aguardar (v0.5.12)
+│   │   ├── si3/
+│   │   │   ├── login_flow.py
+│   │   │   ├── cadastro_paciente_flow.py    (CP01–CP23) ✅ 3x
+│   │   │   ├── admissao_internacao_flow.py  (AI01–AI19) ✅ validado 08/06
+│   │   │   ├── admissao_ambulatorio_flow.py (AB01–AB15) ✅ 3x
+│   │   │   ├── agendamento_flow.py          (AG01–AG13) ✅ 3x
+│   │   │   └── admissao_com_agendamento_flow.py         🔜 aguarda calibração
+│   │   ├── sislab/
+│   │   │   ├── login_flow.py
+│   │   │   └── cadastro_funcionario_flow.py (CF01–CF10) ✅
+│   │   └── msi3/
+│   │       ├── login_flow.py
+│   │       ├── apex_helper.py
+│   │       ├── frequencia_aplicacao_flow.py (FA01–FA10) ✅
+│   │       └── tipo_anestesia_flow.py       (TA01–TA09) ✅
 │   ├── config/         # ConfigLoader + schema.py
-│   └── cli/            # run.py, summary.py, send.py
+│   └── cli/            # run.py, send.py
 ├── configs/
 │   └── si3/
 │       ├── si3_cadastro_paciente/  config.yaml + .env
@@ -138,43 +152,35 @@ VTAE/
 │       └── si3_agendamento/        config.yaml + .env
 ├── templates/si3/
 │   ├── cadastro_paciente/
+│   │   └── titulo_menu_principal.png        # novo v0.5.12
 │   ├── admissao_internacao/
+│   │   ├── btn_selecionar_leito.png         # novo v0.5.12
+│   │   ├── btn_ok_reserva_popup.png         # novo v0.5.12
+│   │   ├── titulo_internacao.png            # novo v0.5.12
+│   │   └── titulo_menu_principal.png        # novo v0.5.12
 │   ├── admissao_ambulatorio/
 │   └── agendamento/
 ├── tests/
 │   ├── unit/
-│   │   ├── conftest.py      # mock_sleep autouse — SOMENTE aqui
-│   │   └── test_*.py
 │   └── integration/
-│       ├── si3/
-│       │   ├── test_login_real.py
-│       │   ├── components/
-│       │   │   └── cadastro_paciente_fixture.py  ← única fonte da lógica de cadastro
-│       │   └── jornadas/
-│       │       ├── ambulatorio/
-│       │       │   ├── sem_agendamento/
-│       │       │   │   ├── test_01_cadastro_paciente.py
-│       │       │   │   └── test_02_admissao_ambulatorio.py
-│       │       │   └── com_agendamento/
-│       │       │       ├── test_01_cadastro_paciente.py
-│       │       │       ├── test_02_agendamento.py
-│       │       │       └── test_03_admissao_com_agendamento.py
-│       │       └── internacao/
-│       │           ├── test_01_cadastro_paciente.py
-│       │           └── test_02_admissao_internacao.py
-│       ├── msi3/
-│       │   └── jornadas/intra_operatorio/
-│       │       ├── test_frequencia_aplicacao.py
-│       │       └── test_tipo_anestesia.py
-│       └── sislab/
-│           └── jornadas/cadastros/
-│               └── test_01_cadastro_funcionario.py
+│       └── si3/
+│           ├── components/
+│           │   └── cadastro_paciente_fixture.py  ← única fonte da lógica de cadastro
+│           └── jornadas/
+│               ├── internacao/
+│               ├── ambulatorio/sem_agendamento/
+│               └── ambulatorio/com_agendamento/
 ├── scripts/
 │   └── posicao_mouse.py
 └── evidence/
     ├── flakiness.json
     ├── estado_jornada.json
-    └── YYYY-MM-DD/<teste>/
+    └── YYYY-MM-DD/
+        ├── <teste>/
+        │   ├── execution.log
+        │   ├── execution.json
+        │   └── report.html
+        └── summary/
 ```
 
 ---
@@ -182,52 +188,128 @@ VTAE/
 ## CLI
 
 ```bash
-# Testes individuais
-vtae run --test login_si3 - NÃO FUNCIONOU
-vtae run --test cadastro_paciente_jornada - OK
-vtae run --test admissao_ambulatorio_jornada : AJUSTAR
-vtae run --test agendamento_jornada - ok
-vtae run --test admissao_com_agendamento_jornada - AJUSTAR
-vtae run --test admissao_internacao_jornada - AJUSTAR
-vtae run --test frequencia_aplicacao - OK
-vtae run --test tipo_anestesia - NÃO FUNCIONOU
+# ── Jornadas completas ──────────────────────────────────────────────
+vtae run --jornada internacao
+vtae run --jornada ambulatorio
+vtae run --jornada ambulatorio_com_agendamento
+vtae run --jornada internacao --repeat 3
 
-# Jornadas completas (encadeadas — para se um step falhar)
-vtae run --jornada ambulatorio                  # cadastro → admissão - AJUSTAR A ADMISSÃO
-vtae run --jornada ambulatorio_com_agendamento  # cadastro → agendamento → admissão
-vtae run --jornada internacao                   # cadastro → admissão internação
+# ── Testes individuais ──────────────────────────────────────────────
+vtae run --test cadastro_paciente_jornada
+vtae run --test admissao_internacao_jornada
+vtae run --test admissao_ambulatorio_jornada
+vtae run --test agendamento_jornada
+vtae run --test cadastro_funcionario
 
-# Com repetição (valida estabilidade)
-vtae run --jornada ambulatorio --repeat 3
-
-# Observabilidade
-vtae flakiness --top 5
+# ── Utilitários ─────────────────────────────────────────────────────
 vtae systems
+vtae flakiness --top 5
 vtae clean --days 7
+vtae summary
+vtae metrics
 ```
 
 ---
 
 ## Sistemas automatizados
 
-| Sistema | Tipo | Runner | Flows | Status |
+| Sistema | Tipo | Runner | Flows validados | Steps |
 |---|---|---|---|---|
-| SI3 | Desktop Oracle Forms | OpenCV | Login, CadastroPaciente (23), AdmissaoInternacao (18), AdmissaoAmbulatorio (15), Agendamento (13), AdmissaoComAgendamento | ✅ |
-| SisLab | Desktop Oracle Forms | OpenCV | Login, CadastroFuncionario | ✅ |
-| MSI3 | Web Oracle APEX 23.1 | Playwright + OpenCV | Login, FrequenciaAplicacao, TipoAnestesia | ✅ |
+| SI3 | Desktop Oracle Forms | OpenCV | Login, CadastroPaciente (3×), AdmissaoInternacao ✅ 08/06, AdmissaoAmbulatorio (3×), Agendamento (3×) | 3+23+19+15+13 |
+| SisLab | Desktop Oracle Forms | OpenCV | Login, CadastroFuncionario | 3+10 |
+| MSI3 | Web Oracle APEX 23.1 | Playwright+OpenCV | Login, FrequenciaAplicacao, TipoAnestesia | 5+10+9 |
 
 ---
 
-## Padrão SI3_PACIENTE_ID — isolamento por jornada
+## BaseFlow — padrão centralizado (v0.5.10+)
 
-Cada jornada tem seu próprio `.env` com `SI3_PACIENTE_ID`:
+Todos os flows herdam `BaseFlow` (`src/flows/base_flow.py`).
 
-```bash
-SI3_PACIENTE_ID=        # vazio = cadastra novo paciente automaticamente
-# SI3_PACIENTE_ID=505050  # preenchido = reutiliza paciente, pula o cadastro
+```python
+class MeuFlow(BaseFlow):
+    def execute(self, ctx, dados, observer=None) -> FlowResult:
+        ...
+    def _step_xx01(self, ctx, observer=None):
+        def fn():
+            valor = self._dado(dados, "chave", "XX01")
+            x, y  = self._coord(coords, "campo_x")
+            self._clicar_aguardar(
+                ctx,
+                acao=lambda: ctx.runner.safe_click(f"{self._TPL}/btn.png"),
+                confirmacao=f"{self._TPL}/tela_destino.png",
+                label="XX01 transicao",
+            )
+        return self._step("XX01", "descricao", fn, observer, ctx=ctx)
 ```
 
-Isso garante que jornadas diferentes não interferem entre si — especialmente importante com a regra de admissão aberta do SI3.
+**Helpers disponíveis:**
+- `_step()` — wrapper com observabilidade completa
+- `_dado()` — leitura segura de dado obrigatório
+- `_coord()` — leitura de coordenada com erro claro
+- `_tpl_existe()` — verifica existência de template antes de usar
+- `_focar_si3()` — reativa janela Oracle Forms
+- `_clicar_aguardar()` — clique com confirmação visual e retry automático *(novo v0.5.12)*
+
+---
+
+## `_clicar_aguardar` — transições robustas (v0.5.12)
+
+Substitui o padrão `safe_click + time.sleep` fixo em todas as transições críticas.
+
+```python
+self._clicar_aguardar(
+    ctx,
+    acao=lambda: ctx.runner.safe_click(f"{self._TPL}/btn.png", threshold=0.7),
+    confirmacao=f"{self._TPL}/tela_destino.png",
+    timeout=12,    # segundos por tentativa
+    threshold=0.7,
+    retries=2,     # recliques se não confirmou
+    label="AI06 admitir paciente",
+)
+```
+
+**Comportamento:**
+- Executa `acao()` → aguarda `confirmacao` via `wait_template`
+- Se não apareceu → reclica até `retries` vezes
+- Se template não existe → avisa no log e usa sleep fixo (bootstrap seguro)
+- Funciona para desktop e web com o mesmo contrato
+
+---
+
+## Observabilidade
+
+| Arquivo | Conteúdo |
+|---|---|
+| `execution.log` | Log estruturado com timestamps |
+| `execution.json` | Dados estruturados por step (CI/CD) |
+| `report.html` | Relatório técnico com screenshots |
+| `summary/*.html` | Relatório gerencial (Onda 2) |
+| `flakiness.json` | Histórico global de pass/fail |
+| `estado_jornada.json` | paciente_id compartilhado entre steps |
+
+### Três validações obrigatórias
+
+| Situação | Validação |
+|---|---|
+| Digitação em campo | `verify_fill(valor, regiao_ocr)` — EasyOCR confirma |
+| Seleção via LOV | `verify_lov(campo, regiao_ocr)` — EasyOCR confirma e loga valor lido |
+| Navegação de tela | `_clicar_aguardar` ou `confirm_template` |
+
+---
+
+## OcrEngine — engine OCR centralizado (v0.5.11)
+
+```yaml
+# config.yaml de qualquer jornada
+ocr_engine: easyocr   # padrão — pip puro, sem instalação no SO
+```
+
+| Altura do campo | Escala | Uso típico |
+|---|---|---|
+| < 20px | 4x | Campos numéricos Oracle Forms |
+| < 35px | 3x | Nr. Leito, Nr. Admissão |
+| < 60px | 2x | Campos médios |
+| ≥ 60px | 1x | Campos grandes |
 
 ---
 
@@ -235,38 +317,22 @@ Isso garante que jornadas diferentes não interferem entre si — especialmente 
 
 ### Oracle Forms (SI3 / SisLab)
 - `type_text()` obrigatório para campos com acentos
-- `double_click` para menus
-- `click_near` para campos grandes; coordenada direta para campos pequenos
-- **LOV:** `_selecionar_via_lov()` + `verify_lov()` obrigatório após
-- **LOV em grade:** `_lov_linha_tab()` — Tab Navigation, sem offset_y calculado
-- **Campos de grade:** `pyperclip.copy() + ctrl+v`
-- **Popup Editor (bug Oracle Forms):** 2x Escape antes de clicar em botões críticos
-- **Foco perdido:** `_focar_si3()` — reativa janela Oracle Forms via pygetwindow
-- **Template ausente:** `_tpl_existe()` — fallback com timeout, nunca quebra por PNG ausente
-- Salvar: **F10** (não Ctrl+S)
-- Navegação: **Localizar no Menu** (mais estável que Favoritos)
+- `double_click` para menus Oracle Forms
+- **LOV resultado único:** OK direto (sem busca)
+- **LOV com lista:** digita → Localizar → `double_click`
+- **TAB abre popup LOV:** mais estável que clicar na LOV
+- **Popup condicional:** `_tpl_existe()` + `is_visible(threshold=0.80)`
+- **Popup janela Forms flutuante:** template separado `btn_ok_reserva_popup.png`
+- **Transição de tela:** `_clicar_aguardar` — nunca sleep fixo
+- **Foco perdido:** `_focar_si3()` antes de steps críticos
+- Salvar: **F10**
+- Sair: **`_clicar_aguardar` com template de confirmação da tela seguinte**
+- Navegação: **Localizar no Menu**
 
 ### Oracle APEX / MSI3
 - Nunca navegar por URL direta — invalida a sessão APEX
 - Cards sem href CSS — OpenCV obrigatório
-- `networkidle` não funciona após cliques OpenCV — usar polling de URL
-
----
-
-## Observabilidade
-
-Cada execução gera em `evidence/YYYY-MM-DD/<teste>/`:
-
-| Arquivo | Conteúdo |
-|---|---|
-| `execution.log` | Log estruturado com todos os prints do runner |
-| `execution.json` | confidence_score e template_path por step |
-| `report.html` | Relatório visual offline — série temporal + badges |
-| `flakiness.json` | Histórico global de pass/fail por step |
-| `estado_jornada.json` | paciente_id compartilhado entre steps da jornada |
-
-**CausaFalha** classificada automaticamente:
-`TEMPLATE_NAO_ENCONTRADO | TIMEOUT | OCR_LEITURA | COORDENADA | ESTADO_AUSENTE | SISTEMA | DESCONHECIDA`
+- Formulários dialog — `ApexHelper` abstrai frames separados
 
 ---
 
@@ -278,15 +344,29 @@ Cada execução gera em `evidence/YYYY-MM-DD/<teste>/`:
 | 5a | CadastroPacienteFlow 23 steps, 3x | ✅ |
 | 5b | Observabilidade básica | ✅ |
 | 5c | Jornada ambulatório 3x | ✅ 26/05/2026 |
-| Obs-Fase1 | verify_lov + verify_fill + score + logger + report.html | ✅ 26/05/2026 |
 | 5d | AgendamentoFlow 13 steps, 3x | ✅ 27/05/2026 |
-| Onda 1 | confirm_template + _focar_si3 + _tpl_existe + SI3_PACIENTE_ID | ✅ 27/05/2026 |
-| **5e** | **AdmissaoComAgendamento + reorganização jornadas** | 🔵 28/05/2026 |
-| Onda 2 | summary_generator.py gerencial | 🔜 |
-| Onda 3 | Métricas + alertas regressão | 🔜 |
+| Onda 1 | confirm_template + validated + _focar_si3 | ✅ 27/05/2026 |
+| 5e | AdmissaoComAgendamento + reorganização | ✅ 28/05/2026 |
+| 5f | AdmissaoInternacaoFlow AI01–AI19 | ✅ 08/06/2026 |
+| v0.5.11 | EasyOCR + ocr_lido no report | ✅ 03/06/2026 |
+| **v0.5.12** | **`_clicar_aguardar` + templates comuns + popup flutuante** | ✅ 08/06/2026 |
+| 5g | Calibrar AdmissaoComAgendamento | 🔜 próximo |
 | 6 | YOLO fine-tuning | 🔜 |
 | 7 | CI/CD Jenkins + RDP | 🔜 |
 | 8 | Portfólio profissional | 🔜 |
+
+---
+
+## Pendências ativas
+
+| # | Pendência | Prioridade |
+|---|---|---|
+| 1 | Validar jornada internacao 3x consecutivas | 🔴 |
+| 2 | `self._tpl()` no BaseFlow + pasta `templates/si3/common/` | 🔴 |
+| 3 | Calibrar AdmissaoComAgendamento (Fase 5g) | 🔴 |
+| 4 | Calibrar `regioes_ocr` si3_internacao (nr_admissao) | 🟡 |
+| 5 | Validar jornadas ambulatorio/agendamento após v0.5.12 | 🟡 |
+| 6 | Alertas automáticos de regressão (Onda 3) | 🟢 |
 
 ---
 
@@ -294,7 +374,33 @@ Cada execução gera em `evidence/YYYY-MM-DD/<teste>/`:
 
 | Arquivo | Descrição |
 |---|---|
-| `docs/VTAE_Prompt_Instrucao_Geral.md` | Estado atual — usar como contexto em novo chat |
+| `docs/VTAE_Prompt_Instrucao_Geral_v0.5.12.md` | Estado atual — usar como contexto em novo chat |
 | `docs/VTAE_Documentacao_Tecnica.docx` | Arquitetura, runners, matchers, exceções |
 | `docs/VTAE_Manual_Criacao_Testes.docx` | Passo a passo para criar novos testes |
 | `CHANGELOG.md` | Histórico de mudanças |
+
+---
+
+## Ambiente virtual (.venv)
+
+```bash
+# Criar (uma vez)
+python -m venv .venv
+
+# Ativar (sempre antes de trabalhar)
+.venv\Scripts\activate          # Windows
+source .venv/bin/activate        # Linux/Mac
+
+# Instalar dependências
+pip install -r requirements.txt
+pip install -e .
+playwright install chromium
+
+# Verificar EasyOCR
+python -c "from src.vision.ocr import OcrHelper; OcrHelper.verificar_instalacao()"
+
+# Desativar
+deactivate
+```
+
+**O `.venv` está no `.gitignore`** — nunca commitar.

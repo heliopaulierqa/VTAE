@@ -122,6 +122,8 @@ class ExecutionObserver:
             msg += f" | causa: {step.causa_falha.value}"
         if step.validated is True:
             msg += " | validado=True"
+            if step.ocr_lido:
+                msg += f" | ocr_lido: '{step.ocr_lido}'"
         elif step.validated is False:
             msg += " | validado=False"
 
@@ -206,6 +208,7 @@ class ExecutionObserver:
                             "error":          s.error,
                             "causa_falha":    s.causa_falha.value if s.causa_falha else None,
                             "validated":      s.validated,
+                            "ocr_lido":       s.ocr_lido,
                             "timestamp":      s.timestamp,
                         }
                         for s in f.steps

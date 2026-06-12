@@ -791,34 +791,63 @@ class AdmissaoInternacaoFlow(BaseFlow):
         def fn():
             self._focar_si3()
 
-            # Sair 1: tela atual -> INTERNACAO
-            self._clicar_aguardar(
-                ctx,
-                acao=lambda: ctx.runner.safe_click(
-                    f"{self._TPL}/btn_sair.png", threshold=0.7
-                ),
-                confirmacao=f"{self._TPL}/titulo_internacao.png",
-                timeout=15, threshold=0.7, retries=2,
-                label="AI18 sair-1 -> internacao",
+            def sair_e_confirmar(tpl_sair, confirmacao, label,
+                                 timeout=15, threshold=0.7, retries=2):
+                """
+                Clica Sair (template da tela atual) e confirma a tela destino
+                por um elemento UNICO dela (nunca pelo titulo, que se repete).
+                So reclica se o botao Sair AINDA estiver visivel — se sumiu,
+                o clique pegou e a tela so esta lenta (timing de servidor).
+                """
+                for tentativa in range(1, retries + 2):
+                    if ctx.runner.is_visible(tpl_sair, threshold=threshold):
+                        ctx.runner.safe_click(tpl_sair, threshold=threshold)
+                    if ctx.runner.wait_template(confirmacao, timeout=timeout, threshold=threshold):
+                        return True
+                    if not ctx.runner.is_visible(tpl_sair, threshold=threshold):
+                        print(f"[AI18] {label}: Sair ja consumido, aguardando transicao lenta...")
+                        if ctx.runner.wait_template(confirmacao, timeout=timeout, threshold=threshold):
+                            return True
+                    if tentativa <= retries:
+                        print(f"[AI18] {label}: tentativa {tentativa}/{retries + 1} — reclicando...")
+                        time.sleep(0.5)
+                raise AssertionError(
+                    f"[AI18] {label}: tela nao confirmada apos {retries + 1} tentativas.\n"
+                    f"  Confirmacao: {confirmacao}\n"
+                    f"Veja se o elemento de confirmacao mudou de layout (recapturar template)."
+                )
+
+            # Sair 1: Alocar Leito -> INTERNACAO (confirma pelo titulo INTERNACAO)
+            sair_e_confirmar(
+                f"{self._TPL}/btn_sair_alocar.png",
+                f"{self._TPL}/titulo_internacao.png",
+                "sair-1 -> internacao",
             )
 
-            # Sair 2: INTERNACAO -> Menu Principal
-            self._clicar_aguardar(
-                ctx,
-                acao=lambda: ctx.runner.safe_click(
-                    f"{self._TPL}/btn_sair.png", threshold=0.7
-                ),
-                confirmacao=f"{self._TPL}/titulo_menu_principal.png",
-                timeout=15, threshold=0.7, retries=2,
-                label="AI18 sair-2 -> menu principal",
+            # Sair 2: INTERNACAO -> Menu Principal real
+            # Confirma por btn_pesquisar_menu (so existe no menu real;
+            # o titulo "Menu Principal" e ambiguo com a tela de login).
+            sair_e_confirmar(
+                f"{self._TPL}/btn_sair_internacao.png",
+                f"{self._TPL}/btn_pesquisar_menu.png",
+                "sair-2 -> menu principal",
             )
 
-            # Sair 3: fecha janela residual se ainda houver btn_sair visivel
-            tpl_sair = f"{self._TPL}/btn_sair.png"
-            if self._tpl_existe(tpl_sair):
-                if ctx.runner.is_visible(tpl_sair, threshold=0.7):
-                    ctx.runner.safe_click(tpl_sair, threshold=0.7)
-                    time.sleep(1.0)
+            # Sair 3: Menu Principal real -> tela de login.
+            # Botao Sair do menu fica na borda esquerda (sombra intermitente
+            # torna template instavel) -> clique por coordenada.
+            # Confirma por login/btn_entrar (so existe na tela de login).
+            self._focar_si3()
+            x, y = self._coord(ctx.config.coordenadas, "btn_sair_menu")
+            pyautogui.click(x, y)
+            if not ctx.runner.wait_template(
+                "templates/si3/login/btn_entrar.png", timeout=15, threshold=0.7
+            ):
+                raise AssertionError(
+                    "[AI18] sair-3 -> login: tela de login nao confirmada apos clique em (btn_sair_menu).\n"
+                    "  Confirmacao: templates/si3/login/btn_entrar.png\n"
+                    "Verifique a coordenada btn_sair_menu no config.yaml e se o login realmente abriu."
+                )
 
             return ctx.runner.screenshot(f"{ctx.evidence_dir}AI18_sair.png")
         return self._step("AI18", "sair para menu principal", fn, observer, ctx=ctx)

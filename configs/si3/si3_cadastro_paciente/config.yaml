@@ -1,10 +1,10 @@
 # configs/si3/si3_cadastro_paciente/config.yaml
-# CadastroPacienteFlow — v0.5.6 — coordenadas calibradas 19/05/2026
+# CadastroPacienteFlow — v0.5.12
 
 sistema: si3_cadastro_paciente
 tipo: desktop
 runner: opencv
-ocr_engine: easyocr  # tesseract | easyocr — controla verify_fill e verify_lov
+ocr_engine: easyocr
 
 ambientes:
   dev:
@@ -61,7 +61,7 @@ dados_faker:
 
   - campo: cor_etnia
     tipo: fixo
-    valor: 'PARDA' #PARDA
+    valor: 'PARDA'
 
   - campo: nacionalidade
     tipo: fixo
@@ -114,7 +114,7 @@ dados_faker:
   - campo: endereco
     tipo: fixo
     valor:
-      cep:         '01021000' #cep padrão: 01310100
+      cep:         '01021000'
       tipo:        'AVENIDA'
       logradouro:  'DR. ENEAS CARVALHO DE AGUIAR'
       numero:      '44'
@@ -144,7 +144,7 @@ coordenadas:
   btn_ok_nacion_coord:              { x: 708,  y: 324  }
   btn_ok_nacion_popup2:             { x: 461,  y: 363  }
 
-  # CP08-CP11 - Mãe, Pai, Cônjuge, Responsável
+  # CP08-CP11 - Mae, Pai, Conjuge, Responsavel
   campo_mae:                        { x: 33,   y: 244  }
   campo_pai:                        { x: 240,  y: 243  }
   campo_conjuge:                    { x: 447,  y: 243  }
@@ -160,17 +160,17 @@ coordenadas:
   campo_escolaridade:               { x: 591,  y: 330  }
   campo_frequenta_escola:           { x: 907,  y: 329  }
 
-  # Abas de navegação (fallback quando template não encontra)
+  # Abas de navegacao
   aba_documentos:                   { x: 63,   y: 361  }
   aba_enderecos:                    { x: 140,  y: 359  }
   aba_comunicacao:                  { x: 219,  y: 361  }
 
-  # CP21 - Aba Documentos
+  # CP19 - Aba Documentos
   campo_rg:                         { x: 330,  y: 425  }
   campo_cpf:                        { x: 264,  y: 450  }
   campo_cns:                        { x: 240,  y: 472  }
 
-  # CP19 - Aba Endereços
+  # CP20 - Aba Enderecos
   campo_cep:                        { x: 57,   y: 435  }
   campo_tipo_endereco:              { x: 136,  y: 437  }
   campo_logradouro:                 { x: 223,  y: 432  }
@@ -182,7 +182,7 @@ coordenadas:
   campo_referencia_endereco:        { x: 528,  y: 541  }
   campo_pais_endereco:              { x: 134,  y: 462  }
 
-  # CP20 - Aba Comunicação
+  # CP21 - Aba Comunicacao
   campo_comunicacao_prioridade_l1:  { x: 58,   y: 454  }
   campo_comunicacao_lov_l1:         { x: 254,  y: 452  }
   campo_comunicacao_numero_l1:      { x: 287,  y: 455  }
@@ -190,7 +190,7 @@ coordenadas:
   campo_comunicacao_lov_l2:         { x: 254,  y: 477  }
   campo_comunicacao_numero_l2:      { x: 286,  y: 415  }
 
-  # CP22 - Gerar Matrícula / Salvar / Sair
+  # CP22 - Gerar Matricula / Salvar / Sair
   btn_gerar_matricula:              { x: 894,  y: 653 }
   btn_sair_1:                       { x: 511,  y: 64  }
   btn_sair_2:                       { x: 512,  y: 67  }
@@ -198,41 +198,48 @@ coordenadas:
 
 regioes_ocr:
   # ─────────────────────────────────────────────────────────────────
-  # BOOTSTRAP MODE — padrão do VTAE
+  # BOOTSTRAP MODE — padrao VTAE
   #
-  # { x1: 0, y1: 0, x2: 0, y2: 0 } = verificação DESABILITADA
-  # valores reais                   = verificação HABILITADA
+  # { x1: 0, y1: 0, x2: 0, y2: 0 } = verificacao DESABILITADA
+  # valores reais                   = verificacao HABILITADA (EasyOCR)
   #
-  # Como habilitar:
+  # Como habilitar campo a campo:
   #   1. Rodar o teste e abrir o screenshot do step no Paint
-  #   2. Cursor no canto superior-esquerdo do campo → x1, y1
-  #   3. Cursor no canto inferior-direito do campo  → x2, y2
-  #   4. Substituir os zeros pelos valores reais
-  #   5. Rodar novamente — o verify_fill passa a validar o campo
+  #   2. Cursor no canto superior-esquerdo do CAMPO (nao do label) -> x1, y1
+  #   3. Cursor no canto inferior-direito do CAMPO -> x2, y2
+  #   4. Regra: x1 < x2 e y1 < y2 obrigatorio
+  #   5. Substituir zeros pelos valores reais
+  #   6. Rodar novamente — verify_fill passa a validar o campo
   # ─────────────────────────────────────────────────────────────────
 
-  # CP04 — Nome Social/Afetivo — desabilitado (OCR instavel em campo pequeno)
-  nome_social:       { x1: 0, y1: 0, x2: 0, y2: 0 }
+  # CP04 — Nome Social — bootstrap (calibrar com CP04_social.png)
+  # CP04 — Nome Social — anchor-based (robusto, sem coordenadas absolutas)
+  nome_social:
+    anchor_template: templates/si3/cadastro_paciente/label_nome_social.png
+    offset_x: 4
+    offset_y: -4
+    largura: 280
+    altura: 14
 
-  # CP05 — Data de Nascimento — desabilitado (OCR inverte digitos em campo pequeno)
-  data_nascimento:   { x1: 0, y1: 0, x2: 0, y2: 0 }
+  # CP05 — Data de Nascimento — bootstrap
+  data_nascimento:   { x1: 362, y1: 197, x2: 433, y2: 208 }
 
-  # CP06 — Sexo — desabilitado
+  # CP06 — Sexo — bootstrap
   sexo:              { x1: 0, y1: 0, x2: 0, y2: 0 }
 
-  # CP08 — Mae — desabilitado
+  # CP08 — Mae — bootstrap
   nome_mae:          { x1: 0, y1: 0, x2: 0, y2: 0 }
 
-  # CP12 — Cor/Etnia — desabilitado
+  # CP12 — Cor/Etnia — bootstrap (calibrar com CP12_cor.png)
   cor_etnia:         { x1: 0, y1: 0, x2: 0, y2: 0 }
 
-  # CP14 — Estado Civil — desabilitado
+  # CP14 — Estado Civil — bootstrap
   estado_civil:      { x1: 0, y1: 0, x2: 0, y2: 0 }
 
-  # CP15 — Ocupacao — desabilitado
+  # CP15 — Ocupacao — bootstrap
   ocupacao:          { x1: 0, y1: 0, x2: 0, y2: 0 }
 
-  # Campos mantidos dos anteriores (nao alterados)
+  # Campos mantidos
   nome:              { x1: 37,  y1: 155, x2: 440, y2: 175 }
   hora:              { x1: 460, y1: 193, x2: 530, y2: 210 }
   nacionalidade:     { x1: 620, y1: 193, x2: 830, y2: 210 }
@@ -243,6 +250,6 @@ regioes_ocr:
   celular:           { x1: 275, y1: 449, x2: 432, y2: 462 }
   email:             { x1: 276, y1: 474, x2: 433, y2: 487 }
 
-  # CP22 — HABILITADOS e validados — nao alterar
+  # CP22 — validados — nao alterar
   matricula:         { x1: 557, y1: 148, x2: 626, y2: 172 }
   identificador:     { x1: 455, y1: 148, x2: 525, y2: 166 }

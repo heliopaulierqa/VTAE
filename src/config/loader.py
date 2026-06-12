@@ -248,7 +248,7 @@ class ConfigLoader:
             regioes_ocr=data.get("regioes_ocr", {}),
             dados_fixos=dados_fixos,  # v0.5.7: secao dados: do config.yaml
             paciente_id=paciente_id,  # v0.5.9c: opcional — do .env
-            ocr_engine=str(data.get("ocr_engine", "tesseract")),  # v0.5.10: engine OCR
+            ocr_engine=str(data.get("ocr_engine", "easyocr")),  # v0.5.10: engine OCR
         )
 
     # ----------------------------------------------------------------

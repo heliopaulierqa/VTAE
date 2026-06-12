@@ -4,6 +4,10 @@ Todas as mudanças significativas do projeto são documentadas aqui.
 
 ---
 
+
+
+
+
 ## [0.5.12] — 2026-06-08
 
 ### Adicionado — Robustez de transições + templates comuns

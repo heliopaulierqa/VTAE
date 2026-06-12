@@ -190,6 +190,7 @@ coordenadas:
   # AI19 — Botao OK + Sair na tela Alocar Leito
   btn_ok_alocar:                { x: 540, y: 556 }   # capturar
   btn_sair_alocar:              { x: 510, y: 62 }   # capturar
+  btn_sair_menu:                { x: 19, y: 573 }   # Sair na borda esquerda do menu principal — sombra torna template instavel
 
 # ─────────────────────────────────────────────────────────────────────────────
 # regioes_ocr — calibrar com Paint apos primeira execucao

@@ -8,6 +8,7 @@
 sistema: si3_agendamento
 tipo: desktop
 runner: opencv
+ocr_engine: easyocr
 
 ambientes:
   dev:

@@ -32,13 +32,15 @@ def test_admissao_ambulatorio_jornada():
     )
 
     observer = ExecutionObserver(test_name="test_admissao_ambulatorio_jornada")
-    runner   = OpenCVRunner(confidence=config.confidence)
+    runner   = OpenCVRunner(confidence=config.confidence,
+                          ocr_engine=config.ocr_engine)
     ctx      = FlowContext(
         runner=runner,
         config=config,
         evidence_dir=observer.evidence_dir,
     )
-
+    observer.inject_logger(ctx)
+    
     # Login
     login = LoginFlow().execute(ctx, observer=observer)
     assert login.success, f"Login falhou: {login.failed_steps}"

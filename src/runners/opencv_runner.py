@@ -1,6 +1,13 @@
 """
 OpenCVRunner — runner desktop via visão computacional.
 
+v0.5.12 — verify_fill_clipboard
+  - verify_fill_clipboard: validacao via clipboard (Ctrl+A + Ctrl+C)
+    mais confiavel que OCR para campos de texto livre Oracle Forms
+  - _verify_campo detecta metodo automaticamente via config.yaml:
+      metodo: clipboard -> verify_fill_clipboard
+      x1/y1/x2/y2      -> verify_fill (EasyOCR)
+
 v0.5.9 — Obs-Fase1b: evidências reais
   - verify_fill: screenshot tirado DENTRO do loop (não antes), reflete estado real
   - verify_lov: novo método — confirma via OCR que campo LOV não ficou vazio
@@ -13,6 +20,7 @@ import os
 import time
 
 import pyautogui
+import pyperclip
 
 from src.runners.base_runner import BaseRunner
 from src.vision.template import TemplateMatcher
@@ -25,6 +33,11 @@ class OpenCVRunner(BaseRunner):
     """
     Runner real para sistemas desktop usando visão computacional.
 
+    v0.5.12 — verify_fill_clipboard:
+      Metodo alternativo ao OCR para campos de texto livre Oracle Forms.
+      Usa Ctrl+A + Ctrl+C para ler o valor do campo via clipboard.
+      Mais confiavel que OCR em campos com fonte bitmap pequena.
+
     v0.5.9 — verify_fill e verify_lov com evidências reais:
       O screenshot de validação é tirado DENTRO do loop de tentativas,
       garantindo que a imagem reflita o estado da tela no momento exato
@@ -32,7 +45,7 @@ class OpenCVRunner(BaseRunner):
     """
 
     def __init__(self, confidence: float = 0.8, scales: tuple = None,
-                 ocr_engine: str = "tesseract"):
+                 ocr_engine: str = "easyocr"):
         self.confidence = confidence
         self._matcher   = TemplateMatcher(confidence=confidence, scales=scales)
         self._logger: logging.Logger | None = None
@@ -155,39 +168,29 @@ class OpenCVRunner(BaseRunner):
         return self._matcher.find_all(template, threshold)
 
     # ──────────────────────────────────────────────
-    # verify_fill — validação pós-digitação (Obs-Fase1)
+    # verify_fill — validação pós-digitação via OCR (Obs-Fase1)
     # ──────────────────────────────────────────────
 
     def verify_fill(self, expected_value: str,
                     region: tuple,
                     timeout: float = 3.0,
                     debug_path: str = None) -> tuple[bool, str]:
-        """Retorna (ok, valor_lido) — valor_lido e o texto OCR do campo."""
         """
-        Verifica via OCR se o valor esperado está presente na região após digitação.
+        Verifica via OCR (EasyOCR) se o valor esperado esta na regiao apos digitacao.
+        Ideal para campos numericos e campos com regioes bem delimitadas.
 
-        CORREÇÃO v0.5.9: o screenshot é tirado DENTRO do loop de tentativas.
-        A versão anterior capturava o screenshot ANTES do loop — sempre lia
-        o estado anterior à digitação, gerando falsos negativos intermitentes.
-
-        Args:
-            expected_value: texto esperado (comparação case-insensitive).
-            region: (x1, y1, x2, y2) — área do campo na tela.
-            timeout: tempo máximo de espera em segundos.
-            debug_path: caminho para screenshot de debug se falhar.
-                        Se None, salva em /tmp/verify_fill_debug_<timestamp>.png
-                        para não sobrescrever debug de steps anteriores.
+        Para campos de texto livre Oracle Forms (nome, data, sexo),
+        prefira verify_fill_clipboard que e mais confiavel.
 
         Returns:
-            True se encontrou o valor na região dentro do timeout.
-            False se expirou — o caller decide se lança StepError.
+            (True, valor_lido) se encontrou o valor na regiao.
+            (False, "") se expirou sem encontrar.
         """
         deadline = time.monotonic() + timeout
         attempt  = 0
 
         while time.monotonic() < deadline:
             attempt += 1
-            # Screenshot tirado aqui — dentro do loop — reflete estado atual da tela
             ts  = int(time.monotonic() * 1000)
             tmp = f"/tmp/verify_fill_attempt_{ts}.png"
             self.screenshot(tmp)
@@ -204,10 +207,22 @@ class OpenCVRunner(BaseRunner):
 
             time.sleep(0.5)
 
-        # Falhou — salvar screenshot de diagnóstico com timestamp único
         ts_fail = int(time.time())
         path_debug = debug_path or f"/tmp/verify_fill_debug_{ts_fail}.png"
-        self.screenshot(path_debug)
+        # Salva o RECORTE da regiao — nao a tela inteira — para diagnostico preciso
+        tmp_full = f"/tmp/verify_fill_full_{ts_fail}.png"
+        self.screenshot(tmp_full)
+        try:
+            import cv2
+            img = cv2.imread(tmp_full)
+            x1, y1, x2, y2 = region
+            recorte = img[y1:y2, x1:x2]
+            folder = os.path.dirname(path_debug)
+            if folder:
+                os.makedirs(folder, exist_ok=True)
+            cv2.imwrite(path_debug, recorte)
+        except Exception:
+            self.screenshot(path_debug)
         self._log(
             f"[verify_fill] FALHOU após {attempt} tentativas — "
             f"valor esperado: '{expected_value}' | região: {region} | "
@@ -217,6 +232,60 @@ class OpenCVRunner(BaseRunner):
         return False, ""
 
     # ──────────────────────────────────────────────
+    # verify_fill_clipboard — validação via clipboard (v0.5.12)
+    # ──────────────────────────────────────────────
+
+    def verify_fill_clipboard(self, expected_value: str,
+                               coord: tuple = None,
+                               debug_path: str = None) -> tuple[bool, str]:
+        """
+        Verifica preenchimento via clipboard (Ctrl+A + Ctrl+C).
+
+        Mais confiavel que OCR para campos de texto livre Oracle Forms.
+        NAO clica no campo — assume que o campo ja esta focado apos digitacao.
+        Isso evita o failsafe do PyAutoGUI por coordenadas fora da tela.
+
+        Args:
+            expected_value: texto esperado (comparacao case-insensitive).
+            coord: ignorado — mantido para compatibilidade futura.
+            debug_path: ignorado — mantido para compatibilidade de assinatura.
+
+        Returns:
+            (True, valor_lido) se campo contem o valor esperado.
+            (False, valor_lido) caso contrario.
+        """
+        try:
+            pyperclip.copy("")          # limpa clipboard anterior
+            pyautogui.hotkey("ctrl", "a")
+            time.sleep(0.1)
+            pyautogui.hotkey("ctrl", "c")
+            time.sleep(0.2)
+            valor_lido = pyperclip.paste().strip()
+        except Exception as e:
+            self._log(
+                f"[verify_fill_clipboard] erro ao ler clipboard: {e}",
+                level="warning"
+            )
+            return False, ""
+
+        self._log(
+            f"[verify_fill_clipboard] esperado: '{expected_value}' | "
+            f"clipboard leu: '{valor_lido}'"
+        )
+
+        ok = expected_value.upper() in valor_lido.upper()
+        if not ok:
+            self._log(
+                f"[verify_fill_clipboard] FALHOU — "
+                f"esperado: '{expected_value}' | lido: '{valor_lido}'",
+                level="warning"
+            )
+        else:
+            self._log(f"[verify_fill_clipboard] OK — '{valor_lido}'")
+
+        return ok, valor_lido
+
+    # ──────────────────────────────────────────────
     # verify_lov — validação pós-seleção de LOV (Obs-Fase1b)
     # ──────────────────────────────────────────────
 
@@ -224,39 +293,13 @@ class OpenCVRunner(BaseRunner):
                    region: tuple,
                    timeout: float = 3.0,
                    debug_path: str = None) -> tuple[bool, str]:
-        """Retorna (ok, valor_lido) — valor_lido e o texto OCR do campo."""
         """
-        Verifica via OCR se um campo foi preenchido após seleção via LOV.
-
-        Diferente do verify_fill (que verifica um valor exato), o verify_lov
-        verifica apenas se o campo NÃO está vazio — qualquer texto vale.
-        Isso é necessário porque o conteúdo selecionado na LOV pode ser
-        formatado de forma diferente do termo de busca original.
-
-        PROBLEMA RESOLVIDO: AG07 (Executante), AB11 (Médico), AB12 (Procedimentos)
-        retornavam sucesso com campo vazio porque não havia validação pós-LOV.
-        Com verify_lov, o step falha imediatamente se o campo ficou vazio,
-        expondo o problema real (lista vazia, termo errado, popup não fechou).
-
-        Args:
-            campo_nome: nome do campo para mensagem de diagnóstico (ex: "Executante").
-            region: (x1, y1, x2, y2) — área do campo na tela.
-            timeout: tempo máximo de espera (padrão 3s — LOV fecha rápido).
-            debug_path: caminho para screenshot de debug se falhar.
+        Verifica via OCR se campo LOV foi preenchido apos selecao.
+        Verifica apenas se NAO esta vazio — qualquer texto vale.
 
         Returns:
-            True se o campo tem qualquer conteúdo após a LOV fechar.
-            False se o campo ficou vazio — indica falha real na seleção.
-
-        Uso obrigatório após qualquer LOV:
-            self._selecionar_via_lov(ctx, coords, ...)
-            if not ctx.runner.verify_lov("Executante",
-                                          region=ctx.config.regioes_ocr["campo_executante_ag"]):
-                raise AssertionError(
-                    "Falha de Observabilidade: campo Executante ficou vazio apos LOV. "
-                    "Verifique se o item foi selecionado — lista pode ter ficado vazia "
-                    "ou o popup nao fechou corretamente."
-                )
+            (True, valor_lido) se campo tem conteudo.
+            (False, "") se campo ficou vazio.
         """
         deadline = time.monotonic() + timeout
         attempt  = 0
@@ -279,7 +322,6 @@ class OpenCVRunner(BaseRunner):
 
             time.sleep(0.5)
 
-        # Campo ficou vazio — salvar evidência de diagnóstico
         ts_fail = int(time.time())
         path_debug = debug_path or f"/tmp/verify_lov_debug_{campo_nome}_{ts_fail}.png"
         self.screenshot(path_debug)
@@ -289,6 +331,58 @@ class OpenCVRunner(BaseRunner):
             level="warning"
         )
         return False, ""
+
+    # ──────────────────────────────────────────────
+    # find_anchor_region — OCR baseado em template de label (v0.5.13)
+    # ──────────────────────────────────────────────
+
+    def find_anchor_region(self, anchor_template: str,
+                            offset_x: int = 0,
+                            offset_y: int = 2,
+                            largura: int = 280,
+                            altura: int = 14,
+                            threshold: float = None) -> tuple | None:
+        """
+        Localiza o template do label na tela e calcula a regiao do campo ao lado.
+
+        Mais robusto que coordenadas absolutas — funciona mesmo se a janela
+        mudar de posicao ou resolucao.
+
+        Args:
+            anchor_template: caminho para o PNG do label do campo
+            offset_x:        deslocamento horizontal a partir do lado direito do label
+            offset_y:        deslocamento vertical a partir do topo do label
+            largura:         largura da regiao a ler
+            altura:          altura da regiao a ler
+            threshold:       threshold do template matching
+
+        Returns:
+            (x1, y1, x2, y2) da regiao do campo, ou None se label nao encontrado.
+        """
+        result = self._matcher.find_best(anchor_template, threshold)
+        if not result:
+            self._log(
+                f"[find_anchor_region] label nao encontrado: '{anchor_template}'",
+                level="warning"
+            )
+            return None
+        # result.x, result.y = centro do template
+        # Estimar largura do template para calcular borda direita
+        import cv2 as _cv2
+        try:
+            tpl = _cv2.imread(anchor_template)
+            tpl_w = tpl.shape[1] if tpl is not None else 0
+        except Exception:
+            tpl_w = 0
+        x1 = result.x - tpl_w // 2 + tpl_w + offset_x
+        y1 = result.y - altura // 2 + offset_y
+        x2 = x1 + largura
+        y2 = y1 + altura
+        self._log(
+            f"[find_anchor_region] label '{anchor_template}' encontrado em "
+            f"({result.x},{result.y}) -> regiao ({x1},{y1},{x2},{y2})"
+        )
+        return (x1, y1, x2, y2)
 
     # ──────────────────────────────────────────────
     # click_near — anchor-based clicking (F2-C)

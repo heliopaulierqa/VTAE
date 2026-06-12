@@ -200,6 +200,7 @@ vtae run --test admissao_internacao_jornada
 vtae run --test admissao_ambulatorio_jornada
 vtae run --test agendamento_jornada
 vtae run --test cadastro_funcionario
+tae run --jornada ambulatorio_com_agendamento
 
 # ── Utilitários ─────────────────────────────────────────────────────
 vtae systems

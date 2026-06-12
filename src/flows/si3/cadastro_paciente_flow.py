@@ -1,7 +1,6 @@
 # src/flows/si3/cadastro_paciente_flow.py
 """
 CadastroPacienteFlow - Cadastro completo de paciente no SI3 (Oracle Forms).
-Versao: 0.5.12
 
 Presupoe que o login ja foi executado via LoginFlow.
 
@@ -28,7 +27,7 @@ Steps:
     CP20  Aba Enderecos
     CP21  Aba Comunicacao (celular + e-mail)
     CP22  Gerar Matricula + Salvar + OCR + salvar estado_jornada.json
-    CP23  Sair — _clicar_aguardar confirma menu principal (v0.5.12)
+    CP23  Sair
 
 Coordenadas:
     TODAS as coordenadas ficam no config.yaml em coordenadas:
@@ -49,7 +48,6 @@ Templates em templates/si3/cadastro_paciente/:
     aba_comunicacao.png
     btn_salvar.png
     btn_gerar_matricula.png  (ou coordenada se nao tiver template)
-    titulo_menu_principal.png  <- titulo da janela Menu Principal (novo v0.5.12)
 
 Regra de popup Oracle Forms:
     - Popups ESPERADOS (CP21 salvar, CP22 gerar matricula): fechados silenciosamente
@@ -71,7 +69,7 @@ import pyautogui
 import pyperclip
 
 from src.core.context import FlowContext
-from src.core.estado_jornada import salvar as _salvar_estado_jornada
+from src.core.estado_jornada import salvar as _salvar_estado_jornada  # helper centralizado
 from src.core.result import CausaFalha, FlowResult, StepResult
 from src.flows.base_flow import BaseFlow
 from src.vision.ocr import OcrHelper
@@ -184,6 +182,8 @@ class CadastroPacienteFlow(BaseFlow):
         """
         Fecha popups de erro Oracle Forms (FRM-* / HC-INCOR) se aparecerem.
         Retorna True se encontrou e fechou pelo menos um popup.
+        Retorna False se nao encontrou nenhum popup.
+        Uso: steps que sabem que podem receber popup fecham silenciosamente.
         """
         encontrou_popup = False
         for _ in range(6):
@@ -207,6 +207,20 @@ class CadastroPacienteFlow(BaseFlow):
               validated: bool = None) -> StepResult:
         """
         Wrapper padrao para todos os steps com observabilidade.
+
+        Args:
+            confirm_template: template da tela destino — validated=True automatico.
+            validated: True explicito quando fn() executou verify_lov/verify_fill
+                       internamente. Corrige bug onde validated ficava None mesmo
+                       com verify_lov/fill rodando dentro de fn().
+
+        StepResult.validated:
+            True  — acao executou E resultado confirmado (confirm_template ou verify_*)
+            False — step falhou (excecao capturada)
+            None  — step executou sem validacao pos-acao
+
+        Nao verifica popup automaticamente — cada step e responsavel
+        por tratar popups esperados dentro do proprio fn().
         """
         if observer:
             observer.log_step_start(step_id, descricao)
@@ -262,33 +276,44 @@ class CadastroPacienteFlow(BaseFlow):
         return step
 
     # ----------------------------------------------------------------
-    # Helper _verify_campo — validacao pos-digitacao centralizada
+    # Helper _verify_campo — validacao pós-digitacao centralizada
+    # Evita duplicar o padrao verify_fill em cada step
     # ----------------------------------------------------------------
 
     def _verify_campo(self, ctx, nome_regiao: str, valor: str,
-                      step_id: str, obrigatorio: bool = True) -> None:
+                      step_id: str, obrigatorio: bool = True) -> str:
         """
         Verifica via OCR se o campo foi preenchido com o valor esperado.
+        Retorna o valor lido pelo OCR para propagacao em ocr_lido do StepResult.
+
+        Args:
+            ctx:           FlowContext
+            nome_regiao:   chave em regioes_ocr do config.yaml
+            valor:         valor esperado no campo
+            step_id:       ID do step para mensagem de erro
+            obrigatorio:   True = falha o step; False = avisa mas continua
         """
         if not valor:
-            return
+            return ""
         regiao = ctx.config.regioes_ocr.get(nome_regiao)
         if not regiao or not (regiao["x1"] or regiao["y1"]):
             print(f"[{step_id}] AVISO: regioes_ocr.{nome_regiao} nao calibrado — "
                   f"verify_fill pulado")
-            return
-        ok, _ = ctx.runner.verify_fill(
+            return ""
+        ok, valor_lido = ctx.runner.verify_fill(
             valor,
             region=(regiao["x1"], regiao["y1"], regiao["x2"], regiao["y2"]),
             debug_path=f"{ctx.evidence_dir}{step_id}_verify_{nome_regiao}_debug.png"
         )
         if not ok:
             msg = (f"[{step_id}] Campo '{nome_regiao}' nao preenchido com '{valor}'.\n"
+                   f"OCR leu: '{valor_lido}'\n"
                    f"Veja {step_id}_verify_{nome_regiao}_debug.png.")
             if obrigatorio:
                 raise AssertionError(msg)
             else:
                 print(f"AVISO: {msg}")
+        return valor_lido
 
     # ----------------------------------------------------------------
     # Steps CP01-CP03: Navegacao
@@ -337,24 +362,55 @@ class CadastroPacienteFlow(BaseFlow):
     # ----------------------------------------------------------------
 
     def _step_nome_social(self, ctx, dados: dict, observer=None) -> StepResult:
+        _ocr = [None]
         def fn():
             valor = dados.get("nome_social", "") or dados.get("nome", "")
             self._preencher_template(ctx, "campo_nome_social.png",
                                      "campo_nome_social", valor)
             pyautogui.press("tab")
-            self._verify_campo(ctx, "nome_social", valor, "CP04", obrigatorio=False)
+            time.sleep(0.3)
+            # verify_lov: confirma que o campo nao ficou vazio e lê o valor real
+            # Uso verify_lov (nao verify_fill) porque o valor aceito pelo Oracle Forms
+            # pode ter formatacao diferente do dado gerado pelo Faker
+            ok, valor_lido = ctx.runner.verify_lov(
+                "nome_social",
+                region=(18, 148, 350, 162),
+                timeout=3.0,
+            )
+            _ocr[0] = valor_lido
+            if not ok:
+                print(f"[CP04] AVISO: campo Nome Social ficou vazio apos digitacao")
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP04_social.png")
-        return self._step("CP04", "Nome Social", fn, observer, validated=True)
+        step = self._step("CP04", "Nome Social", fn, observer, validated=True)
+        if step.success and _ocr[0]:
+            step.ocr_lido = _ocr[0]
+        return step
 
     def _step_data_nascimento(self, ctx, dados: dict, observer=None) -> StepResult:
-        def fn():
-            data = dados["data_nascimento"]
-            self._preencher_coord(ctx, "campo_data_nascimento", data)
-            self._preencher_coord(ctx, "campo_hora", dados.get("hora", "00:00"))
-            self._verify_campo(ctx, "data_nascimento", data, "CP05", obrigatorio=True)
-            return ctx.runner.screenshot(f"{ctx.evidence_dir}CP05_data.png")
-        return self._step("CP05", "Data Nascimento + Hora", fn, observer, validated=True)
+     def fn():
+        data = dados["data_nascimento"]
+        hora = dados.get("hora", "00:00")
 
+        # Campo de data com máscara Oracle Forms: Ctrl+A não funciona.
+        # Digitar só os dígitos (sem /) — o Forms preenche os separadores.
+        x, y = self._coord(ctx, "campo_data_nascimento")
+        pyautogui.click(x, y); time.sleep(0.3)
+        pyautogui.press("backspace", presses=10, interval=0.02)
+        digitos_data = data.replace("/", "")   # "02/03/1966" → "02031966"
+        ctx.runner.type_text(digitos_data)
+        time.sleep(0.3)
+
+        # Campo hora: mesmo padrão
+        x, y = self._coord(ctx, "campo_hora")
+        pyautogui.click(x, y); time.sleep(0.3)
+        pyautogui.press("backspace", presses=6, interval=0.02)
+        digitos_hora = hora.replace(":", "")   # "00:00" → "0000"
+        ctx.runner.type_text(digitos_hora)
+        time.sleep(0.3)
+
+        self._verify_campo(ctx, "data_nascimento", data, "CP05", obrigatorio=True)
+        return ctx.runner.screenshot(f"{ctx.evidence_dir}CP05_data.png")
+     return self._step("CP05", "Data Nascimento + Hora", fn, observer, validated=True)
     def _step_sexo(self, ctx, dados: dict, observer=None) -> StepResult:
         def fn():
             valor = dados.get("sexo", "M")
@@ -507,11 +563,13 @@ class CadastroPacienteFlow(BaseFlow):
         def fn():
             self._clicar_aba(ctx, "aba_documentos.png", "aba_documentos")
             time.sleep(0.5)
+            # confirm_template: aba Documentos deve estar visível
             apareceu = ctx.runner.wait_template(f"{self._TPL}/aba_documentos.png",
                                                 timeout=8.0, threshold=0.7)
             if not apareceu:
                 raise AssertionError(
-                    "Falha de Observabilidade: aba_documentos.png nao visivel apos clicar na aba."
+                    "Falha de Observabilidade: aba_documentos.png nao visivel apos clicar na aba. "
+                    "Aba Documentos pode nao ter sido ativada."
                 )
 
             pyperclip.copy(dados.get("rg", "44643579X"))
@@ -527,6 +585,7 @@ class CadastroPacienteFlow(BaseFlow):
             pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
 
             pyautogui.click(868, 424); time.sleep(0.3)
+            # sempre 30 dias atras — nunca anterior ao nascimento, nunca futuro
             data_emissao = (date.today() - timedelta(days=30)).strftime("%d/%m/%Y")
             pyperclip.copy(data_emissao)
             pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
@@ -548,11 +607,13 @@ class CadastroPacienteFlow(BaseFlow):
         def fn():
             self._clicar_aba(ctx, "aba_enderecos.png", "aba_enderecos")
             time.sleep(0.5)
+            # confirm_template: aba Enderecos deve estar visível
             apareceu = ctx.runner.wait_template(f"{self._TPL}/aba_enderecos.png",
                                                 timeout=8.0, threshold=0.7)
             if not apareceu:
                 raise AssertionError(
-                    "Falha de Observabilidade: aba_enderecos.png nao visivel apos clicar na aba."
+                    "Falha de Observabilidade: aba_enderecos.png nao visivel apos clicar na aba. "
+                    "Aba Enderecos pode nao ter sido ativada."
                 )
             end = dados.get("endereco", {})
 
@@ -599,11 +660,13 @@ class CadastroPacienteFlow(BaseFlow):
         def fn():
             self._clicar_aba(ctx, "aba_comunicacao.png", "aba_comunicacao")
             time.sleep(0.5)
+            # confirm_template: aba Comunicacao deve estar visível
             apareceu = ctx.runner.wait_template(f"{self._TPL}/aba_comunicacao.png",
                                                 timeout=8.0, threshold=0.7)
             if not apareceu:
                 raise AssertionError(
-                    "Falha de Observabilidade: aba_comunicacao.png nao visivel apos clicar na aba."
+                    "Falha de Observabilidade: aba_comunicacao.png nao visivel apos clicar na aba. "
+                    "Aba Comunicacao pode nao ter sido ativada."
                 )
 
             com = dados.get("comunicacao", {})
@@ -634,6 +697,7 @@ class CadastroPacienteFlow(BaseFlow):
             # Salvar antes de gerar matricula
             pyautogui.click(58, 66); time.sleep(2.5)
 
+            # Popup apos salvar e comportamento esperado no SI3 — fechar silenciosamente
             if self._fechar_popups_oracle(ctx):
                 print("[CP21] Popup Oracle Forms fechado apos salvar — comportamento esperado")
 
@@ -657,6 +721,7 @@ class CadastroPacienteFlow(BaseFlow):
             # 2. Salvar
             pyautogui.click(58, 66); time.sleep(3.0)
 
+            # Popup apos salvar e comportamento esperado — fechar silenciosamente
             if self._fechar_popups_oracle(ctx):
                 print("[CP22] Popup Oracle Forms fechado apos salvar — comportamento esperado")
 
@@ -667,7 +732,7 @@ class CadastroPacienteFlow(BaseFlow):
             r_mat = ctx.config.regioes_ocr["matricula"]
             regiao_matricula = (r_mat["x1"], r_mat["y1"], r_mat["x2"], r_mat["y2"])
 
-            # 5. OCR — Matricula
+            # 5. OCR — Matricula (validacao de que foi gerada)
             OcrHelper.salvar_debug(screenshot_path, regiao_matricula,
                                    f"{ctx.evidence_dir}CP22_ocr_debug.png")
             texto_mat = OcrHelper.ler_regiao(screenshot_path, regiao_matricula)
@@ -682,7 +747,10 @@ class CadastroPacienteFlow(BaseFlow):
             matricula = numeros_mat[0]
             print(f"[CP22] Matricula gerada: {matricula}")
 
-            # 6. OCR — Identificador
+            # 6. OCR — Identificador (usado como paciente_id no AB02)
+            # O Identificador fica no topo da tela, campo fixo, so digitos
+            # Regiao calibravel em regioes_ocr.identificador no config.yaml
+            # Fallback: usa a matricula se a regiao nao estiver configurada
             paciente_id = matricula  # fallback padrao
             if "identificador" in ctx.config.regioes_ocr:
                 r_id = ctx.config.regioes_ocr["identificador"]
@@ -696,14 +764,16 @@ class CadastroPacienteFlow(BaseFlow):
                     print(f"[CP22] Identificador lido: {paciente_id}")
                 else:
                     print(f"[CP22] AVISO: OCR nao leu Identificador (texto='{texto_id}') "
-                          f"— usando matricula '{matricula}' como fallback.")
+                          f"— usando matricula '{matricula}' como fallback. "
+                          f"Ajuste regioes_ocr.identificador no config.yaml.")
             else:
                 print(f"[CP22] regioes_ocr.identificador nao configurado — "
-                      f"usando matricula '{matricula}' como paciente_id.")
+                      f"usando matricula '{matricula}' como paciente_id. "
+                      f"Adicione ao config.yaml para usar o Identificador.")
 
-            # 7. Salva estado
+            # 7. Salva Identificador como paciente_id — usado pelo AB02 na admissao
             _salvar_estado_jornada("paciente_id", paciente_id)
-            _salvar_estado_jornada("matricula", matricula)
+            _salvar_estado_jornada("matricula", matricula)  # mantém matricula separada
 
             return screenshot_path
         return self._step("CP22", "Gerar Matricula + Salvar + OCR", fn, observer,
@@ -714,30 +784,12 @@ class CadastroPacienteFlow(BaseFlow):
     # ----------------------------------------------------------------
 
     def _step_sair(self, ctx, observer=None) -> StepResult:
-        """
-        Sair do cadastro e voltar ao menu principal.
-        Sair 1 e 2: coordenadas com sleep aumentado (telas intermediarias).
-        Sair 3: _clicar_aguardar confirma chegada ao menu principal.
-
-        Template necessario: titulo_menu_principal.png
-        """
         def fn():
-            # Sair 1 — tela de cadastro -> tela intermediaria
             self._clicar_coord(ctx, "btn_sair_1")
-            time.sleep(2.5)
-
-            # Sair 2 — tela intermediaria -> proxima
+            time.sleep(1.5)
             self._clicar_coord(ctx, "btn_sair_2")
-            time.sleep(2.5)
-
-            # Sair 3 — confirma chegada ao menu principal
-            self._clicar_aguardar(
-                ctx,
-                acao=lambda: self._clicar_coord(ctx, "btn_sair_menu"),
-                confirmacao=f"{self._TPL}/titulo_menu_principal.png",
-                timeout=15, threshold=0.7, retries=2,
-                label="CP23 sair-3 -> menu principal",
-            )
-
+            time.sleep(1.5)
+            self._clicar_coord(ctx, "btn_sair_menu")
+            time.sleep(1.0)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP23_menu.png")
         return self._step("CP23", "sair para o Menu Principal", fn, observer)

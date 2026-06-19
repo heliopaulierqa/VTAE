@@ -57,7 +57,8 @@ dados_faker:
 
   - campo: hora
     tipo: fixo
-    valor: '00:00'
+    valor: ''  
+    #00:00
 
   - campo: cor_etnia
     tipo: fixo
@@ -85,7 +86,7 @@ dados_faker:
 
   - campo: tipo_deficiencia
     tipo: fixo
-    valor: ''
+    valor: 'TESTE AUTOMATIZADO'
 
   - campo: escolaridade
     tipo: fixo
@@ -97,11 +98,11 @@ dados_faker:
 
   - campo: conjuge
     tipo: fixo
-    valor: 'TESTE'
+    valor: 'TESTE AUTOMATIZADO'
 
   - campo: responsavel
     tipo: fixo
-    valor: 'TETSE'
+    valor: 'TESTE AUTOMATIZADO'
 
   - campo: rg
     tipo: fixo

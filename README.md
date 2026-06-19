@@ -4,9 +4,9 @@
 > para sistemas web modernos, legados desktop e ambientes híbridos.
 
 ![Python](https://img.shields.io/badge/Python-3.13%2B-blue)
-![Versão](https://img.shields.io/badge/versão-0.5.12-purple)
+![Versão](https://img.shields.io/badge/versão-0.5.16-purple)
 ![Testes](https://img.shields.io/badge/testes-297%20unitários-green)
-![Fase](https://img.shields.io/badge/fase-5f%20concluída-brightgreen)
+![Fase](https://img.shields.io/badge/fase-1%20(gate)%20em%20curso-orange)
 
 ---
 
@@ -27,12 +27,14 @@ Ideal para:
 
 ### 1. Pré-requisito do sistema operacional
 
-**Python 3.13+** — única dependência de SO necessária.
+**Python 3.13+** — única dependência de SO necessária. Confirmado: o projeto **não** requer Java/JDK nem Tesseract instalados na máquina — tudo é resolvido via `pip`.
 ```bash
 python --version  # deve retornar 3.13.x
 ```
 
 > ✅ **Tesseract removido na v0.5.11** — o VTAE usa EasyOCR (instalado via pip, sem dependência de SO).
+
+> ⚠️ **Resolução de tela: 1920x1080.** Vários templates usam coordenadas absolutas (ex: `primeira_linha_grade_ag` da jornada `ambulatorio_com_agendamento`). Rodar em resolução diferente quebra esses steps silenciosamente — o erro aparece como falha de clique/template, não como aviso de resolução. Ajuste a tela antes de rodar a primeira jornada.
 
 ---
 
@@ -79,6 +81,8 @@ playwright install chromium
 
 Cada jornada tem seu próprio `.env` isolado. **Nunca commitar no Git.**
 
+> ⚠️ **Nenhum comentário na mesma linha de `VAR=valor`** — comentários sempre em linha separada, acima. Um valor contendo `#` (ex: senha `teste#1906`) é truncado se houver corte por `#` inline.
+
 ```bash
 # configs/si3/si3_cadastro_paciente/.env
 SI3_USER=seu_usuario
@@ -89,7 +93,19 @@ SI3_PACIENTE_ID=   # vazio = cadastra novo; preenchido = reutiliza
 SI3_USER=seu_usuario
 SI3_PASS=sua_senha
 SI3_PACIENTE_ID=
+
+# configs/si3/si3_ambulatorio/.env
+SI3_USER=seu_usuario
+SI3_PASS=sua_senha
+SI3_PACIENTE_ID=
+
+# configs/si3/si3_agendamento/.env
+SI3_USER=seu_usuario
+SI3_PASS=sua_senha
+SI3_PACIENTE_ID=
 ```
+
+**Admissão standalone:** se `SI3_PACIENTE_ID` estiver preenchido, o flow de admissão correspondente usa esse paciente isoladamente (`vtae run --test admissao_com_agendamento_jornada`, por exemplo), sem depender de uma jornada completa rodando antes. Sempre limpar o valor após o uso standalone — um `.env` esquecido faz a próxima jornada completa admitir o paciente errado.
 
 ---
 
@@ -130,10 +146,10 @@ VTAE/
 │   │   ├── si3/
 │   │   │   ├── login_flow.py
 │   │   │   ├── cadastro_paciente_flow.py    (CP01–CP23) ✅ 3x
-│   │   │   ├── admissao_internacao_flow.py  (AI01–AI19) ✅ validado 08/06
-│   │   │   ├── admissao_ambulatorio_flow.py (AB01–AB15) ✅ 3x
-│   │   │   ├── agendamento_flow.py          (AG01–AG13) ✅ 3x
-│   │   │   └── admissao_com_agendamento_flow.py         🔜 aguarda calibração
+│   │   │   ├── admissao_internacao_flow.py  (AI01–AI19) ✅ 3x — 10/06
+│   │   │   ├── admissao_ambulatorio_flow.py (AB01–AB16) ✅ 3x — guards Fase 1 pendentes (AB06–AB12 sem OCR)
+│   │   │   ├── agendamento_flow.py          (AG01–AG13) ✅ 3x — revalidar pós-gate
+│   │   │   └── admissao_com_agendamento_flow.py (AB05 corrigido 12/06 — fluxo 3 telas + guard de título) 🔜 3x pendente pós-gate
 │   │   ├── sislab/
 │   │   │   ├── login_flow.py
 │   │   │   └── cadastro_funcionario_flow.py (CF01–CF10) ✅
@@ -159,7 +175,8 @@ VTAE/
 │   │   ├── titulo_internacao.png            # novo v0.5.12
 │   │   └── titulo_menu_principal.png        # novo v0.5.12
 │   ├── admissao_ambulatorio/
-│   └── agendamento/
+│   ├── agendamento/
+│   └── common/                              # 🔜 Fase 1 Passo B: popup_erro_generico.png, btn_ok_popup_erro.png
 ├── tests/
 │   ├── unit/
 │   └── integration/
@@ -171,7 +188,8 @@ VTAE/
 │               ├── ambulatorio/sem_agendamento/
 │               └── ambulatorio/com_agendamento/
 ├── scripts/
-│   └── posicao_mouse.py
+│   ├── posicao_mouse.py
+│   └── testar_regiao_ocr.py        # testa região OCR isolada sem rodar a jornada inteira
 └── evidence/
     ├── flakiness.json
     ├── estado_jornada.json
@@ -216,7 +234,7 @@ vtae metrics
 
 | Sistema | Tipo | Runner | Flows validados | Steps |
 |---|---|---|---|---|
-| SI3 | Desktop Oracle Forms | OpenCV | Login, CadastroPaciente (3×), AdmissaoInternacao ✅ 08/06, AdmissaoAmbulatorio (3×), Agendamento (3×) | 3+23+19+15+13 |
+| SI3 | Desktop Oracle Forms | OpenCV | Login, CadastroPaciente (3×), AdmissaoInternacao (3×), AdmissaoAmbulatorio (3× — guards Fase 1 pendentes), AdmissaoComAgendamento (AB05 corrigido, 3× pendente pós-gate), Agendamento (3× — revalidar pós-gate) | 3+23+19+16+13 |
 | SisLab | Desktop Oracle Forms | OpenCV | Login, CadastroFuncionario | 3+10 |
 | MSI3 | Web Oracle APEX 23.1 | Playwright+OpenCV | Login, FrequenciaAplicacao, TipoAnestesia | 5+10+9 |
 
@@ -298,6 +316,20 @@ self._clicar_aguardar(
 
 ---
 
+## Contrato de classificação de campo (Fase 1 — em curso)
+
+Todo campo digitado em um flow é classificado em uma destas três categorias, explícitas no código:
+
+| Classificação | Comportamento se vazio/incorreto | Uso |
+|---|---|---|
+| **Obrigatório** | `AssertionError` imediato + screenshot — para o flow | Campo sem o qual a operação não salva |
+| **Opcional** | Aviso não-bloqueante + grava `step.ocr_lido` no report | Campo informativo, pode ficar vazio legitimamente |
+| **Popup de erro** | Detecta popup genérico do Oracle Forms, lê a mensagem via OCR, falha com a causa real | Dado inexistente/inválido digitado em qualquer campo |
+
+**Status:** helpers `_verify_campo_obrigatorio` / `_verify_campo_opcional` em implementação no `BaseFlow`. Escopo travado na jornada `ambulatorio` (AB06–AB12) até 3x consecutivas com os guards ativos — só então o padrão é propagado para `internacao`, `agendamento` e `ambulatorio_com_agendamento`. Detalhe completo em `VTAE_Roadmap_Observabilidade_v0_5_16.docx`.
+
+---
+
 ## OcrEngine — engine OCR centralizado (v0.5.11)
 
 ```yaml
@@ -350,11 +382,18 @@ ocr_engine: easyocr   # padrão — pip puro, sem instalação no SO
 | 5e | AdmissaoComAgendamento + reorganização | ✅ 28/05/2026 |
 | 5f | AdmissaoInternacaoFlow AI01–AI19 | ✅ 08/06/2026 |
 | v0.5.11 | EasyOCR + ocr_lido no report | ✅ 03/06/2026 |
-| **v0.5.12** | **`_clicar_aguardar` + templates comuns + popup flutuante** | ✅ 08/06/2026 |
-| 5g | Calibrar AdmissaoComAgendamento | 🔜 próximo |
-| 6 | YOLO fine-tuning | 🔜 |
-| 7 | CI/CD Jenkins + RDP | 🔜 |
-| 8 | Portfólio profissional | 🔜 |
+| v0.5.12 | `_clicar_aguardar` + templates comuns + popup flutuante | ✅ 08/06/2026 |
+| v0.5.14 | AI18 saída multi-tela + AB01 Localizar no Menu | ✅ 10/06/2026 |
+| v0.5.15 | Ambulatório 3x consecutivas (AB04/AB12/AB14/AB15) | ✅ 11/06/2026 |
+| v0.5.16 | Bugfixes infra (loader/.env/AB05 com_agendamento) | ✅ 12/06/2026 |
+| **Fase 1 (GATE)** | **Observabilidade real por campo — jornada `ambulatorio` (AB06–AB12)** | 🔴 em curso |
+| Fase 2 | verify_lov CP05–CP15 | 🔴 represado até gate |
+| Fase 3 | verify_similar + cenários negativos + Fase 5g + nr_admissao | 🔴 represado até gate |
+| Fase 4 | Fail Fast genérico (aviso terminal + flakiness_monitor) | 🔴 represado até gate |
+| Fase 5 | Dashboard + valor para gestores | 🔜 |
+| Fase 6 | YOLO fine-tuning | 🔜 |
+| Fase 7 | CI/CD Jenkins + RDP | 🔜 |
+| Fase 8 | Portfólio profissional | 🔜 |
 
 ---
 
@@ -362,12 +401,19 @@ ocr_engine: easyocr   # padrão — pip puro, sem instalação no SO
 
 | # | Pendência | Prioridade |
 |---|---|---|
-| 1 | Validar jornada internacao 3x consecutivas | 🔴 |
-| 2 | `self._tpl()` no BaseFlow + pasta `templates/si3/common/` | 🔴 |
-| 3 | Calibrar AdmissaoComAgendamento (Fase 5g) | 🔴 |
-| 4 | Calibrar `regioes_ocr` si3_internacao (nr_admissao) | 🟡 |
-| 5 | Validar jornadas ambulatorio/agendamento após v0.5.12 | 🟡 |
-| 6 | Alertas automáticos de regressão (Onda 3) | 🟢 |
+| 1 | **Fase 1 Passo A** — helpers `_verify_campo_obrigatorio`/`_verify_campo_opcional` no `BaseFlow` | 🔴 imediato — risco zero |
+| 2 | **Fase 1 Passo C** — diagnosticar campo vazio que causou AB15='' em 12/06 | 🔴 imediato |
+| 3 | **Fase 1 Passo B** — capturar `popup_erro_generico.png`/`btn_ok_popup_erro.png` em `templates/si3/common/` | 🔴 |
+| 4 | **Fase 1 Passo D.1–D.5** — calibrar e ativar guards AB06–AB12, um por vez | 🔴 |
+| 5 | **Fase 1 Passo E** — cenário negativo (dado inválido → popup) | 🟡 |
+| 6 | Validar `ambulatorio_com_agendamento` 3x (Fase 5g) | 🟡 — pós-gate |
+| 7 | Validar `agendamento` puro pós v0.5.16 | 🟡 — pós-gate |
+| 8 | Propagar padrão de observabilidade para `internacao` | 🟡 — pós-gate |
+| 9 | Triagem dos 76 testes unitários (xfail/skip com reason) | 🟡 |
+| 10 | Calibrar `nr_admissao` si3_internacao (sair do bootstrap) | 🟡 |
+| 11 | Aviso visual genérico no terminal quando step falha (Fase 4) | 🟡 |
+| 12 | `flakiness_monitor.py` — alerta automático de regressão | 🟢 |
+| 13 | Investigar `--repeat N` não repetir a jornada inteira no CLI | 🟢 |
 
 ---
 
@@ -375,7 +421,8 @@ ocr_engine: easyocr   # padrão — pip puro, sem instalação no SO
 
 | Arquivo | Descrição |
 |---|---|
-| `docs/VTAE_Prompt_Instrucao_Geral_v0.5.12.md` | Estado atual — usar como contexto em novo chat |
+| `VTAE_Prompt_Instrucao_Geral_v0.5.16.md` | Estado atual — usar como contexto em novo chat |
+| `VTAE_Roadmap_Observabilidade_v0_5_16.docx` | Roadmap consolidado — Fase 1 (gate) detalhada + Fases 2–6 |
 | `docs/VTAE_Documentacao_Tecnica.docx` | Arquitetura, runners, matchers, exceções |
 | `docs/VTAE_Manual_Criacao_Testes.docx` | Passo a passo para criar novos testes |
 | `CHANGELOG.md` | Histórico de mudanças |

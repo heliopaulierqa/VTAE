@@ -50,7 +50,7 @@ dados:
   # ── AI08: Provedor e Plano ────────────────────────────────────────────
   # cenario_provedor define qual bloco abaixo sera usado pelo flow
   # Valores possiveis: sus | particular | incor_sis | convenio
-  cenario_provedor: 'sus'
+  cenario_provedor: 'convenio'
 
   cenarios_provedor:
     sus:

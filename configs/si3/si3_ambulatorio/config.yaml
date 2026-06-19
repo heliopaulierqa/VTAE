@@ -33,7 +33,7 @@ dados:
   # Cenario de provedor ativo
   # Opcoes: sus | particular | incor_sis | convenio_allianz | convenio_unimed
   # ----------------------------------------------------------------
-  cenario_provedor: 'sus'
+  cenario_provedor: 'convenio'
 
   cenarios_provedor:
 

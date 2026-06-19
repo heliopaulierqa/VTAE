@@ -4,9 +4,54 @@ Todas as mudanças significativas do projeto são documentadas aqui.
 
 ---
 
+## [0.5.16] — 2026-06-12
 
+### Corrigido — Bugs críticos de infraestrutura
+- **`src/config/loader.py`**: `_parsear_env_file` cortava valores por `#` inline (`value.split("#", 1)[0]`) — quebrava qualquer senha/valor contendo `#` (ex: `teste#1906` → `teste`). Revertido. Nova regra: `.env` nunca tem comentário na mesma linha de `VAR=valor` — comentários sempre em linha separada acima.
+- **`src/config/loader.py`** e **`src/runners/opencv_runner.py`**: default `ocr_engine: "tesseract"` corrigido para `"easyocr"` em `ConfigLoader._construir` e `OpenCVRunner.__init__` (o `__init__` não repassava `config.ocr_engine`).
+- **`src/flows/si3/cadastro_paciente_flow.py`**: CP05 `_step_data_nascimento` — `Ctrl+A` não seleciona corretamente em campo de data com máscara Oracle Forms (`02/03/1966` virava `12/03/1966`); trocado por `backspace(10x) + type_text` (mesmo padrão aplicado ao campo de hora).
 
+### Corrigido — AdmissaoComAgendamentoFlow (AB05)
+- Fluxo real de 3 telas mapeado: Cadastro de Pacientes → Verificar Agendamento → AMBULATORIO.
+- `wait_template` em `campo_unidade_funcional.png` / `label_ambulatorio.png` / `btn_guia_tiss.png` dava score 1.0 mesmo com a tela "Verificar Agendamento" ainda aberta (Oracle Forms renderiza elementos de telas adjacentes simultaneamente). Substituído por guard `_titulo_janela_contem("AMBULAT", excluir="VERIFICAR")` via `pygetwindow`.
+- Novo template `btn_admitir_verificar_ag.png` (botão "Admitir" da tela Verificar Agendamento) + coordenada `primeira_linha_grade_ag` (seleção da linha do agendamento na grade) calibrados.
 
+### Adicionado
+- **`src/flows/si3/admissao_ambulatorio_flow.py`** AB02: contrato `paciente_id` — `.env` (`SI3_PACIENTE_ID`) preenchido = teste standalone; vazio = lê `estado_jornada.json` (fluxo de jornada completa). Permite `vtae run --test admissao_com_agendamento_jornada` isolado.
+- **`scripts/testar_regiao_ocr.py`**: testa região OCR isolada (salva `_crop_raw.png` + `_crop_proc.png` com upscale 3x + grayscale), sem rodar a jornada inteira (~90s economizados por ciclo de calibração).
+- `VTAE_Roadmap_Observabilidade_v0_5_16.docx` — roadmap consolidado com Fase 1 (gate) de observabilidade real por campo.
+- `VTAE_Prompt_Instrucao_Geral_v0.5.16.md` — instrução geral do projeto atualizada (substitui a v0.5.12).
+
+### Descoberto — não corrigido ainda
+- Jornada `ambulatorio`: AB06–AB12 não verificam via OCR se o valor digitado foi aceito pelo sistema ("testes cegos"). Causou AB15 (Nr. Admissão) lendo vazio após 14 steps "OK". Vira **Fase 1 (gate)** — escopo travado na jornada `ambulatorio` até validação 3x consecutivas; nenhuma outra jornada recebe os novos guards antes disso.
+
+---
+
+## [0.5.15] — 2026-06-11
+
+### Validado
+- Jornada `ambulatorio` (sem agendamento): 3x consecutivas (pacientes 49976892/94/95).
+  - AB04: campo Tipo = RUA via `backspace×20 + digitar + Tab + Ctrl+S`
+  - AB12: profissional do procedimento selecionado via Tab
+  - AB14: salvar via F10
+  - AB15: `regioes_ocr.nr_admissao_amb` calibrado no `config.yaml` — `ocr_lido='00234746'`
+
+### Adicionado
+- `scripts/testar_regiao_ocr.py` criado nesta sessão (ver detalhe completo em 0.5.16).
+
+---
+
+## [0.5.14] — 2026-06-10
+
+### Corrigido
+- **AI18** (saída multi-tela, `admissao_internacao_flow.py`): reescrito com template por tela + confirmação por elemento único + coordenada na borda + confirmar antes de reclicar — padrão reaproveitável para saídas multi-tela.
+- **AB01** (`admissao_ambulatorio_flow.py`): migrado para "Localizar no Menu" (`menu_ambulatorio.png` + `btn_pesquisar_menu.png` + `titulo_ambulatorio.png`).
+- `ocr_engine: easyocr` adicionado aos configs `si3_ambulatorio` e `si3_agendamento`.
+
+### Validado
+- Jornada `internacao`: 3x consecutivas (pacientes 49976883/84/85).
+
+---
 
 ## [0.5.12] — 2026-06-08
 

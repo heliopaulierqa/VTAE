@@ -572,32 +572,32 @@ class CadastroPacienteFlow(BaseFlow):
                     "Aba Documentos pode nao ter sido ativada."
                 )
 
-            pyperclip.copy(dados.get("rg", "44643579X"))
-            pyautogui.click(262, 424); time.sleep(0.3)
-            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            pyperclip.copy(dados.get("rg", "44643579X")); time.sleep(0.15)
+            pyautogui.click(262, 424); time.sleep(0.5)
+            pyautogui.hotkey("ctrl", "v"); time.sleep(0.3)
 
-            pyautogui.click(637, 427); time.sleep(0.3)
-            pyperclip.copy("SSP")
-            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            pyautogui.click(637, 427); time.sleep(0.5)
+            pyperclip.copy("SSP"); time.sleep(0.15)
+            pyautogui.hotkey("ctrl", "v"); time.sleep(0.3)
 
-            pyautogui.click(780, 426); time.sleep(0.3)
-            pyperclip.copy("SP")
-            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            pyautogui.click(780, 426); time.sleep(0.5)
+            pyperclip.copy("SP"); time.sleep(0.15)
+            pyautogui.hotkey("ctrl", "v"); time.sleep(0.3)
 
-            pyautogui.click(868, 424); time.sleep(0.3)
+            pyautogui.click(868, 424); time.sleep(0.5)
             # sempre 30 dias atras — nunca anterior ao nascimento, nunca futuro
             data_emissao = (date.today() - timedelta(days=30)).strftime("%d/%m/%Y")
-            pyperclip.copy(data_emissao)
-            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            pyperclip.copy(data_emissao); time.sleep(0.15)
+            pyautogui.hotkey("ctrl", "v"); time.sleep(0.3)
 
             cpf = dados["cpf"].replace(".", "").replace("-", "")
-            pyautogui.click(262, 450); time.sleep(0.3)
-            pyperclip.copy(cpf)
-            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            pyautogui.click(262, 450); time.sleep(0.5)
+            pyperclip.copy(cpf); time.sleep(0.15)
+            pyautogui.hotkey("ctrl", "v"); time.sleep(0.3)
 
-            pyautogui.click(257, 476); time.sleep(0.3)
-            pyperclip.copy("726337961670004")
-            pyautogui.hotkey("ctrl", "v"); time.sleep(0.2)
+            pyautogui.click(257, 476); time.sleep(0.5)
+            pyperclip.copy("726337961670004"); time.sleep(0.15)
+            pyautogui.hotkey("ctrl", "v"); time.sleep(0.3)
 
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CP19_docs.png")
         return self._step("CP19", "Aba Documentos: RG + CPF + CNS", fn, observer,

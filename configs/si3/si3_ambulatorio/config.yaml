@@ -33,7 +33,7 @@ dados:
   # Cenario de provedor ativo
   # Opcoes: sus | particular | incor_sis | convenio_allianz | convenio_unimed
   # ----------------------------------------------------------------
-  cenario_provedor: 'convenio'
+  cenario_provedor: 'sus'
 
   cenarios_provedor:
 
@@ -78,7 +78,7 @@ dados:
     - codigo:         'SCF-CONS'
       complemento:    'CASO NOVO'
       area_executora: ''
-      profissional:   'MEDICO (SÓ PARA USO DA INFORMATICA)'
+      profissional:   'MEDICO'
 
     # Descomentar para testar multiplos procedimentos apos AB12 estabilizar:
     # - codigo:         'ECG'

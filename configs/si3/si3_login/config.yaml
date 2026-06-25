@@ -1,0 +1,35 @@
+sistema: si3_login
+tipo: desktop
+runner: opencv
+ocr_engine: easyocr
+
+# SI3 abre via Edge (janela nativa Oracle Forms separada)
+# browser_launcher.py abre o Edge e dispara o SI3
+# confirmacao de carregamento: templates/si3/login/popup_conexao.png (score 0.79, threshold 0.75)
+# confirmacao de login ok:     templates/si3/login/menu_principal_login.png (score 1.0)
+
+ambientes:
+  dev:
+    url: 'http://si3_prototipo/'
+    confidence: 0.75
+
+credenciais:
+  usuario: ${SI3_USER}
+  senha:   ${SI3_PASS}
+
+dados_faker:
+  - campo: usuario
+    tipo: fixo
+    valor: ${SI3_USER}
+  - campo: senha
+    tipo: fixo
+    valor: ${SI3_PASS}
+
+# regioes_ocr em bootstrap — nao ha campos para confirmar via OCR no login
+regioes_ocr: {}
+
+# coordenadas capturadas com posicao_mouse.py — resolucao 1920x1080, janela maximizada
+coordenadas:
+  campo_usuario:   { x: 340, y: 263 }
+  campo_senha:     { x: 346, y: 291 }
+  btn_conectar:    { x: 340, y: 322 }

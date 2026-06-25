@@ -1,0 +1,197 @@
+sistema: si3_cadastro_paciente_min
+tipo: desktop
+runner: opencv
+ocr_engine: easyocr
+
+ambientes:
+  dev:
+    url: ''
+    confidence: 0.75
+
+credenciais:
+  usuario: ${SI3_USER}
+  senha:   ${SI3_PASS}
+
+dados_faker:
+  - campo: nome
+    tipo: faker
+    metodo: name
+    transformacao: sem_prefixo_upper
+
+  - campo: data_nascimento
+    tipo: faker
+    metodo: date_of_birth
+    transformacao: sem_pontuacao
+
+  - campo: data_entrada_brasil
+    tipo: faker
+    metodo: date_of_birth
+    transformacao: sem_pontuacao
+
+  - campo: data_naturalizacao
+    tipo: faker
+    metodo: date_of_birth
+    transformacao: sem_pontuacao
+
+  - campo: nr_portaria
+    tipo: faker
+    metodo: numerify
+    args: "####/####"
+
+# ── Dados fixos — listas para selecao aleatoria no flow ─────────────────────
+dados:
+  # Cenario de execucao:
+  # positivo : dados validos — espera sucesso
+  # negativo : dados invalidos — espera deteccao de erro HC-INCOR
+  cenario: positivo
+
+  sexo_opcoes:
+    - MASCULINO
+    - FEMININO
+
+  cor_etnia_opcoes:
+    - AMARELA
+    - BRANCA
+    - PRETA
+    - PARDA
+
+  nacionalidade_opcoes:
+    - BRASILEIRO
+    - ESTRANGEIRO
+    - NATURALIZADO
+
+  # ── Popup Brasileiro — pares Estado/Cidade vinculados ────────────────────
+  # O flow sorteia o estado e busca a cidade correspondente.
+  # Adicionar novos pares sem alterar codigo.
+  estados_brasileiro:
+    - RO
+    - AC
+    - AM
+    - RR
+    - PA
+    - AP
+    - TO
+    - MA
+    - PI
+    - MT
+
+  cidades_por_estado:
+    EX: ESTADO INEXISTENTE
+    RO: PORTO VELHO
+    AC: RIO BRANCO
+    AM: MANAUS
+    RR: BOA VISTA
+    PA: BELEM
+    AP: MACAPA
+    TO: PALMAS
+    MA: SAO LUIS
+    PI: TERESINA
+    MT: CUIABA
+
+  # ── Popup Estrangeiro — Pais de Origem ───────────────────────────────────
+  # cenario: positivo — valores validos aceitos pelo SI3
+  paises_estrangeiro:
+    - ARGENTINA
+    - CHILE
+    - COLOMBIA
+    - PARAGUAI
+    - PERU
+    - URUGUAY
+    - BOLIVIA
+    - VENEZUELA
+    - EQUADOR
+    - CUBA
+
+  # cenario: negativo — valor invalido para testar deteccao de erro
+  paises_estrangeiro_negativo:
+    - XPTO_INVALIDO
+
+  # ── Popup Naturalizado — Pais de Origem ──────────────────────────────────
+  # cenario: positivo — Brasil obrigatorio + outros
+  paises_naturalizado:
+    - BRASIL
+    - ARGENTINA
+    - CHILE
+    - PORTUGAL
+    - ITALIA
+    - ALEMANHA
+    - ESPANHA
+    - JAPAO
+    - FRANCA
+    - ESTADOS UNIDOS
+
+  # cenario: negativo — valor invalido para testar deteccao de erro
+  paises_naturalizado_negativo:
+    - XPTO_INVALIDO
+
+# ── regioes_ocr ──────────────────────────────────────────────────────────────
+# { x1: 0, y1: 0, x2: 0, y2: 0 } = bootstrap (verificacao desabilitada)
+regioes_ocr:
+  campo_nome:          { x1: 27,  y1: 145, x2: 447, y2: 168 }  # calibrado
+  campo_data_nasc:     { x1: 363, y1: 195, x2: 463, y2: 207 }  # calibrado
+  campo_sexo:          { x1: 543, y1: 192, x2: 633, y2: 212 }  # calibrado
+  campo_cor_etnia:     { x1: 22,  y1: 278, x2: 200, y2: 296 }  # calibrado
+  campo_nacionalidade: { x1: 664, y1: 193, x2: 829, y2: 211 }  # calibrado ✅
+  matricula:           { x1: 565, y1: 148, x2: 662, y2: 166 }  # calibrado
+  identificador:       { x1: 457, y1: 146, x2: 552, y2: 165 }  # calibrado
+
+# ── coordenadas capturadas com posicao_mouse.py — resolucao 1920x1080 ───────
+coordenadas:
+
+  # ── Navegacao CM01-CM03 ───────────────────────────────────────────────────
+  campo_localizar_menu:   { x: 626,  y: 579 }
+  btn_pesquisar_menu:     { x: 809,  y: 578 }
+  btn_nao_popup:          { x: 1026, y: 555 }
+  menu_cadastro_paciente: { x: 165,  y: 219 }
+  campo_nome_pesquisa:    { x: 172,  y: 259 }
+  btn_pesquisar_params:   { x: 596,  y: 511 }
+  btn_novo_lista:         { x: 758,  y: 642 }
+
+  # ── Formulario CM04-CM06 ──────────────────────────────────────────────────
+  campo_nome:          { x: 63,  y: 159 }
+  campo_data_nasc:     { x: 384, y: 199 }
+  campo_hora:          { x: 486, y: 200 }
+  campo_sexo_lov:      { x: 648, y: 200 }
+  campo_cor_etnia_lov: { x: 195, y: 288 }
+  btn_ok_lov:          { x: 222, y: 360 }
+  btn_ok_lov_cor_etnia: { x: 1005, y: 883 }
+
+  # ── Nacionalidade CM07 — Lista de Tipo ───────────────────────────────────
+  btn_lov_nacionalidade:   { x: 842, y: 197 }
+  item_lista_brasileiro:   { x: 582, y: 257 }
+  item_lista_estrangeiro:  { x: 581, y: 274 }
+  item_lista_naturalizado: { x: 583, y: 291 }
+  btn_ok_lista_nac:        { x: 706, y: 326 }
+  campo_localizar_lov:     { x: 90,  y: 142 }
+
+  # ── Popup Brasileiro ──────────────────────────────────────────────────────
+  campo_estado_brasileiro:       { x: 247, y: 262 }
+  campo_cidade_brasileiro:       { x: 230, y: 288 }
+  btn_ok_lov_estado_brasileiro:  { x: 244, y: 353 }
+  btn_ok_lov_cidade_brasileiro:  { x: 271, y: 357 }
+  btn_ok_popup_brasileiro:       { x: 478, y: 362 }
+
+  # ── Popup Estrangeiro ─────────────────────────────────────────────────────
+  campo_pais_estrangeiro:       { x: 299, y: 264 }
+  campo_data_entrada_brasil:    { x: 304, y: 288 }
+  campo_estado_estrangeiro:     { x: 301, y: 309 }
+  campo_municipio_estrangeiro:  { x: 297, y: 334 }
+  btn_ok_lov_pais_estrangeiro:  { x: 266, y: 358 }
+  btn_ok_popup_estrangeiro:     { x: 464, y: 367 }
+
+  # ── Popup Naturalizado ────────────────────────────────────────────────────
+  campo_pais_naturalizado:      { x: 347, y: 263 }
+  campo_data_naturalizacao:     { x: 287, y: 288 }
+  campo_nr_portaria:            { x: 286, y: 307 }
+  btn_ok_lov_pais_naturalizado: { x: 272, y: 353 }
+  btn_ok_popup_naturalizado:    { x: 483, y: 366 }
+
+  # ── Popup HC-INCOR (erro Oracle Forms) ───────────────────────────────────
+  btn_ok_erro_incor:      { x: 1044, y: 592 }
+  btn_cancelar_popup_nac: { x: 376,  y: 370 }
+
+  # ── CM09 Gerar Matricula + CM10 Sair ─────────────────────────────────────
+  btn_gerar_matricula: { x: 888, y: 654 }
+  btn_sair_1:          { x: 511, y: 64  }
+  btn_sair_2:          { x: 512, y: 67  }
+  btn_sair_3:          { x: 16,  y: 575 }

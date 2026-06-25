@@ -23,6 +23,10 @@ MODULOS = {
     ],
     "si3": [
         "tests/integration/si3/test_login_real.py",
+        # linha 26, após "tests/integration/si3/test_login_real.py",
+        "tests/integration/si3/components/login_si3_fixture.py",
+        "tests/integration/si3/components/test_cadastro_paciente_min.py",
+        "tests/integration/si3/jornadas/cadastro_min/test_cadastro_paciente_min.py",
         "tests/integration/si3/jornadas/internacao/test_01_cadastro_paciente.py",
         "tests/integration/si3/jornadas/internacao/test_02_admissao_internacao.py",
         "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_01_cadastro_paciente.py",
@@ -36,15 +40,17 @@ MODULOS = {
 
 TESTES = {
     # SI3 — testes individuais
-    "login_si3":                          "tests/integration/si3/test_login_real.py",
-    "cadastro_paciente_jornada":          "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_01_cadastro_paciente.py",
-    "admissao_ambulatorio_jornada":       "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_02_admissao_ambulatorio.py",
-    "agendamento_jornada":                "tests/integration/si3/jornadas/ambulatorio/com_agendamento/test_02_agendamento.py",
-    "admissao_com_agendamento_jornada":   "tests/integration/si3/jornadas/ambulatorio/com_agendamento/test_03_admissao_com_agendamento.py",
+    "login_si3_novo":                        "tests/integration/si3/components/login_si3_fixture.py",
+    "cadastro_paciente_min":                 "tests/integration/si3/components/test_cadastro_paciente_min.py",  # novo
+    "login_si3":                             "tests/integration/si3/test_login_real.py",
+    "cadastro_paciente_jornada":             "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_01_cadastro_paciente.py",
+    "admissao_ambulatorio_jornada":          "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_02_admissao_ambulatorio.py",
+    "agendamento_jornada":                   "tests/integration/si3/jornadas/ambulatorio/com_agendamento/test_02_agendamento.py",
+    "admissao_com_agendamento_jornada":      "tests/integration/si3/jornadas/ambulatorio/com_agendamento/test_03_admissao_com_agendamento.py",
     "cadastro_paciente_internacao_jornada": "tests/integration/si3/jornadas/internacao/test_01_cadastro_paciente.py",
-    "admissao_internacao_jornada":        "tests/integration/si3/jornadas/internacao/test_02_admissao_internacao.py",
+    "admissao_internacao_jornada":           "tests/integration/si3/jornadas/internacao/test_02_admissao_internacao.py",
     # SisLab
-    "cadastro_funcionario":               "tests/integration/sislab/jornadas/cadastros/test_01_cadastro_funcionario.py",
+    "cadastro_funcionario":                 "tests/integration/sislab/jornadas/cadastros/test_01_cadastro_funcionario.py",
     # MSI3
     'tipo_anestesia':                      'tests/integration/msi3/jornadas/anestesia_pre_operatorio/test_tipo_anestesia.py',
 }
@@ -68,6 +74,8 @@ JORNADAS = {
 
 _MAPA_TESTE_SISTEMA = {
     "login_si3":                            "si3",
+    "login_si3_novo":                       "si3",
+    "cadastro_paciente_min":                "si3",   
     "cadastro_paciente_jornada":            "si3",
     "admissao_ambulatorio_jornada":         "si3",
     "agendamento_jornada":                  "si3",

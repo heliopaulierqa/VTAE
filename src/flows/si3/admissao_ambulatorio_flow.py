@@ -508,6 +508,13 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
         _ocr = [None]
         def fn():
             regiao = ctx.config.regioes_ocr.get("nr_admissao_amb")
+            # Aguarda tela carregar completamente antes de tirar screenshot
+            # — evita OCR ler vazio quando servidor esta lento (bug 12/06/2026)
+            ctx.runner.wait_template(
+                f"{self._TPL}/titulo_ambulatorio.png",
+                timeout=15,
+                threshold=0.75,
+            )
             screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}AB15_validacao.png")
 
             if not regiao or not (regiao["x1"] or regiao["y1"]
@@ -529,7 +536,8 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
                     f"Texto lido: '{texto}'\n"
                     f"Veja AB15_ocr_debug.png e ajuste regioes_ocr.nr_admissao_amb."
                 )
-            nr_admissao = numeros[0]
+            # pega o numero mais longo — evita capturar '2' ou '26' da mesma regiao
+            nr_admissao = max(numeros, key=len)
             _ocr[0] = nr_admissao
             print(f"[AB15] Nr Admissao Ambulatorio: {nr_admissao}")
             _salvar_estado("nr_admissao_amb", nr_admissao)

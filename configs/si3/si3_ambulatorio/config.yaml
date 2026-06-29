@@ -33,7 +33,7 @@ dados:
   # Cenario de provedor ativo
   # Opcoes: sus | particular | incor_sis | convenio_allianz | convenio_unimed
   # ----------------------------------------------------------------
-  cenario_provedor: 'sus'
+  cenario_provedor: 'convenio_allianz'
 
   cenarios_provedor:
 
@@ -152,6 +152,9 @@ coordenadas:
   # Proxima linha na grade de procedimentos
   proxima_linha_proc:           { x: 90,  y: 262 }
 
+  # Popup elegibilidade convenio — botao Sim
+  btn_sim_convenio:             { x: 1058, y: 587 }
+
   # AB15/AB16 — Sair
   btn_sair_1:                   { x: 50,  y: 20  }
   btn_sair_2:                   { x: 20,  y: 574 }
@@ -161,10 +164,30 @@ regioes_ocr:
   # AB14/AB15 — Nr Admissao Ambulatorio
   nr_admissao_amb:              { x1: 35,  y1: 131, x2: 136, y2: 155 }
 
+  # AB06 — Unidade Funcional (calibrado 26/06/2026)
+  campo_unidade_funcional:      { x1: 28,  y1: 194, x2: 556, y2: 214 }
+
+  # AB07 — Provedor e Plano (calibrado 26/06/2026)
+  campo_provedor:               { x1: 18,  y1: 230, x2: 240, y2: 250 }
+  campo_plano:                  { x1: 248, y1: 230, x2: 490, y2: 250 }
+
+  # AB08 — Declarante e Especialidade (calibrado 26/06/2026)
+  campo_declarante_ocr:         { x1: 18,  y1: 270, x2: 320, y2: 290 }
+  campo_especialidade_ocr:      { x1: 295, y1: 270, x2: 545, y2: 290 }
+
+  # AB09 — Obs (calibrado 26/06/2026)
+  campo_obs_ocr:                { x1: 55,  y1: 335, x2: 403, y2: 364 }
+
+  # AB10 — Origem Tipo (calibrado 26/06/2026)
+  campo_origem_tipo_ocr:        { x1: 18,  y1: 390, x2: 260, y2: 416 }
+
+  # AB11 — Medico Responsavel (calibrado 26/06/2026)
+  campo_medico_nome_ocr:        { x1: 155, y1: 458, x2: 530, y2: 478 }
+
   # Campo Tipo Endereco
   campo_tipo_endereco:          { x1: 133, y1: 431, x2: 178, y2: 442 }
 
-  # Medico Responsavel
+  # Medico Responsavel (legado — substituido por campo_medico_nome_ocr)
   campo_medico_ab:              { x1: 129, y1: 430, x2: 181, y2: 440 }
 
   # Grade de Procedimentos — calibrar apos AB12 estabilizar

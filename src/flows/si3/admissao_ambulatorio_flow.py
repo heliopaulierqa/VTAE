@@ -94,7 +94,11 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
         return merged
 
     def _fechar_popups_convenio(self, ctx) -> bool:
-        """Fecha popups de elegibilidade de convenio. Retorna True se encontrou."""
+        """
+        Detecta popup de elegibilidade de convenio e clica em Sim.
+        Usa template para detectar presenca e coordenada absoluta para clicar.
+        Retorna True se encontrou e fechou o popup.
+        """
         encontrou = False
         for _ in range(3):
             try:
@@ -102,8 +106,13 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
                     f"{self._TPL}/btn_ok_convenio.png", timeout=2.0, threshold=0.75,
                 )
                 if achou:
-                    ctx.runner.safe_click(f"{self._TPL}/btn_ok_convenio.png", threshold=0.75)
-                    time.sleep(0.5); encontrou = True
+                    # Clica em Sim via coordenada absoluta — template do botao
+                    # e muito generico para matching confiavel
+                    coords = ctx.config.coordenadas
+                    x, y = self._coord(coords, "btn_sim_convenio")
+                    pyautogui.click(x, y)
+                    time.sleep(0.5)
+                    encontrou = True
                 else:
                     break
             except Exception:
@@ -277,8 +286,13 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
             pyautogui.hotkey("ctrl", "a"); ctx.runner.type_text(valor)
             pyautogui.press("tab"); time.sleep(0.5)
             pyautogui.press("tab"); time.sleep(0.5)
-            return ctx.runner.screenshot(f"{ctx.evidence_dir}AB06_unidade.png")
-        return self._step("AB06", "preencher Unidade Funcional", fn, observer, ctx=ctx)
+            _ocr = [None]
+            screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}AB06_unidade.png")
+            self._verify_campo_obrigatorio(ctx, "unidade_funcional", valor,
+                                           "AB06", "campo_unidade_funcional", _ocr)
+            return screenshot_path
+        return self._step("AB06", "preencher Unidade Funcional", fn, observer,
+                          validated=True, ctx=ctx)
 
     # ----------------------------------------------------------------
     # AB07 — Provedor / Plano
@@ -309,18 +323,27 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
                         offset_x=100, offset_y=0, threshold=0.65
                     )
                     pyautogui.hotkey("ctrl", "a"); ctx.runner.type_text(carteirinha)
-                    pyautogui.press("tab"); time.sleep(0.3)
+                    pyautogui.press("tab"); time.sleep(1.5)
                     if self._fechar_popups_convenio(ctx):
                         print("[AB07] Popup pos-carteirinha fechado")
+                        time.sleep(1.0)  # aguarda popup fechar completamente
                 if validade:
                     ctx.runner.click_near(
                         f"{self._TPL}/campo_validade_carteirinha.png",
                         offset_x=100, offset_y=0, threshold=0.65
                     )
                     pyautogui.hotkey("ctrl", "a"); ctx.runner.type_text(validade)
-                    pyautogui.press("tab"); time.sleep(0.3)
-            return ctx.runner.screenshot(f"{ctx.evidence_dir}AB07_provedor.png")
-        return self._step("AB07", "preencher Provedor e Plano", fn, observer, ctx=ctx)
+                    pyautogui.press("tab"); time.sleep(0.5)
+            _ocr_prov = [None]
+            _ocr_plano = [None]
+            screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}AB07_provedor.png")
+            self._verify_campo_obrigatorio(ctx, "provedor", provedor,
+                                           "AB07", "campo_provedor", _ocr_prov)
+            self._verify_campo_obrigatorio(ctx, "plano", plano,
+                                           "AB07", "campo_plano", _ocr_plano)
+            return screenshot_path
+        return self._step("AB07", "preencher Provedor e Plano", fn, observer,
+                          validated=True, ctx=ctx)
 
     # ----------------------------------------------------------------
     # AB08 — Declarante / Especialidade
@@ -339,7 +362,14 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
             pyautogui.click(x, y); time.sleep(0.3)
             pyautogui.hotkey("ctrl", "a"); ctx.runner.type_text(especialidade)
             pyautogui.press("tab"); time.sleep(0.3)
-            return ctx.runner.screenshot(f"{ctx.evidence_dir}AB08_declarante.png")
+            _ocr_dec = [None]
+            _ocr_esp = [None]
+            screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}AB08_declarante.png")
+            self._verify_campo_opcional(ctx, "declarante", declarante,
+                                        "AB08", "campo_declarante_ocr", _ocr_dec)
+            self._verify_campo_opcional(ctx, "especialidade", especialidade,
+                                        "AB08", "campo_especialidade_ocr", _ocr_esp)
+            return screenshot_path
         return self._step("AB08", "preencher Declarante e Especialidade",
                           fn, observer, ctx=ctx)
 
@@ -353,7 +383,11 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
             x, y = self._coord(coords, "campo_obs_amb")
             pyautogui.click(x, y); time.sleep(0.3)
             pyautogui.hotkey("ctrl", "a"); ctx.runner.type_text(valor); time.sleep(0.3)
-            return ctx.runner.screenshot(f"{ctx.evidence_dir}AB09_obs.png")
+            _ocr_obs = [None]
+            screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}AB09_obs.png")
+            self._verify_campo_opcional(ctx, "obs", valor,
+                                        "AB09", "campo_obs_ocr", _ocr_obs)
+            return screenshot_path
         return self._step("AB09", "preencher campo Obs", fn, observer, ctx=ctx)
 
     # ----------------------------------------------------------------
@@ -367,8 +401,13 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
             pyautogui.click(x, y); time.sleep(0.3)
             pyautogui.hotkey("ctrl", "a"); ctx.runner.type_text(tipo)
             pyautogui.press("tab"); time.sleep(1.0)
-            return ctx.runner.screenshot(f"{ctx.evidence_dir}AB10_origem.png")
-        return self._step("AB10", "preencher Origem do Paciente", fn, observer, ctx=ctx)
+            _ocr_orig = [None]
+            screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}AB10_origem.png")
+            self._verify_campo_obrigatorio(ctx, "origem_tipo", tipo,
+                                           "AB10", "campo_origem_tipo_ocr", _ocr_orig)
+            return screenshot_path
+        return self._step("AB10", "preencher Origem do Paciente", fn, observer,
+                          validated=True, ctx=ctx)
 
     # ----------------------------------------------------------------
     # AB11 — Medico Responsavel via LOV
@@ -386,10 +425,13 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
                 duplo_clique_item="item_profissional_proc",
             )
             time.sleep(1.5)
-            return ctx.runner.screenshot(f"{ctx.evidence_dir}AB11_medico.png")
+            _ocr_med = [None]
+            screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}AB11_medico.png")
+            self._verify_campo_obrigatorio(ctx, "medico_responsavel", "MEDICO",
+                                           "AB11", "campo_medico_nome_ocr", _ocr_med)
+            return screenshot_path
         return self._step("AB11", "selecionar Medico Responsavel via LOV",
-                          fn, observer, ctx=ctx)
-
+                          fn, observer, validated=True, ctx=ctx)
     # ----------------------------------------------------------------
     # AB12 — Lista de Procedimentos
     # ----------------------------------------------------------------
@@ -448,16 +490,16 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
                     )
                     time.sleep(0.5)
 
-                # Profissional: digita o nome direto no campo + Tab (sem popup LOV).
-                # Padrao Oracle Forms validado manualmente: complemento -> Tab leva ao
-                # campo Profissional -> digita o nome completo -> Tab confirma.
-                # `profissional` vem do config (proc.get("profissional")), entao aceita
-                # qualquer profissional, nao so MEDICO.
-                # NOTA: este unico Tab assume que o cursor saiu do complemento. Se o
-                # procedimento NAO tiver complemento, revalidar quantos Tabs sao precisos.
-                pyautogui.press("tab"); time.sleep(0.5)
-                ctx.runner.type_text(profissional); time.sleep(0.3)
-                pyautogui.press("tab"); time.sleep(0.5)
+                # Profissional: seleciona via LOV — campo nao aceita digitacao direta
+                self._selecionar_via_lov(
+                    ctx, coords,
+                    btn_lov="btn_lov_profissional_proc",
+                    campo_localizar="campo_localizar_profissional",
+                    termo=profissional,
+                    btn_localizar="btn_localizar_profissional",
+                    btn_ok="btn_ok_profissional",
+                )
+                time.sleep(0.5)
 
             return ctx.runner.screenshot(f"{ctx.evidence_dir}AB12_procedimentos.png")
         return self._step("AB12", "preencher Lista de Procedimentos", fn, observer, ctx=ctx)

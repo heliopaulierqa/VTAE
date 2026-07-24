@@ -81,10 +81,10 @@ class LoginSi3Flow(BaseFlow):
             self._clicar_aguardar(
                 ctx,
                 acao=lambda: pyautogui.click(x, y),
-                confirmacao=f"{self._TPL}/menu_principal_login.png",
-                timeout=20,    # login pode demorar dependendo do servidor
-                threshold=0.7, # score 1.0 no diagnose — threshold conservador
-                retries=2,
+                confirmacao=f"{self._TPL}/caixa_mensagens_login.png",
+                timeout=30,    # login pode demorar dependendo do servidor
+                threshold=0.85, # score 1.0 no diagnose — threshold conservador
+                retries=3,
                 label="L03 conectar ao SI3",
             )
             return ctx.runner.screenshot(f"{ctx.evidence_dir}L03_conectar.png")

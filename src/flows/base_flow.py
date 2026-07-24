@@ -1,18 +1,23 @@
 # src/flows/base_flow.py
 """
 BaseFlow — Classe base para todos os flows do VTAE.
-Versao: 0.5.19 — comparacao OCR com tolerancia a ruido (Levenshtein)
+Versao: 0.5.25 — verificacao estrutural via pyjab (Java Access Bridge)
 
 Centraliza os helpers que antes eram duplicados em cada flow:
     _step()                    — wrapper padrao com observabilidade completa
     _dado()                    — leitura segura de dado obrigatorio do config.yaml
     _coord()                   — leitura de coordenada com erro claro
-    _tpl_existe()              — verifica se template PNG existe antes de usar
-    _focar_si3()               — foca janela Oracle Forms (janela nativa)
+    _tpl_existe()               — verifica se template PNG existe antes de usar
+    _focar_si3()                — foca janela Oracle Forms (janela nativa)
     _focar_navegador_sislab()  — foca janela do browser (SisLab via navegador)
-    _clicar_aguardar()         — clique robusto com confirmacao de tela
-    _verify_campo_obrigatorio() — Fase 1: AssertionError se campo ficar vazio ou incorreto
-    _verify_campo_opcional()   — Fase 1: aviso nao-bloqueante se campo ficar vazio ou incorreto
+    _clicar_aguardar()          — clique robusto com confirmacao de tela
+    _verify_campo_obrigatorio() — Fase 1: AssertionError se campo ficar vazio ou incorreto (via OCR)
+    _verify_campo_opcional()   — Fase 1: aviso nao-bloqueante se campo ficar vazio ou incorreto (via OCR)
+    _verify_campo_via_jab()    — v0.5.25: verificacao estrutural EXATA via pyjab,
+                                  PARALELA ao OCR — cobre o caso em que a tela
+                                  esta "limpa" mas o valor esta errado (match
+                                  parcial silencioso em LOV). Ver secao 3.3/3.4
+                                  do prompt de instrucao geral v0.5.25.
 
 Todos os flows herdam desta classe e NADA MAIS precisam definir
 desses helpers. O _step() canonico foi extraido do AgendamentoFlow
@@ -36,6 +41,15 @@ Comparacao OCR (v0.5.19):
     para aceitar ruido de OCR em caracteres similares (B/3, O/D, V/I).
     Isso garante que valores corretos passem sem abaixar o rigor para
     valores genuinamente errados.
+
+Verificacao estrutural via pyjab (v0.5.25):
+    _verify_campo_via_jab() le o valor REAL do campo via Java Access
+    Bridge (.text), nao um bitmap. Comparacao EXATA (via _normalizar),
+    SEM tolerancia Levenshtein — nao ha ruido de OCR nessa leitura, entao
+    _similar() perderia precisao sem necessidade (regra 30). Usa
+    ctx.jab (JABDriver ja conectado, instanciado no fixture ao lado do
+    OpenCVRunner) — nao reconecta a cada verificacao. Roda em PARALELO
+    a _verify_campo_obrigatorio/_verify_campo_opcional, nao substitui.
 """
 
 import os
@@ -74,6 +88,10 @@ def _similar(lido: str, esperado: str, tolerancia: float = 0.230) -> bool:
 
     Valores genuinamente errados (ex: 'TESTE ERRO' no lugar de 'AMARELA')
     tem distancia alta e nao passam mesmo com a tolerancia.
+
+    NAO usar em comparacao via pyjab (_verify_campo_via_jab) — leitura
+    exata via Access Bridge nao tem ruido de OCR, entao a tolerancia
+    perderia precisao sem necessidade (regra 30).
 
     Args:
         lido:       texto lido pelo OCR (ja normalizado)
@@ -464,6 +482,96 @@ class BaseFlow:
         )
 
     # ----------------------------------------------------------------
+    # _conectar_db() / _obter_via_banco_ou_yaml() — v0.5.28
+    # Padrao UNICO de fallback banco->YAML para qualquer campo LOV.
+    # Sobe para BaseFlow (nao fica local em nenhum flow especifico)
+    # para que o mesmo padrao sirva Ambulatorio, Internacao, SADT, PS
+    # sem reinvencao — evita N flows com N logicas de fallback
+    # diferentes (regra 5/6 — nao criar variacoes de um padrao ja
+    # estabelecido).
+    #
+    # Excecao conhecida e documentada: campos que precisam de um PAR
+    # de valores associados (ex: provedor+plano, que tambem carregam
+    # carteirinha/validade do cenario) NAO usam este helper genérico —
+    # tem logica propria no flow (ver _resolver_cenario_provedor em
+    # admissao_ambulatorio_flow.py). Este helper serve apenas o caso
+    # comum: uma lista simples de valores validos para um unico campo.
+    # ----------------------------------------------------------------
+
+    def _conectar_db(self, ctx) -> None:
+        """
+        Conecta o DatabaseRunner sob demanda, cacheado em ctx.db — mesmo
+        padrao ja validado do ctx.jab (conecta na primeira necessidade,
+        reutilizado pelos steps seguintes do mesmo flow). Nao lanca
+        excecao: se falhar, ctx.db permanece None e quem chamar decide
+        o fallback (regra 34 — nunca silencioso).
+
+        Le as credenciais de ctx.config.DADOS (db_dsn/db_user/db_senha),
+        mesmo padrao ja usado para jab_home_fake — resolvidas via .env,
+        nunca hardcoded no config.yaml.
+        """
+        if getattr(ctx, "db", None):
+            return
+        try:
+            dsn   = ctx.config.DADOS.get("db_dsn")
+            user  = ctx.config.DADOS.get("db_user")
+            senha = ctx.config.DADOS.get("db_senha")
+            from src.runners.database_runner import DatabaseRunner
+            ctx.db = DatabaseRunner(dsn=dsn, user=user, password=senha)
+        except Exception as e:
+            print(f"[DB] AVISO: DatabaseRunner nao conectou — "
+                  f"fallback YAML sera usado nesta execucao: {e}")
+
+    def _obter_via_banco_ou_yaml(
+        self,
+        ctx,
+        dados: dict,
+        step_id: str,
+        sql: str,
+        coluna: str,
+        chave_yaml: str,
+        params: dict = None,
+    ) -> list:
+        """
+        Padrao UNICO de fallback banco->YAML para qualquer campo LOV
+        com lista simples de valores (Unidade, Procedimento, etc.).
+
+        Fonte de verdade: DatabaseRunner. Fallback: dados[chave_yaml],
+        com WARNING explicito (regra 34) — nunca silencioso. Execucao
+        em fallback nao conta para o gate de "3x com banco real".
+
+        Interface identica entre banco e YAML — quem chama faz
+        random.choice(lista) do mesmo jeito nos dois casos.
+
+        Args:
+            ctx:        FlowContext (usa ctx.db, conecta via _conectar_db)
+            dados:      dict de dados do config.yaml (fallback)
+            step_id:    para mensagens de log (ex: "AB06")
+            sql:        SELECT a executar
+            coluna:     nome da coluna que vira a lista de valores
+            chave_yaml: chave em dados[] com a lista de fallback
+            params:     bind variables opcionais do SQL
+
+        Returns:
+            Lista de valores (do banco OU do YAML — interface identica).
+        """
+        self._conectar_db(ctx)
+        if getattr(ctx, "db", None):
+            try:
+                linhas = ctx.db.query(sql, params)
+                valores = [l[coluna] for l in linhas]
+                if valores:
+                    print(f"[{step_id}] '{chave_yaml}' via DatabaseRunner "
+                          f"({len(valores)} opcoes)")
+                    return valores
+                print(f"[{step_id}] WARNING: DatabaseRunner retornou lista "
+                      f"vazia para '{chave_yaml}' — usando fallback YAML.")
+            except Exception as e:
+                print(f"[{step_id}] WARNING: DatabaseRunner indisponivel "
+                      f"({e}) — usando fallback YAML para '{chave_yaml}'.")
+        return dados.get(chave_yaml) or []
+
+    # ----------------------------------------------------------------
     # _verify_campo_obrigatorio() / _verify_campo_opcional()
     # Fase 1 (GATE) — Passo A
     # Implementam o contrato de classificacao de campo:
@@ -577,6 +685,79 @@ class BaseFlow:
                   f"  Possivel valor residual ou dado nao aceito pelo sistema.")
         else:
             print(f"[{step_id}] OK — '{nome_campo}' = '{lido}'")
+
+    # ----------------------------------------------------------------
+    # _verify_campo_via_jab() — v0.5.25
+    # Verificacao estrutural EXATA via Java Access Bridge (pyjab).
+    # PARALELA a _verify_campo_obrigatorio/_verify_campo_opcional — nao
+    # substitui a rede de seguranca OCR ja validada 3x, cobre o caso que
+    # o OCR/template estruturalmente nao alcancam: tela "limpa" (sem
+    # popup) mas valor errado por match parcial silencioso em LOV.
+    # Ver secao 3.3/3.4 do prompt de instrucao geral v0.5.25 — Medicao 3
+    # capturou 'PALMEIRAS'/'BASICO' reais apos match parcial incorreto.
+    # ----------------------------------------------------------------
+
+    def _verify_campo_via_jab(
+        self,
+        ctx,
+        nome_campo_jab: str,
+        valor_esperado: str,
+        step_id: str,
+        ocr_holder: list,
+    ) -> None:
+        """
+        Confirma o valor REAL de um campo lendo via Java Access Bridge
+        (pyjab), nao um bitmap. Roda em PARALELO a
+        _verify_campo_obrigatorio/_verify_campo_opcional — nao substitui,
+        cobre o caso em que a tela esta "limpa" mas o valor esta errado
+        (match parcial silencioso em LOV, ver secao 3.3/3.4 do prompt).
+
+        Comparacao EXATA (via _normalizar), sem tolerancia Levenshtein —
+        nao ha ruido de OCR nessa leitura, entao _similar() perderia
+        precisao sem necessidade (regra 30).
+
+        Se ctx.jab nao estiver conectado, avisa e pula — mesmo espirito
+        do bootstrap de regioes_ocr nao calibradas: nao quebra flows que
+        ainda nao tem essa camada ativa.
+
+        Args:
+            ctx:            FlowContext — usa ctx.jab (JABDriver conectado)
+            nome_campo_jab: o "name" do elemento no Access Bridge
+                            (ex: 'Descricao do provedor.')
+            valor_esperado: valor que deveria estar no campo
+            step_id:        ID do step atual (ex: "AB07")
+            ocr_holder:     lista de 1 posicao — recebe o valor lido,
+                            mesmo padrao de propagacao para StepResult.ocr_lido
+
+        Raises:
+            AssertionError: campo nao encontrado via pyjab, ou valor
+                            lido diferente do esperado.
+        """
+        if not getattr(ctx, "jab", None):
+            print(f"[{step_id}] AVISO: ctx.jab nao conectado — "
+                  f"verificacao via pyjab pulada.")
+            return
+
+        elementos = ctx.jab.find_elements_by_name(nome_campo_jab)
+        if not elementos:
+            raise AssertionError(
+                f"[{step_id}] Campo '{nome_campo_jab}' nao encontrado via pyjab.\n"
+                f"Verifique se o name esta correto ou se a janela mudou de foco."
+            )
+
+        lido = elementos[0].text
+        ocr_holder[0] = lido
+        lido_norm = _normalizar(lido)
+        esperado_norm = _normalizar(str(valor_esperado))
+
+        if lido_norm != esperado_norm:
+            raise AssertionError(
+                f"[{step_id}] Campo '{nome_campo_jab}' via pyjab com valor INCORRETO.\n"
+                f"Esperado: '{valor_esperado}' | pyjab leu: '{lido}'\n"
+                f"Comparacao exata (sem tolerancia) — possivel match parcial "
+                f"em LOV ou dado rejeitado pelo sistema."
+            )
+        print(f"[{step_id}] OK (pyjab) — '{nome_campo_jab}' = '{lido}'")
 
 
 # Import local para evitar dependencia circular — StepError usado no _step()

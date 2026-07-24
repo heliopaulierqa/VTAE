@@ -1,6 +1,11 @@
 # configs/si3/si3_ambulatorio/config.yaml
-# AdmissaoAmbulatorioFlow + AdmissaoComAgendamentoFlow — v0.5.15
-# Cenarios de provedor + lista de procedimentos configuravel
+# AdmissaoAmbulatorioFlow + AdmissaoComAgendamentoFlow — v0.5.23
+# v0.5.23: LOV aleatorio (item 3 do roadmap)
+#   - cenario_provedor: 'aleatorio' — rotaciona entre cenarios_validos
+#   - unidades_validas: lista em vez de valor unico fixo
+#   - procedimentos: lista com multiplos itens para rotacao aleatoria
+#   Transitorio: fonte = listas neste YAML
+#   Definitivo: fonte = DatabaseRunner (db.query nas tabelas de dominio do SI3)
 
 sistema: si3_ambulatorio
 tipo: desktop
@@ -19,10 +24,20 @@ credenciais:
   senha:       ${SI3_PASS}
   paciente_id: ${SI3_PACIENTE_ID:-}
 
+credenciais:
+  usuario:     ${SI3_USER}
+  senha:       ${SI3_PASS}
+  paciente_id: ${SI3_PACIENTE_ID:-}
+
+#credenciais_db:
+  #dsn:   ${SI3_DB_DSN:-CNPQDW:1521/DESENV}
+  #user:  ${SI3_DB_USER}
+  #senha: ${SI3_DB_PASS}
+
+
 dados_faker: []  # sem faker — dados fixos para admissao ambulatorial
 
 dados:
-  unidade_funcional:  'SC MONITORIZACAO AMBULATORIAL'
   declarante:         'TESTE AUTOMATIZADO'
   especialidade:      'CAR - CARDIO GERAL'
   obs:                'ADMISSAO REALIZADA COM FERRAMENTA DE AUTOMACAO DE TESTES'
@@ -30,10 +45,55 @@ dados:
   termo_menu_amb:     'AMBULATORIO'
 
   # ----------------------------------------------------------------
-  # Cenario de provedor ativo
-  # Opcoes: sus | particular | incor_sis | convenio_allianz | convenio_unimed
+  # Java Access Bridge — pasta "de mentira" com WindowsAccessBridge-64.dll
+  # (lado cliente do pyjab). NAO e o Java real do SI3 nem o JAVA_HOME do
+  # sistema — so serve para o pyjab localizar a DLL. Cada estacao define
+  # SI3_JAB_HOME_FAKE no .env apontando para onde copiou a DLL.
+  # Default C:\jab_home se o .env nao definir a variavel.
   # ----------------------------------------------------------------
-  cenario_provedor: 'convenio_allianz'
+  jab_home_fake:      ${SI3_JAB_HOME_FAKE:-C:\jab_home}
+
+  # ----------------------------------------------------------------
+  # DatabaseRunner — credenciais Oracle (CNPQDW:1521/DESENV), leitura apenas
+  # Mesmo padrao do jab_home_fake: resolvido via .env, nunca hardcoded.
+  # ----------------------------------------------------------------
+  db_dsn:             ${SI3_DB_DSN:-CNPQDW:1521/DESENV}
+  db_user:             ${SI3_DB_USER}
+  db_senha:            ${SI3_DB_PASS}
+
+  # ----------------------------------------------------------------
+  # Unidade Funcional — lista para rotacao aleatoria (AB06)
+  # Transitorio: valores aqui. Definitivo: db.query('SELECT UNI_NOME FROM ...')
+  # Adicionar/remover valores conforme as unidades ativas no SI3.
+  # ----------------------------------------------------------------
+  unidades_validas:
+    - 'SC MONITORIZACAO AMBULATORIAL'
+    # Adicionar outras unidades validas apos confirmar no SI3:
+    # - 'SC CARDIOLOGIA CLINICA'
+    # - 'SC ERGOMETRIA'
+
+  # ----------------------------------------------------------------
+  # Cenario de provedor ativo (AB07)
+  # 'aleatorio' -> escolhe aleatoriamente de cenarios_validos abaixo.
+  # Para fixar um cenario especifico: sus | particular | incor_sis |
+  #   convenio_allianz | convenio_unimed
+  # Para cenario negativo (Passo E): negativo
+  # ----------------------------------------------------------------
+  cenario_provedor: 'aleatorio'
+  #cenario_provedor: 'negativo'
+  #provedor:             ''
+  #plano:                ''
+  #numero_carteirinha:   ''
+  #validade_carteirinha: ''
+
+  # Cenarios elegíveis para rotacao aleatoria.
+  # Remover da lista qualquer cenario que esteja indisponivel no SI3.
+  cenarios_validos:
+    - 'convenio_allianz'
+    - 'convenio_unimed'
+    - 'sus'
+    # particular: removido temporariamente — requer validacao isolada
+    # incor_sis: removido temporariamente — requer validacao isolada
 
   cenarios_provedor:
 
@@ -56,7 +116,7 @@ dados:
       validade_carteirinha: ''
 
     convenio_allianz:
-      provedor:             'ALLIANZ'
+      provedor:             'ALLIANZ SAUDE S/A'
       plano:                'EXCELLENCE'
       numero_carteirinha:   '54354354353'
       validade_carteirinha: '30/07/2028'
@@ -67,10 +127,20 @@ dados:
       numero_carteirinha:   '54354354353'
       validade_carteirinha: '30/07/2028'
 
+    # Cenario negativo — usado no Passo E (cenario negativo do gate).
+    # Mantem fora de cenarios_validos para nao entrar na rotacao normal.
+    negativo:
+      provedor:             'PROVEDOR_INVALIDO_XYZ'
+      plano:                'PLANO_INVALIDO_XYZ'
+      numero_carteirinha:   ''
+      validade_carteirinha: ''
+
   # ----------------------------------------------------------------
-  # Lista de procedimentos
+  # Lista de procedimentos (AB12)
+  # O flow escolhe 1 aleatoriamente por execucao.
+  # Transitorio: valores aqui. Definitivo: db.query('SELECT PRO_CODIGO FROM ...')
   # Cada item: codigo, complemento, area_executora, profissional
-  #   area_executora: '' = clica OK direto no popup sem digitar
+  #   area_executora: '' = clica OK direto no popup sem filtrar
   #   area_executora: 'COMISSAO CIENTIFICA' = filtra e seleciona
   # ----------------------------------------------------------------
   procedimentos:
@@ -80,7 +150,12 @@ dados:
       area_executora: ''
       profissional:   'MEDICO'
 
-    # Descomentar para testar multiplos procedimentos apos AB12 estabilizar:
+    - codigo:         'SCF-CONS'
+      complemento:    'SEGUIMENTO'
+      area_executora: ''
+      profissional:   'MEDICO'
+
+    # Adicionar outros procedimentos validos apos confirmar no SI3:
     # - codigo:         'ECG'
     #   complemento:    'SEGUIMENTO'
     #   area_executora: 'COMISSAO CIENTIFICA'
@@ -103,8 +178,8 @@ coordenadas:
   campo_tipo_endereco_amb:      { x: 149, y: 434 }
 
   # AB05 — AdmissaoComAgendamento: grade de agendamentos
-  primeira_linha_grade_ag:      { x: 119,  y: 155 }   # primeira linha da grade
-  btn_admitir_ag:               { x: 569,  y: 300 }  # botao Admitir — confirmar com posicao_mouse.py 
+  primeira_linha_grade_ag:      { x: 119,  y: 155 }
+  btn_admitir_ag:               { x: 569,  y: 300 }
 
   # AB08 — Declarante / Especialidade
   campo_declarante:             { x: 47,  y: 282 }
@@ -153,7 +228,7 @@ coordenadas:
   proxima_linha_proc:           { x: 90,  y: 262 }
 
   # Popup elegibilidade convenio — botao Sim
-  btn_sim_convenio:             { x: 1058, y: 587 }
+  #btn_sim_convenio:             { x: 1058, y: 587 }
 
   # AB15/AB16 — Sair
   btn_sair_1:                   { x: 50,  y: 20  }

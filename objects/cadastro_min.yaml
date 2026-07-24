@@ -1,0 +1,10 @@
+objetos:
+  campo_sexo:
+    coordenada: { x: 648, y: 200 }
+    regiao_ocr: { x1: 543, y1: 192, x2: 633, y2: 212 }
+    template: null
+
+  btn_ok_lov:
+    coordenada: { x: 222, y: 360 }
+    regiao_ocr: null
+    template: templates/si3/cadastro_paciente_min/btn_ok_lov.png

@@ -18,8 +18,52 @@ v0.5.15 — AB02 (12/06/2026):
   - BUGFIX: uma edicao anterior havia removido o bloco de clique+type_text
     do AB02, fazendo o step "passar" em ~70ms sem digitar nada no campo
     Identificador — falso positivo corrigido restaurando o bloco.
+
+v0.5.22 — ocr_lido (01/07/2026):
+  - _ocr = [None] movido para escopo do metodo em AB06-AB11
+  - step.ocr_lido = _ocr[0] apos _step() retornar — padrao AB15 propagado
+
+v0.5.23 — LOV aleatorio (item 3 do roadmap, 01/07/2026):
+  - cenario_provedor: 'aleatorio' — escolhe aleatoriamente de cenarios_validos
+  - AB06: random.choice(dados['unidades_validas']) em vez de valor unico fixo
+  - AB12: random.choice(procedimentos) — 1 procedimento por execucao
+  - Interface identica ao definitivo (DatabaseRunner) — so muda a fonte dos dados
+  - Nenhum valor unico de dominio de LOV fixo neste flow
+
+v0.5.25 — pyjab no AB07 (03/07/2026):
+  - Guard de popup (_assert_tela_limpa) TENTADO e ABANDONADO nesta sessao —
+    deu falso positivo numa tela sem popup nenhum (score 0.886 no titulo
+    'HC - INCOR' contra uma tela normal do SI3). Template de baixa textura
+    + ajuste 'equalize' e instavel demais para servir de guard estrutural.
+    NENHUMA chamada de guard neste arquivo — decisao explicita, nao
+    esquecimento (ver regra 25: popups sao ancoragens frageis).
+  - AB07 (Provedor/Plano) ganha verificacao estrutural via pyjab, EM
+    PARALELO ao OCR ja existente (_verify_campo_obrigatorio/_opcional).
+    Le o valor REAL do campo via Java Access Bridge — pega o caso de
+    match parcial silencioso em LOV (ex: 'PROVEDOR_INVALIDO_XYZ' virar
+    'PALMEIRAS' sem popup nenhum, tela aparentando limpa). Conexao do
+    JABDriver e sob demanda (primeira vez que o AB07 precisar), cacheada
+    em ctx.jab — nao reconecta a cada verificacao.
+
+v0.5.25 — fix _fechar_popups_convenio (03/07/2026):
+  - BUGFIX real, nao cosmetico: btn_ok_convenio.png (350x100px) incluia
+    a mensagem do popup no recorte — quebra quando a mensagem muda
+    ("Webservice nao cadastrado" vs "Neste momento nao foi possivel
+    verificar"). Score medido contra popup real: 0.4969 (bem abaixo do
+    threshold 0.75) — falha silenciosa que deixou popup aberto por
+    varios steps, contaminando AB08/AB09/AB10 com OCR lendo o texto
+    do popup em vez dos campos reais.
+  - Corrigido com btn_sim_convenio.png — recorte apertado (52x24px, so
+    o botao). Score medido: 0.816, estavel em 5/5 metodos de
+    pre-processamento, mesma posicao (1030,585) em todos.
+  - Clique trocado de coordenada absoluta fixa para clique via template
+    (safe_click) — elimina dependencia de posicao fixa, que poderia
+    desalinhar se o dialog do Windows redimensionar conforme o tamanho
+    da mensagem (regra 20).
 """
 
+import os
+import random
 import re
 import time
 
@@ -46,7 +90,7 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
     def execute(self, ctx: FlowContext, dados: dict, observer=None) -> FlowResult:
         result = FlowResult(flow_name=self.FLOW_NAME)
         coords = ctx.config.coordenadas
-        dados  = self._resolver_cenario_provedor(dados)
+        dados  = self._resolver_cenario_provedor(ctx, dados)
 
         steps = [
             lambda: self._step_abrir_ambulatorio(ctx, observer),
@@ -82,11 +126,77 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
     # Helpers privados especificos deste flow
     # ----------------------------------------------------------------
 
-    def _resolver_cenario_provedor(self, dados: dict) -> dict:
-        """Resolve o cenario ativo de provedor — sobrescreve provedor/plano/carteirinha."""
-        cenario_key = dados.get("cenario_provedor", "sus")
+    def _obter_provedores_validos(self, ctx) -> dict | None:
+        """
+        EXCECAO DOCUMENTADA ao padrao generico _obter_via_banco_ou_yaml
+        (BaseFlow): provedor nao e uma lista simples de valores — e um
+        PAR provedor+plano, e o cenario correspondente no YAML carrega
+        alem disso carteirinha/validade (dado de teste, nao existe nas
+        tabelas de dominio do SI3). Por isso tem logica propria aqui,
+        em vez de usar o helper generico.
+
+        Retorna {provedor: plano} vindos do banco, ou None se o banco
+        nao conectou/nao retornou nada (quem chama decide o fallback
+        para cenarios_provedor do YAML — regra 34, WARNING explicito).
+        Nome de tabela/coluna provisorio (SI3_PROVEDORES/PRV_NOME/
+        PRV_PLANO/PRV_ATIVO) — ajustar quando confirmado.
+        """
+        self._conectar_db(ctx)
+        if getattr(ctx, "db", None):
+            try:
+                linhas = ctx.db.query(
+                    "SELECT PRV_NOME, PRV_PLANO FROM SI3_PROVEDORES WHERE PRV_ATIVO = 1"
+                )
+                pares = {l["PRV_NOME"]: l["PRV_PLANO"] for l in linhas}
+                if pares:
+                    print(f"[AB07] provedores via DatabaseRunner ({len(pares)} opcoes)")
+                    return pares
+                print("[AB07] WARNING: DatabaseRunner retornou lista vazia — usando fallback YAML.")
+            except Exception as e:
+                print(f"[AB07] WARNING: DatabaseRunner indisponivel ({e}) — usando fallback YAML.")
+        return None
+
+    def _resolver_cenario_provedor(self, ctx, dados: dict) -> dict:
+        """Resolve o cenario ativo de provedor — sobrescreve provedor/plano/carteirinha.
+
+        cenario_provedor: 'aleatorio' -> banco decide QUAL provedor/plano
+        usar (fonte de verdade de dominio), localizando depois o cenario
+        do YAML com o MESMO provedor — para herdar carteirinha/validade
+        corretas (dado de teste que nao existe no banco de provedores
+        ativos). Se o banco nao conectar, ou o provedor sorteado nao
+        tiver cenario YAML correspondente (sem carteirinha/validade),
+        cai para o fallback aleatorio original (sorteio direto de
+        cenarios_validos) — sempre com WARNING explicito (regra 34).
+        """
+        cenario_key = dados.get("cenario_provedor", "convenio_allianz")
         cenarios    = dados.get("cenarios_provedor", {})
-        cenario     = cenarios.get(cenario_key, {})
+
+        if cenario_key == "aleatorio":
+            pares_db = self._obter_provedores_validos(ctx)
+            cenario_key = None
+            if pares_db:
+                provedor_escolhido = random.choice(list(pares_db.keys()))
+                cenario_key = next(
+                    (k for k, v in cenarios.items()
+                     if v.get("provedor") == provedor_escolhido),
+                    None,
+                )
+                if cenario_key:
+                    print(f"[AB] provedor via banco: '{provedor_escolhido}' "
+                          f"-> cenario YAML correspondente: '{cenario_key}'")
+                else:
+                    print(f"[AB] WARNING: provedor '{provedor_escolhido}' do banco "
+                          f"nao tem cenario correspondente no YAML (sem carteirinha/"
+                          f"validade) — usando fallback aleatorio do YAML.")
+
+            if not cenario_key:
+                # Rotaciona entre os cenarios listados em cenarios_validos.
+                # Fallback: todos os cenarios definidos em cenarios_provedor.
+                cenarios_validos = dados.get("cenarios_validos") or list(cenarios.keys())
+                cenario_key = random.choice(cenarios_validos)
+                print(f"[AB] cenario_provedor: 'aleatorio' (fallback YAML) → escolhido: '{cenario_key}'")
+
+        cenario = cenarios.get(cenario_key, {})
         if not cenario:
             print(f"[WARNING] cenario_provedor '{cenario_key}' nao encontrado — usando dados base")
         merged = {**dados, **cenario}
@@ -96,21 +206,35 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
     def _fechar_popups_convenio(self, ctx) -> bool:
         """
         Detecta popup de elegibilidade de convenio e clica em Sim.
-        Usa template para detectar presenca e coordenada absoluta para clicar.
+
+        v0.5.25 (03/07): template trocado de btn_ok_convenio.png (350x100px —
+        pegava icone + mensagem + os 2 botoes juntos, score medido 0.4969
+        contra popup real, MUITO abaixo do threshold) para btn_sim_convenio.png
+        (recorte apertado 52x24px, so o botao — score medido 0.816, estavel
+        em 5/5 metodos de pre-processamento, mesma posicao em todos).
+        Causa raiz do score baixo do template antigo: a mensagem do popup
+        muda conforme o motivo da falha de elegibilidade ("Webservice nao
+        cadastrado" vs "Neste momento nao foi possivel verificar"), e o
+        template antigo incluia esse texto — quebra quando a mensagem muda,
+        mesmo padrao ja visto e corrigido no titulo HC-INCOR e no botao OK
+        generico dos popups internos.
+
+        Clique agora via TEMPLATE (safe_click), nao mais via coordenada
+        absoluta fixa — o botao pode deslocar de posicao se o dialog do
+        Windows redimensionar conforme o tamanho da mensagem. Clicar onde
+        o template foi de fato encontrado elimina essa dependencia de
+        coordenada (regra 20 — evitar coordenada fixa quando ha alternativa).
+
         Retorna True se encontrou e fechou o popup.
         """
         encontrou = False
         for _ in range(3):
             try:
                 achou = ctx.runner.wait_template(
-                    f"{self._TPL}/btn_ok_convenio.png", timeout=2.0, threshold=0.75,
+                    f"{self._TPL}/btn_sim_convenio.png", timeout=2.0, threshold=0.75,
                 )
                 if achou:
-                    # Clica em Sim via coordenada absoluta — template do botao
-                    # e muito generico para matching confiavel
-                    coords = ctx.config.coordenadas
-                    x, y = self._coord(coords, "btn_sim_convenio")
-                    pyautogui.click(x, y)
+                    ctx.runner.safe_click(f"{self._TPL}/btn_sim_convenio.png", threshold=0.75)
                     time.sleep(0.5)
                     encontrou = True
                 else:
@@ -277,8 +401,26 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
     # ----------------------------------------------------------------
 
     def _step_unidade_funcional(self, ctx, dados: dict, observer=None):
+        _ocr = [None]
         def fn():
-            valor = self._dado(dados, "unidade_funcional", "AB06")
+            # Padrao generico de fallback banco->YAML (BaseFlow) — mesmo
+            # helper reutilizado por qualquer campo LOV com lista simples.
+            # Nome de tabela/coluna provisorio (SI3_UNIDADES/UNI_NOME/
+            # UNI_ATIVA) — ajustar quando confirmado.
+            unidades = self._obter_via_banco_ou_yaml(
+                ctx, dados, "AB06",
+                sql="SELECT UNI_NOME FROM SI3_UNIDADES WHERE UNI_ATIVA = 1",
+                coluna="UNI_NOME",
+                chave_yaml="unidades_validas",
+            )
+            if not unidades:
+                raise AssertionError(
+                    "[AB06] Nenhuma unidade valida disponivel (banco e YAML "
+                    "ambos vazios/indisponiveis). Adicionar lista em "
+                    "dados.unidades_validas."
+                )
+            valor = random.choice(unidades)
+            print(f"[AB06] unidade escolhida: '{valor}' (de {len(unidades)} opcoes)")
             ctx.runner.click_near(
                 f"{self._TPL}/campo_unidade_funcional.png",
                 offset_x=200, offset_y=0, threshold=0.65
@@ -286,19 +428,23 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
             pyautogui.hotkey("ctrl", "a"); ctx.runner.type_text(valor)
             pyautogui.press("tab"); time.sleep(0.5)
             pyautogui.press("tab"); time.sleep(0.5)
-            _ocr = [None]
             screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}AB06_unidade.png")
             self._verify_campo_obrigatorio(ctx, "unidade_funcional", valor,
                                            "AB06", "campo_unidade_funcional", _ocr)
             return screenshot_path
-        return self._step("AB06", "preencher Unidade Funcional", fn, observer,
+        step = self._step("AB06", "preencher Unidade Funcional", fn, observer,
                           validated=True, ctx=ctx)
+        if step.success:
+            step.ocr_lido = _ocr[0] if _ocr[0] is not None else ''
+        return step
 
     # ----------------------------------------------------------------
     # AB07 — Provedor / Plano
     # ----------------------------------------------------------------
 
     def _step_provedor_plano(self, ctx, dados: dict, observer=None):
+        _ocr_prov  = [None]
+        _ocr_plano = [None]
         def fn():
             provedor = self._dado(dados, "provedor", "AB07")
             plano    = self._dado(dados, "plano", "AB07")
@@ -334,22 +480,63 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
                     )
                     pyautogui.hotkey("ctrl", "a"); ctx.runner.type_text(validade)
                     pyautogui.press("tab"); time.sleep(0.5)
-            _ocr_prov = [None]
-            _ocr_plano = [None]
+                    # Popup pos-validade: SI3 dispara verificacao ao sair da validade.
+                    if self._fechar_popups_convenio(ctx):
+                        print("[AB07] Popup pos-validade fechado")
+                        time.sleep(1.0)  # aguarda popup fechar completamente
             screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}AB07_provedor.png")
             self._verify_campo_obrigatorio(ctx, "provedor", provedor,
                                            "AB07", "campo_provedor", _ocr_prov)
-            self._verify_campo_obrigatorio(ctx, "plano", plano,
-                                           "AB07", "campo_plano", _ocr_plano)
+            # Plano usa _opcional: nomes longos (ex: 'CORPORATIVO COMPLETO - APARTAMENTO')
+            # excedem a capacidade de leitura confiavel do EasyOCR nessa regiao (242x20px).
+            # Provedor ja valida que o preenchimento ocorreu — plano registra o lido sem parar.
+            self._verify_campo_opcional(ctx, "plano", plano,
+                                        "AB07", "campo_plano", _ocr_plano)
+
+            # v0.5.25 — verificacao estrutural via pyjab (paralela ao OCR acima).
+            # Pega match parcial silencioso em LOV que o OCR nao detecta
+            # (Medicao 3, 03/07 — caso real PALMEIRAS/BASICO). Conexao sob
+            # demanda, cacheada em ctx.jab — nao reconecta a cada verificacao.
+            if not ctx.jab:
+                try:
+                    # JAVA_HOME de mentira (lado cliente pyjab) — vem do .env
+                    # via config, nao de setx (setx exige terminal novo e some
+                    # se o terminal ja estava aberto antes do comando). So
+                    # localiza a WindowsAccessBridge-64.dll; nao toca no Java
+                    # real do SI3 nem no JAVA_HOME do sistema. Precisa ser
+                    # setado ANTES do import pyjab (a DLL e procurada no import).
+                    _jab_home = ctx.config.DADOS.get("jab_home_fake")
+                    if _jab_home:
+                        os.environ["JAVA_HOME"] = _jab_home
+                    from pyjab.jabdriver import JABDriver
+                    ctx.jab = JABDriver(title='AMBULATÓRIO')
+                except Exception as e:
+                    print(f"[AB07] AVISO: JABDriver nao conectou — "
+                          f"verificacao pyjab pulada nesta execucao: {e}")
+            _jab_prov  = [None]
+            _jab_plano = [None]
+            self._verify_campo_via_jab(ctx, 'Descrição do provedor.', provedor,
+                                       "AB07", _jab_prov)
+            self._verify_campo_via_jab(ctx, 'Nome do Plano.', plano,
+                                       "AB07", _jab_plano)
+
             return screenshot_path
-        return self._step("AB07", "preencher Provedor e Plano", fn, observer,
+        step = self._step("AB07", "preencher Provedor e Plano", fn, observer,
                           validated=True, ctx=ctx)
+        if step.success:
+            step.ocr_lido = (
+                f"provedor={_ocr_prov[0] or ''} "
+                f"plano={_ocr_plano[0] or ''}"
+            )
+        return step
 
     # ----------------------------------------------------------------
     # AB08 — Declarante / Especialidade
     # ----------------------------------------------------------------
 
     def _step_declarante_especialidade(self, ctx, dados: dict, coords, observer=None):
+        _ocr_dec = [None]
+        _ocr_esp = [None]
         def fn():
             # declarante e especialidade sao opcionais — fallback definido no config.yaml
             declarante    = dados.get("declarante",    "TESTE AUTOMATIZADO")
@@ -362,58 +549,69 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
             pyautogui.click(x, y); time.sleep(0.3)
             pyautogui.hotkey("ctrl", "a"); ctx.runner.type_text(especialidade)
             pyautogui.press("tab"); time.sleep(0.3)
-            _ocr_dec = [None]
-            _ocr_esp = [None]
             screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}AB08_declarante.png")
             self._verify_campo_opcional(ctx, "declarante", declarante,
                                         "AB08", "campo_declarante_ocr", _ocr_dec)
             self._verify_campo_opcional(ctx, "especialidade", especialidade,
                                         "AB08", "campo_especialidade_ocr", _ocr_esp)
             return screenshot_path
-        return self._step("AB08", "preencher Declarante e Especialidade",
+        step = self._step("AB08", "preencher Declarante e Especialidade",
                           fn, observer, ctx=ctx)
+        if step.success:
+            step.ocr_lido = (
+                f"declarante={_ocr_dec[0] or ''} "
+                f"especialidade={_ocr_esp[0] or ''}"
+            )
+        return step
 
     # ----------------------------------------------------------------
     # AB09 — Obs
     # ----------------------------------------------------------------
 
     def _step_obs(self, ctx, dados: dict, coords, observer=None):
+        _ocr_obs = [None]
         def fn():
             valor = dados.get("obs", "ADMISSAO REALIZADA COM FERRAMENTA DE AUTOMACAO DE TESTES")
             x, y = self._coord(coords, "campo_obs_amb")
             pyautogui.click(x, y); time.sleep(0.3)
             pyautogui.hotkey("ctrl", "a"); ctx.runner.type_text(valor); time.sleep(0.3)
-            _ocr_obs = [None]
             screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}AB09_obs.png")
             self._verify_campo_opcional(ctx, "obs", valor,
                                         "AB09", "campo_obs_ocr", _ocr_obs)
             return screenshot_path
-        return self._step("AB09", "preencher campo Obs", fn, observer, ctx=ctx)
+        step = self._step("AB09", "preencher campo Obs", fn, observer, ctx=ctx)
+        if step.success:
+            step.ocr_lido = _ocr_obs[0] if _ocr_obs[0] is not None else ''
+        return step
 
     # ----------------------------------------------------------------
     # AB10 — Origem do Paciente
     # ----------------------------------------------------------------
 
     def _step_origem_paciente(self, ctx, dados: dict, coords, observer=None):
+        _ocr_orig = [None]
         def fn():
             tipo = self._dado(dados, "origem_tipo", "AB10")
             x, y = self._coord(coords, "campo_origem_tipo")
             pyautogui.click(x, y); time.sleep(0.3)
             pyautogui.hotkey("ctrl", "a"); ctx.runner.type_text(tipo)
             pyautogui.press("tab"); time.sleep(1.0)
-            _ocr_orig = [None]
             screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}AB10_origem.png")
             self._verify_campo_obrigatorio(ctx, "origem_tipo", tipo,
                                            "AB10", "campo_origem_tipo_ocr", _ocr_orig)
             return screenshot_path
-        return self._step("AB10", "preencher Origem do Paciente", fn, observer,
+        step = self._step("AB10", "preencher Origem do Paciente", fn, observer,
                           validated=True, ctx=ctx)
+        if step.success:
+            step.ocr_lido = _ocr_orig[0] if _ocr_orig[0] is not None else ''
+        return step
 
     # ----------------------------------------------------------------
     # AB11 — Medico Responsavel via LOV
     # ----------------------------------------------------------------
 
     def _step_medico_responsavel(self, ctx, coords, observer=None):
+        _ocr_med = [None]
         def fn():
             self._selecionar_via_lov(
                 ctx, coords,
@@ -425,13 +623,15 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
                 duplo_clique_item="item_profissional_proc",
             )
             time.sleep(1.5)
-            _ocr_med = [None]
             screenshot_path = ctx.runner.screenshot(f"{ctx.evidence_dir}AB11_medico.png")
             self._verify_campo_obrigatorio(ctx, "medico_responsavel", "MEDICO",
                                            "AB11", "campo_medico_nome_ocr", _ocr_med)
             return screenshot_path
-        return self._step("AB11", "selecionar Medico Responsavel via LOV",
+        step = self._step("AB11", "selecionar Medico Responsavel via LOV",
                           fn, observer, validated=True, ctx=ctx)
+        if step.success:
+            step.ocr_lido = _ocr_med[0] if _ocr_med[0] is not None else ''
+        return step
     # ----------------------------------------------------------------
     # AB12 — Lista de Procedimentos
     # ----------------------------------------------------------------
@@ -443,63 +643,62 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
                 raise AssertionError(
                     "Nenhum procedimento configurado em dados.procedimentos no config.yaml."
                 )
+            # Escolhe 1 procedimento aleatorio — explora diferentes codigos entre execucoes.
+            # Transitorio: lista no YAML. Definitivo: db.query('SELECT PRO_CODIGO FROM ...')
+            proc = random.choice(procedimentos)
+            codigo         = proc.get("codigo", "")
+            complemento    = proc.get("complemento", "")
+            area_executora = proc.get("area_executora", "")
+            profissional   = proc.get("profissional", "MEDICO")
+            print(f"[AB12] procedimento escolhido: '{codigo}' / complemento: '{complemento}' "
+                  f"(de {len(procedimentos)} opcoes)")
+
             ctx.runner.safe_click(f"{self._TPL}/btn_lista_procedimentos.png", threshold=0.7)
             time.sleep(1.5)
 
-            for i, proc in enumerate(procedimentos):
-                codigo         = proc.get("codigo", "")
-                complemento    = proc.get("complemento", "")
-                area_executora = proc.get("area_executora", "")
-                profissional   = proc.get("profissional", "MEDICO")
-                print(f"[AB12] Procedimento {i+1}: {codigo} / {complemento}")
+            self._selecionar_via_lov(
+                ctx, coords,
+                btn_lov="btn_lov_codigo_proc",
+                campo_localizar="campo_localizar_proc",
+                termo=codigo,
+                btn_localizar="btn_localizar_proc",
+                btn_ok="btn_ok_proc",
+            )
+            time.sleep(0.5)
 
-                if i > 0:
-                    x, y = self._coord(coords, "proxima_linha_proc")
-                    pyautogui.click(x, y + (i * 18)); time.sleep(0.3)
+            area_para_digitar = area_executora.strip()
+            if area_para_digitar:
+                x, y = self._coord(coords, "campo_localizar_area")
+                pyautogui.click(x, y); time.sleep(0.3)
+                pyautogui.hotkey("ctrl", "a"); ctx.runner.type_text(area_para_digitar)
+                x, y = self._coord(coords, "btn_localizar_area")
+                pyautogui.click(x, y); time.sleep(1.0)
+            x, y = self._coord(coords, "btn_ok_area_executora")
+            pyautogui.click(x, y); time.sleep(0.5)
+            pyautogui.press("tab"); time.sleep(0.3)
+            pyautogui.press("tab"); time.sleep(0.3)
 
+            if complemento:
                 self._selecionar_via_lov(
                     ctx, coords,
-                    btn_lov="btn_lov_codigo_proc",
-                    campo_localizar="campo_localizar_proc",
-                    termo=codigo,
-                    btn_localizar="btn_localizar_proc",
-                    btn_ok="btn_ok_proc",
+                    btn_lov="btn_lov_complemento",
+                    campo_localizar="campo_localizar_complemento",
+                    termo=complemento,
+                    btn_localizar="btn_localizar_complemento",
+                    btn_ok="btn_ok_complemento",
                 )
                 time.sleep(0.5)
 
-                area_para_digitar = area_executora.strip()
-                if area_para_digitar:
-                    x, y = self._coord(coords, "campo_localizar_area")
-                    pyautogui.click(x, y); time.sleep(0.3)
-                    pyautogui.hotkey("ctrl", "a"); ctx.runner.type_text(area_para_digitar)
-                    x, y = self._coord(coords, "btn_localizar_area")
-                    pyautogui.click(x, y); time.sleep(1.0)
-                x, y = self._coord(coords, "btn_ok_area_executora")
-                pyautogui.click(x, y); time.sleep(0.5)
-                pyautogui.press("tab"); time.sleep(0.3)
-                pyautogui.press("tab"); time.sleep(0.3)
-
-                if complemento:
-                    self._selecionar_via_lov(
-                        ctx, coords,
-                        btn_lov="btn_lov_complemento",
-                        campo_localizar="campo_localizar_complemento",
-                        termo=complemento,
-                        btn_localizar="btn_localizar_complemento",
-                        btn_ok="btn_ok_complemento",
-                    )
-                    time.sleep(0.5)
-
-                # Profissional: seleciona via LOV — campo nao aceita digitacao direta
-                self._selecionar_via_lov(
-                    ctx, coords,
-                    btn_lov="btn_lov_profissional_proc",
-                    campo_localizar="campo_localizar_profissional",
-                    termo=profissional,
-                    btn_localizar="btn_localizar_profissional",
-                    btn_ok="btn_ok_profissional",
-                )
-                time.sleep(0.5)
+            # Profissional: seleciona via LOV — campo nao aceita digitacao direta
+            self._selecionar_via_lov(
+                ctx, coords,
+                btn_lov="btn_lov_profissional_proc",
+                campo_localizar="campo_localizar_profissional",
+                termo=profissional,
+                btn_localizar="btn_localizar_profissional",
+                btn_ok="btn_ok_profissional",
+            )
+            time.sleep(0.5)
 
             return ctx.runner.screenshot(f"{ctx.evidence_dir}AB12_procedimentos.png")
         return self._step("AB12", "preencher Lista de Procedimentos", fn, observer, ctx=ctx)
@@ -586,8 +785,8 @@ class AdmissaoAmbulatorioFlow(BaseFlow):
             return screenshot_path
         step = self._step("AB15", "validar Nr Admissao via OCR",
                           fn, observer, validated=True, ctx=ctx)
-        if step.success and _ocr[0]:
-            step.ocr_lido = _ocr[0]
+        if step.success:
+            step.ocr_lido = _ocr[0] if _ocr[0] is not None else ''
         return step
 
     # ----------------------------------------------------------------

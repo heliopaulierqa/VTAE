@@ -9,6 +9,7 @@ from src.flows.si3.login.login_si3_flow import LoginSi3Flow
 from src.flows.si3.cadastro_min.cadastro_paciente_min_flow import CadastroPacienteMinFlow
 from src.runners.opencv_runner import OpenCVRunner
 from src.runners.browser_launcher import abrir_si3_navegador
+from src.core.object_repository import ObjectRepository
 
 
 def test_cadastro_paciente_min_flow():
@@ -59,10 +60,13 @@ def test_cadastro_paciente_min_flow():
 
     # ctx: coordenadas do cadastro (campo_nome, campo_data_nasc, etc)
     # Usar config aqui — CadastroPacienteMinFlow precisa das coordenadas do formulario
+    objects_repo = ObjectRepository.from_yaml("objects/cadastro_min.yaml")
+
     ctx = FlowContext(
         runner=runner,
         config=config,
         evidence_dir=observer.evidence_dir,
+        objects=objects_repo,
     )
 
     result = CadastroPacienteMinFlow().execute(ctx, dados=config.DADOS, observer=observer)

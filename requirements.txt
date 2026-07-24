@@ -1,3 +1,5 @@
+#v0.5.27
+
 # ── Desktop (OpenCVRunner) ──
 opencv-python
 pyautogui
@@ -34,3 +36,7 @@ pygetwindow        # controle de foco no Oracle Forms (Windows)
 
 # ── Banco de dados ──
 oracledb           # driver Oracle oficial — busca paciente_id via query (thin mode, sem Oracle Client)
+
+# ── Java Access Bridge (2ª camada de verificação estrutural) ──
+pyjab==1.1.7       # leitura do valor real de campos Oracle Forms via .text (exato, sem ruído OCR)
+pywinauto==0.6.9   # dependência do pyjab — controle de janelas Windows

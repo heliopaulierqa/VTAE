@@ -102,22 +102,22 @@ class CadastroPacienteMinFlow(BaseFlow):
                 janelas[0].maximize()
                 time.sleep(0.9)
 
-            x, y = self._coord(coords, "campo_localizar_menu")
+            x, y = ctx.objects.coord("campo_localizar_menu")
             pyautogui.click(x, y)
             time.sleep(1.5)
             pyautogui.hotkey("ctrl", "a")
             ctx.runner.type_text("CADASTRO DE PACIENTE")
             time.sleep(0.9)
 
-            x, y = self._coord(coords, "btn_pesquisar_menu")
+            x, y = ctx.objects.coord("btn_pesquisar_menu")
             pyautogui.click(x, y)
             time.sleep(1.5)
 
-            x, y = self._coord(coords, "btn_nao_popup")
+            x, y = ctx.objects.coord("btn_nao_popup")
             pyautogui.click(x, y)
             time.sleep(1.0)
 
-            x, y = self._coord(coords, "menu_cadastro_paciente")
+            x, y = ctx.objects.coord("menu_cadastro_paciente")
             pyautogui.doubleClick(x, y)
             time.sleep(1.0)
 
@@ -137,14 +137,14 @@ class CadastroPacienteMinFlow(BaseFlow):
         def fn():
             nome = self._dado(dados, "nome", "CM02")
 
-            x, y = self._coord(coords, "campo_nome_pesquisa")
+            x, y = ctx.objects.coord("campo_nome_pesquisa")
             pyautogui.click(x, y)
             time.sleep(0.5)
             pyautogui.hotkey("ctrl", "a")
             ctx.runner.type_text(nome)
             time.sleep(0.5)
 
-            x, y = self._coord(coords, "btn_pesquisar_params")
+            x, y = ctx.objects.coord("btn_pesquisar_params")
             pyautogui.click(x, y)
             time.sleep(2.5)
 
@@ -169,7 +169,7 @@ class CadastroPacienteMinFlow(BaseFlow):
     # ------------------------------------------------------------------
     def _step_cm03_novo(self, ctx, coords, observer=None) -> StepResult:
         def fn():
-            x, y = self._coord(coords, "btn_novo_lista")
+            x, y = ctx.objects.coord("btn_novo_lista")
             pyautogui.click(x, y)
             time.sleep(1.0)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CM03_novo.png")
@@ -227,14 +227,14 @@ class CadastroPacienteMinFlow(BaseFlow):
             else:
                 data_digitos = data_raw.replace("/", "").replace("-", "")
 
-            x, y = self._coord(coords, "campo_data_nasc")
+            x, y = ctx.objects.coord("campo_data_nasc")
             pyautogui.click(x, y)
             time.sleep(0.5)
             pyautogui.press("backspace", presses=10, interval=0.02)
             ctx.runner.type_text(data_digitos)
             time.sleep(0.3)
 
-            x, y = self._coord(coords, "campo_hora")
+            x, y = ctx.objects.coord("campo_hora")
             pyautogui.click(x, y)
             time.sleep(0.3)
             pyautogui.press("backspace", presses=6, interval=0.02)
@@ -339,34 +339,34 @@ class CadastroPacienteMinFlow(BaseFlow):
             nacionalidade = random.choice(opcoes)
 
             # 1. Abrir lista de tipos
-            x, y = self._coord(coords, "btn_lov_nacionalidade")
+            x, y = ctx.objects.coord("btn_lov_nacionalidade")
             pyautogui.click(x, y)
             time.sleep(1.0)
 
             # 2. Clicar item + OK da lista
             if nacionalidade == "BRASILEIRO":
-                x, y = self._coord(coords, "item_lista_brasileiro")
+                x, y = ctx.objects.coord("item_lista_brasileiro")
             elif nacionalidade == "ESTRANGEIRO":
-                x, y = self._coord(coords, "item_lista_estrangeiro")
+                x, y = ctx.objects.coord("item_lista_estrangeiro")
             else:
-                x, y = self._coord(coords, "item_lista_naturalizado")
+                x, y = ctx.objects.coord("item_lista_naturalizado")
             pyautogui.click(x, y)
             time.sleep(0.3)
 
-            x, y = self._coord(coords, "btn_ok_lista_nac")
+            x, y = ctx.objects.coord("btn_ok_lista_nac")
             pyautogui.click(x, y)
             time.sleep(1.0)
 
             # 3. Preencher popup + clicar OK
             if nacionalidade == "BRASILEIRO":
                 self._preencher_popup_brasileiro(ctx, coords, dados)
-                x, y = self._coord(coords, "btn_ok_popup_brasileiro")
+                x, y = ctx.objects.coord("btn_ok_popup_brasileiro")
             elif nacionalidade == "ESTRANGEIRO":
                 self._preencher_popup_estrangeiro(ctx, coords, dados)
-                x, y = self._coord(coords, "btn_ok_popup_estrangeiro")
+                x, y = ctx.objects.coord("btn_ok_popup_estrangeiro")
             else:
                 self._preencher_popup_naturalizado(ctx, coords, dados)
-                x, y = self._coord(coords, "btn_ok_popup_naturalizado")
+                x, y = ctx.objects.coord("btn_ok_popup_naturalizado")
             pyautogui.click(x, y)
             time.sleep(0.8)
 
@@ -407,14 +407,14 @@ class CadastroPacienteMinFlow(BaseFlow):
         invalidos para cenario negativo (observabilidade).
         """
         # 1. Focar no campo e abrir a LOV
-        x, y = self._coord(coords, campo_coord)
+        x, y = ctx.objects.coord(campo_coord)
         pyautogui.click(x, y)
         time.sleep(0.5)
         pyautogui.press("f9")
         time.sleep(1.0)  # aguarda LOV abrir
 
         # 2. Clicar no campo Localizar e digitar o valor
-        x, y = self._coord(coords, "campo_localizar_lov")
+        x, y = ctx.objects.coord("campo_localizar_lov")
         pyautogui.click(x, y)
         time.sleep(0.3)
         pyautogui.hotkey("ctrl", "a")
@@ -422,7 +422,7 @@ class CadastroPacienteMinFlow(BaseFlow):
         time.sleep(0.5)  # aguarda filtro aplicar
 
         # 3. Clicar OK — confirma o item filtrado
-        x, y = self._coord(coords, btn_ok_coord)
+        x, y = ctx.objects.coord(btn_ok_coord)
         pyautogui.click(x, y)
         time.sleep(0.5)
 
@@ -481,20 +481,20 @@ class CadastroPacienteMinFlow(BaseFlow):
         )
 
         data_entrada = _fake_br.date_of_birth().strftime("%d%m%Y")
-        x, y = self._coord(coords, "campo_data_entrada_brasil")
+        x, y = ctx.objects.coord("campo_data_entrada_brasil")
         pyautogui.click(x, y)
         time.sleep(0.3)
         pyautogui.press("backspace", presses=10, interval=0.02)
         ctx.runner.type_text(data_entrada)
         time.sleep(0.3)
 
-        x, y = self._coord(coords, "campo_estado_estrangeiro")
+        x, y = ctx.objects.coord("campo_estado_estrangeiro")
         pyautogui.click(x, y)
         time.sleep(0.3)
         ctx.runner.type_text(_fake_br.state_abbr())
         time.sleep(0.3)
 
-        x, y = self._coord(coords, "campo_municipio_estrangeiro")
+        x, y = ctx.objects.coord("campo_municipio_estrangeiro")
         pyautogui.click(x, y)
         time.sleep(0.3)
         ctx.runner.type_text(_fake_br.city())
@@ -520,7 +520,7 @@ class CadastroPacienteMinFlow(BaseFlow):
         )
 
         data_nat = _fake_br.date_of_birth().strftime("%d%m%Y")
-        x, y = self._coord(coords, "campo_data_naturalizacao")
+        x, y = ctx.objects.coord("campo_data_naturalizacao")
         pyautogui.click(x, y)
         time.sleep(0.3)
         pyautogui.press("backspace", presses=10, interval=0.02)
@@ -528,7 +528,7 @@ class CadastroPacienteMinFlow(BaseFlow):
         time.sleep(0.3)
 
         nr_portaria = _fake_br.numerify("####/####")
-        x, y = self._coord(coords, "campo_nr_portaria")
+        x, y = ctx.objects.coord("campo_nr_portaria")
         pyautogui.click(x, y)
         time.sleep(0.3)
         ctx.runner.type_text(nr_portaria)
@@ -565,12 +565,12 @@ class CadastroPacienteMinFlow(BaseFlow):
         )
 
         # Fechar popup de erro
-        x, y = self._coord(ctx.config.coordenadas, "btn_ok_erro_incor")
+        x, y = ctx.objects.coord("btn_ok_erro_incor")
         pyautogui.click(x, y)
         time.sleep(0.5)
 
         # Fechar popup de Nacionalidade
-        x, y = self._coord(ctx.config.coordenadas, "btn_cancelar_popup_nac")
+        x, y = ctx.objects.coord("btn_cancelar_popup_nac")
         pyautogui.click(x, y)
         time.sleep(0.5)
 
@@ -637,7 +637,7 @@ class CadastroPacienteMinFlow(BaseFlow):
             time.sleep(2.0)
 
             # 2. Clicar Gerar Matricula
-            x, y = self._coord(ctx.config.coordenadas, "btn_gerar_matricula")
+            x, y = ctx.objects.coord("btn_gerar_matricula")
             pyautogui.click(x, y)
             time.sleep(2.0)
 
@@ -696,13 +696,13 @@ class CadastroPacienteMinFlow(BaseFlow):
     def _step_cm10_sair(self, ctx, coords, observer=None) -> StepResult:
         def fn():
             self._focar_si3()
-            x, y = self._coord(coords, "btn_sair_1")
+            x, y = ctx.objects.coord("btn_sair_1")
             pyautogui.click(x, y)
             time.sleep(1.0)
-            x, y = self._coord(coords, "btn_sair_2")
+            x, y = ctx.objects.coord("btn_sair_2")
             pyautogui.click(x, y)
             time.sleep(1.0)
-            x, y = self._coord(coords, "btn_sair_3")
+            x, y = ctx.objects.coord("btn_sair_3")
             pyautogui.click(x, y)
             time.sleep(1.0)
             return ctx.runner.screenshot(f"{ctx.evidence_dir}CM10_sair.png")

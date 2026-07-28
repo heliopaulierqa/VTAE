@@ -396,9 +396,9 @@ class CadastroPacienteMinFlow(BaseFlow):
         Padrao universal para selecionar um valor em qualquer LOV de lista.
 
         Fluxo:
-          1. Clicar no campo -> F9 -> LOV abre
+          1. Clicar no campo Localizar, digitar o valor, pressionar ENTER
           2. Clicar no campo Localizar da LOV
-          3. Limpar + digitar o valor sorteado -> LOV filtra
+          3. Clicar OK da LOV (confirma o item filtrado)
           4. Clicar OK da LOV
 
         Este padrao garante selecao aleatoria real — nao depende do
@@ -420,6 +420,12 @@ class CadastroPacienteMinFlow(BaseFlow):
         pyautogui.hotkey("ctrl", "a")
         ctx.runner.type_text(valor)
         time.sleep(0.5)  # aguarda filtro aplicar
+
+        # 2b. ENTER dispara a busca — mesmo efeito do botao Localizar,
+        # sem depender de coordenada (regra 21). Filtra a lista pelo termo,
+        # deixando 1 resultado destacado quando o termo e exato (sigla/nome).
+        pyautogui.press("enter")
+        time.sleep(1.0)  # aguarda lista re-filtrar
 
         # 3. Clicar OK — confirma o item filtrado
         x, y = ctx.objects.coord(btn_ok_coord)
@@ -451,6 +457,7 @@ class CadastroPacienteMinFlow(BaseFlow):
             campo_coord="campo_estado_brasileiro",
             btn_ok_coord="btn_ok_lov_estado_brasileiro",
             valor=estado,
+            
         )
 
         self._selecionar_em_lov(
@@ -458,6 +465,7 @@ class CadastroPacienteMinFlow(BaseFlow):
             campo_coord="campo_cidade_brasileiro",
             btn_ok_coord="btn_ok_lov_cidade_brasileiro",
             valor=cidade,
+           
         )
 
     def _preencher_popup_estrangeiro(self, ctx, coords, dados) -> None:
@@ -478,6 +486,7 @@ class CadastroPacienteMinFlow(BaseFlow):
             campo_coord="campo_pais_estrangeiro",
             btn_ok_coord="btn_ok_lov_pais_estrangeiro",
             valor=pais,
+            
         )
 
         data_entrada = _fake_br.date_of_birth().strftime("%d%m%Y")
@@ -517,6 +526,7 @@ class CadastroPacienteMinFlow(BaseFlow):
             campo_coord="campo_pais_naturalizado",
             btn_ok_coord="btn_ok_lov_pais_naturalizado",
             valor=pais,
+            
         )
 
         data_nat = _fake_br.date_of_birth().strftime("%d%m%Y")

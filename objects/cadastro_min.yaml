@@ -65,6 +65,10 @@ objetos:
     coordenada: { x: 271, y: 357 }
   btn_ok_popup_brasileiro:
     coordenada: { x: 478, y: 362 }
+  btn_localizar_lov_estado_brasileiro:
+    coordenada: { x: 137, y: 355 }
+  btn_localizar_lov_cidade_brasileiro:
+    coordenada: { x: 180, y: 355 }  
 
   # ── Popup Estrangeiro ─────────────────────────────────────────────────────
   campo_pais_estrangeiro:
@@ -79,6 +83,8 @@ objetos:
     coordenada: { x: 266, y: 358 }
   btn_ok_popup_estrangeiro:
     coordenada: { x: 464, y: 367 }
+  btn_localizar_lov_pais_estrangeiro:
+    coordenada: { x: 171, y: 352 }  
 
   # ── Popup Naturalizado ────────────────────────────────────────────────────
   campo_pais_naturalizado:
@@ -91,6 +97,8 @@ objetos:
     coordenada: { x: 272, y: 353 }
   btn_ok_popup_naturalizado:
     coordenada: { x: 483, y: 366 }
+  btn_localizar_lov_pais_naturalizado:
+    coordenada: { x: 179, y: 357 }  
 
   # ── Popup HC-INCOR (erro Oracle Forms) ────────────────────────────────────
   btn_ok_erro_incor:

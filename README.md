@@ -131,7 +131,21 @@ recorte.show()
 ### Validar score de template (diagnose)
 
 ```bash
-# ATENÇÃO: template PRIMEIRO, screenshot DEPOIS — inversão retorna 0.0 sempre
+# v0.5.34 — script único e parametrizável (scripts/diagnose_contra_arquivo.py)
+# substitui os antigos diagnose_algumacoisa.py — nunca criar um script novo por investigação
+
+# Modo 1 — mede o template contra uma imagem já salva ("com imagem")
+python scripts/diagnose_contra_arquivo.py templates/si3/meu_modulo/meu_template.png screenshot_sistema.png
+
+# Modo 2 — screenshot omitido: captura a tela ao vivo (3s de delay) e mede contra o print real
+python scripts/diagnose_contra_arquivo.py templates/si3/meu_modulo/meu_template.png
+```
+
+> ATENÇÃO: template sempre PRIMEIRO, screenshot depois — inversão retorna 0.0 sempre.
+> A captura ao vivo é salva com timestamp em `evidence/diagnose_manual/` — fica registrada, não é descartável.
+
+**Equivalente antigo (ainda funciona, mas prefira o script acima):**
+```bash
 python -c "
 from src.vision.template import TemplateMatcher
 print(TemplateMatcher().diagnose(
@@ -149,6 +163,8 @@ print(TemplateMatcher().diagnose(
 
 > ⚠️ Oracle Forms via Edge tem teto real ~0.79. Documentar e justificar quando abaixo de 0.88.
 
+> **Medir sensibilidade E especificidade:** rodar o diagnose também contra uma tela ONDE O ELEMENTO NÃO DEVERIA APARECER — um score alto ali é falso positivo em potencial, mesmo que o score contra a tela certa também esteja alto. Foi assim que o threshold do L03 (LoginSi3Flow) subiu de 0.7 para 0.85: o pior falso positivo medido foi 0.746.
+
 ### Capturar coordenada de campo
 
 ```bash
@@ -156,10 +172,12 @@ print(TemplateMatcher().diagnose(
 python scripts/posicao_mouse.py
 ```
 
-### Testar região OCR isolada
+### Testar OCR de uma região — com imagem já salva
 
 ```bash
-# Testa leitura de uma região específica — salva _crop_raw.png e _crop_proc.png
+# Testa leitura de uma região específica de uma imagem existente
+# ("com imagem" — não captura a tela, lê o arquivo informado)
+# Salva _crop_raw.png (recorte bruto) e _crop_proc.png (recorte após pré-processamento do OCR)
 python scripts/testar_regiao_ocr.py screenshot_sistema.png x1 y1 x2 y2
 
 # Exemplos reais:
@@ -167,6 +185,30 @@ python scripts/testar_regiao_ocr.py screenshot_cadastro.png 27 145 447 168    # 
 python scripts/testar_regiao_ocr.py screenshot_cadastro.png 363 195 463 207   # data nasc
 python scripts/testar_regiao_ocr.py screenshot_cadastro.png 543 192 633 212   # sexo
 python scripts/testar_regiao_ocr.py screenshot_cadastro.png 565 148 662 166   # matricula
+```
+
+> Diferença entre as duas ferramentas: `diagnose_contra_arquivo.py` mede "o elemento está aqui?" (score de imagem);
+> `testar_regiao_ocr.py` mede "o que está escrito aqui?" (texto lido). Use os dois juntos quando o problema
+> não estiver claro — comparar o `_crop_raw.png` (o que a região realmente capturou) contra o texto retornado
+> já resolve a maioria dos casos de OCR não ler o valor esperado.
+
+### Testar OCR sem arquivo salvo — direto do OcrHelper
+
+```bash
+# Lê uma região diretamente de um screenshot já existente, sem passar pelo script de calibração
+python -c "
+from src.vision.ocr import OcrHelper
+regiao = (27, 145, 447, 168)   # x1, y1, x2, y2
+texto = OcrHelper.ler_regiao('screenshot_cadastro.png', regiao)
+print('OCR leu:', repr(texto))
+"
+
+# Gera um recorte ampliado para inspeção visual quando o OCR não lê o esperado
+python -c "
+from src.vision.ocr import OcrHelper
+OcrHelper.salvar_debug('screenshot_cadastro.png', (27, 145, 447, 168), 'debug_ocr.png')
+print('salvo: debug_ocr.png')
+"
 ```
 
 ### Verificar config carregado (debug de dados)
@@ -235,6 +277,9 @@ cat evidence/estado_jornada.json
 
 # Ver histórico de flakiness
 cat evidence/flakiness.json
+
+# Ver capturas manuais do diagnose ao vivo (Modo 2 do diagnose_contra_arquivo.py)
+ls evidence/diagnose_manual/
 ```
 
 ---
@@ -295,11 +340,13 @@ VTAE/
 │       │   └── test_cadastro_paciente_min.py # ✅ 3x
 │       └── jornadas/
 ├── scripts/
-│   ├── posicao_mouse.py       # captura coordenadas
-│   └── testar_regiao_ocr.py   # calibra regioes OCR
+│   ├── posicao_mouse.py           # captura coordenadas
+│   ├── testar_regiao_ocr.py       # calibra regioes OCR (com imagem salva)
+│   └── diagnose_contra_arquivo.py # score de template — com imagem ou captura ao vivo (v0.5.34)
 └── evidence/
     ├── flakiness.json
     ├── estado_jornada.json
+    ├── diagnose_manual/              # capturas ao vivo do diagnose_contra_arquivo.py
     └── YYYY-MM-DD/
         └── <teste>/
             ├── execution.log

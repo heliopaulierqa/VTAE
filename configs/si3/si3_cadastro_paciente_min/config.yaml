@@ -96,7 +96,7 @@ dados:
     - COLOMBIA
     - PARAGUAI
     - PERU
-    - URUGUAY
+    - URUGUAI
     - BOLIVIA
     - VENEZUELA
     - EQUADOR
@@ -162,8 +162,7 @@ coordenadas:
   item_lista_estrangeiro:  { x: 581, y: 274 }
   item_lista_naturalizado: { x: 583, y: 291 }
   btn_ok_lista_nac:        { x: 706, y: 326 }
-  campo_localizar_lov:     { x: 90,  y: 142 }
-
+ 
   # ── Popup Brasileiro ──────────────────────────────────────────────────────
   campo_estado_brasileiro:       { x: 247, y: 262 }
   campo_cidade_brasileiro:       { x: 230, y: 288 }

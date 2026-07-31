@@ -249,9 +249,8 @@ class CadastroPacienteMinFlow(BaseFlow):
             screenshot_path = ctx.runner.screenshot(
                 f"{ctx.evidence_dir}CM05_data.png"
             )
-            regiao = ctx.config.regioes_ocr.get("campo_data_nasc")
-            if regiao and (regiao["x1"] or regiao["y1"] or regiao["x2"] or regiao["y2"]):
-                regiao_tupla = (regiao["x1"], regiao["y1"], regiao["x2"], regiao["y2"])
+            regiao_tupla = self._resolver_regiao_ocr(ctx, "campo_data_nasc")
+            if regiao_tupla is not None:
                 ok, lido = ctx.runner.verify_lov(
                     "data_nascimento", region=regiao_tupla, timeout=3.0
                 )
@@ -668,8 +667,13 @@ class CadastroPacienteMinFlow(BaseFlow):
             )
 
             # 4. OCR — Matricula (obrigatorio — prova que o cadastro foi salvo)
-            r_mat = ctx.config.regioes_ocr["matricula"]
-            regiao_mat = (r_mat["x1"], r_mat["y1"], r_mat["x2"], r_mat["y2"])
+            regiao_mat = self._resolver_regiao_ocr(ctx, "matricula")
+            if regiao_mat is None:
+                raise AssertionError(
+                    "[CM09] Regiao 'matricula' nao calibrada em "
+                    "objects/cadastro_min.yaml nem no config.yaml — "
+                    "verificacao OBRIGATORIA impossivel."
+                )
             texto_mat = OcrHelper.ler_regiao(screenshot_path, regiao_mat)
             numeros_mat = re.findall(r"\d+", texto_mat)
             if not numeros_mat:
@@ -684,9 +688,8 @@ class CadastroPacienteMinFlow(BaseFlow):
 
             # 5. OCR — Identificador (usado como paciente_id na jornada)
             paciente_id = matricula  # fallback padrao
-            if "identificador" in ctx.config.regioes_ocr:
-                r_id = ctx.config.regioes_ocr["identificador"]
-                regiao_id = (r_id["x1"], r_id["y1"], r_id["x2"], r_id["y2"])
+            regiao_id = self._resolver_regiao_ocr(ctx, "identificador")
+            if regiao_id is not None:
                 texto_id = OcrHelper.ler_regiao(screenshot_path, regiao_id)
                 numeros_id = re.findall(r"\d+", texto_id)
                 if numeros_id:

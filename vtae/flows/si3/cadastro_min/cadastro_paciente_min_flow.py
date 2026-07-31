@@ -644,9 +644,7 @@ class CadastroPacienteMinFlow(BaseFlow):
     #   3. OCR na regiao matricula — AssertionError se vazio (obrigatorio)
     #   4. OCR na regiao identificador — fallback para matricula se nao calibrado
     #   5. Salvar paciente_id e matricula em estado_jornada.json
-    # Regioes OCR (config.yaml):
-    #   matricula:     { x1: 565, y1: 148, x2: 662, y2: 166 }  calibrado
-    #   identificador: { x1: 457, y1: 146, x2: 552, y2: 165 }  calibrado
+    # Regioes OCR: objects/cadastro_min.yaml (matricula, identificador)
     # ------------------------------------------------------------------
     def _step_cm09_gerar_matricula(self, ctx, observer=None) -> StepResult:
         def fn():
@@ -681,7 +679,7 @@ class CadastroPacienteMinFlow(BaseFlow):
                     f"[CM09] Matricula nao gerada ou OCR nao leu.\n"
                     f"Texto lido: '{texto_mat}'\n"
                     f"Regiao usada: {regiao_mat}\n"
-                    f"Verifique regioes_ocr.matricula no config.yaml."
+                    f"Verifique regiao_ocr de 'matricula' em objects/cadastro_min.yaml."
                 )
             matricula = numeros_mat[0]
             print(f"[CM09] Matricula gerada: {matricula}")

@@ -9,7 +9,7 @@ import pytest
 from unittest.mock import patch
 from dataclasses import FrozenInstanceError
 
-from src.config.schema import (
+from vtae.config.schema import (
     SystemConfig,
     AmbienteConfig,
     CredenciaisConfig,

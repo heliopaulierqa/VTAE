@@ -2,7 +2,7 @@
 # MIGRADO — credenciais agora em vtae/configs/msi3/.env
 # Mantido para retrocompatibilidade. Remover na v0.5.0.
 
-from src.config import ConfigLoader as _CL
+from vtae.config import ConfigLoader as _CL
 from pathlib import Path as _P
 
 _cfg = _CL.carregar("msi3")

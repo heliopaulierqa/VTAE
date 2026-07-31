@@ -23,12 +23,12 @@ Executar como parte da jornada completa:
 """
 import pathlib
 
-from src.config.loader import ConfigLoader
-from src.core.context import FlowContext
-from src.core.observer import ExecutionObserver
-from src.flows.si3.admissao_com_agendamento_flow import AdmissaoComAgendamentoFlow
-from src.flows.si3.login_flow import LoginFlow
-from src.runners.opencv_runner import OpenCVRunner
+from vtae.config.loader import ConfigLoader
+from vtae.core.context import FlowContext
+from vtae.report.observer import ExecutionObserver
+from vtae.flows.si3.admissao.admissao_com_agendamento_flow import AdmissaoComAgendamentoFlow
+from vtae.flows.si3.login.login_flow import LoginFlow
+from vtae.runners.opencv_runner import OpenCVRunner
 
 
 def test_admissao_com_agendamento_jornada():

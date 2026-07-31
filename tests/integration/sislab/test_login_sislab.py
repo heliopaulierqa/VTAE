@@ -1,8 +1,8 @@
-from vtae.runners.opencv_runner import OpenCVRunner
+from vtae.config import ConfigLoader
 from vtae.core.context import FlowContext
-from vtae.core.observer import ExecutionObserver
-from vtae.configs.sislab.login_config import LoginConfigSisLab
-from vtae.flows.login_flow_sislab import LoginFlowSisLab
+from vtae.report.observer import ExecutionObserver
+from vtae.flows.sislab.login.login_flow_sislab import LoginFlowSisLab
+from vtae.runners.opencv_runner import OpenCVRunner
 
 
 def test_login_sislab():
@@ -10,13 +10,16 @@ def test_login_sislab():
     Testa o login do SisLab via OpenCV.
     Com o SisLab aberto e maximizado na tela de login.
     """
+    config = ConfigLoader.carregar("sislab")
+
     observer = ExecutionObserver(test_name="test_login_sislab")
-    runner = OpenCVRunner(confidence=0.8)
+    runner = OpenCVRunner(confidence=config.confidence)
     ctx = FlowContext(
         runner=runner,
-        config=LoginConfigSisLab,
+        config=config,
         evidence_dir=observer.evidence_dir,
     )
+    observer.inject_logger(ctx)
 
     result = LoginFlowSisLab().execute(ctx, observer=observer)
     observer.report(ctx)

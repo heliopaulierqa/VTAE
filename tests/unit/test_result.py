@@ -1,15 +1,15 @@
-from src.core.result import StepResult, FlowResult
+from vtae.core.result import StepResult, FlowResult
 
 
 def test_step_result_sucesso_str():
     step = StepResult(step_id="L01", success=True, duration_ms=120.5)
-    assert "✅" in str(step)
+    assert "OK" in str(step)
     assert "L01" in str(step)
 
 
 def test_step_result_falha_str():
     step = StepResult(step_id="A01", success=False, duration_ms=50.0, error="Timeout")
-    assert "❌" in str(step)
+    assert "FALHOU" in str(step)
     assert "Timeout" in str(step)
 
 

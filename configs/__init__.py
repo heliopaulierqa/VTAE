@@ -1,1 +1,1 @@
-from src.config import ConfigLoader, SystemConfig  # noqa: F401
+from vtae.config import ConfigLoader, SystemConfig  # noqa: F401

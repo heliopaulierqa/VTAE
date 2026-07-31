@@ -1,3 +1,7 @@
+# Propriedades da TELA (nao de um objeto especifico)
+tela:
+  titulo_jab: "Form_Pac0010"   # titulo da janela Java para o JABDriver
+
 objetos:
 
   # ── Navegacao CM01-CM03 ───────────────────────────────────────────────────
@@ -29,10 +33,12 @@ objetos:
     coordenada: { x: 648, y: 200 }
   campo_sexo:
     regiao_ocr: { x1: 543, y1: 192, x2: 633, y2: 212 }
+    jab_name: 'Descrição do Sexo.'
   campo_cor_etnia_lov:
     coordenada: { x: 195, y: 288 }
   campo_cor_etnia:
     regiao_ocr: { x1: 22, y1: 278, x2: 200, y2: 296 }
+    jab_name: 'Descrição da Cor/Raça.'
   btn_ok_lov:
     coordenada: { x: 222, y: 360 }
   btn_ok_lov_cor_etnia:
@@ -53,6 +59,7 @@ objetos:
     coordenada: { x: 90, y: 142 }
   campo_nacionalidade:
     regiao_ocr: { x1: 664, y1: 193, x2: 829, y2: 211 }
+    jab_name: 'Tipo de naturalidade'
 
   # ── Popup Brasileiro ──────────────────────────────────────────────────────
   campo_estado_brasileiro:

@@ -12,7 +12,7 @@ Executar:
 """
 import pathlib
 
-from src.config import ConfigLoader
+from vtae.config import ConfigLoader
 from vtae.core.observer import ExecutionObserver
 from vtae.runners.opencv_runner import OpenCVRunner
 from vtae.core.context import FlowContext

@@ -1,8 +1,8 @@
 import pytest
 from faker import Faker
-from src.runners.playwright_runner import PlaywrightRunner
-from src.core.context import FlowContext
-from src.core.observer import ExecutionObserver
+from vtae.runners.playwright_runner import PlaywrightRunner
+from vtae.core.context import FlowContext
+from vtae.report.observer import ExecutionObserver
 from configs.msi3.login_config import LoginConfigMsi3
 from src.flows.msi3.login_flow_msi3 import LoginFlowMsi3
 from src.flows.msi3.frequencia_aplicacao_flow import FrequenciaAplicacaoFlow

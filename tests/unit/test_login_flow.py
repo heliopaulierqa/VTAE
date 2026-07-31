@@ -1,4 +1,4 @@
-from src.flows.si3.login_flow import LoginFlow
+from vtae.flows.si3.login.login_flow import LoginFlow
 
 
 def test_login_flow_retorna_resultado(ctx):

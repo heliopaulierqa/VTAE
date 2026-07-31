@@ -230,7 +230,7 @@ print('OCR ENGINE:', c.ocr_engine)
 ```bash
 python -c "
 import sys; sys.path.insert(0, '.')
-from src.flows.base_flow import _normalizar, _similar
+from vtae.flows.base_flow import _normalizar, _similar
 # Testar normalizacao
 print(_normalizar('CÂMARA'))           # CAMARA
 print(_normalizar('04/11/2023'))       # 04112023
@@ -247,17 +247,17 @@ print(_similar('TESTE ERRO', 'BRUNA')) # False (muito diferente)
 # Ler qualquer arquivo do projeto sem editor
 cat src/flows/si3/cadastro_min/cadastro_paciente_min_flow.py
 cat configs/si3/si3_cadastro_paciente_min/config.yaml
-cat src/flows/base_flow.py
+cat vtae/flows/base_flow.py
 
 # Com numeração de linhas (útil para identificar onde editar)
-cat -n src/flows/base_flow.py
+cat -n vtae/flows/base_flow.py
 
 # Filtrar linhas com palavra-chave
-cat src/flows/base_flow.py | grep -n "_verify_campo"
-cat src/flows/base_flow.py | grep -n "def _"
+cat vtae/flows/base_flow.py | grep -n "_verify_campo"
+cat vtae/flows/base_flow.py | grep -n "def _"
 
 # Ver apenas parte do arquivo (linhas 50 a 100)
-sed -n '50,100p' src/flows/base_flow.py
+sed -n '50,100p' vtae/flows/base_flow.py
 ```
 
 ### Ver evidências de execução

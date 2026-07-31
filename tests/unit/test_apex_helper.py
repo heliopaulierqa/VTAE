@@ -55,13 +55,13 @@ def _make_locator(visible=False, text=""):
 
 class TestObterContextos:
     def test_retorna_ao_menos_a_pagina_principal(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         contextos = ApexHelper._obter_contextos(runner)
         assert runner._page in contextos
 
     def test_inclui_frames_adicionais(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         main_frame = MagicMock()
         extra_frame = MagicMock()
         extra_frame.url = "http://msi3/apex/f?p=152:19:"
@@ -77,7 +77,7 @@ class TestObterContextos:
 
 class TestVerificarSemErro:
     def test_nao_lanca_quando_sem_erro(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         # wait_for_selector lança TimeoutError — nenhum erro visível
         runner._page.wait_for_selector.side_effect = Exception("timeout")
@@ -86,7 +86,7 @@ class TestVerificarSemErro:
         ApexHelper.verificar_sem_erro(runner, timeout_ms=100)
 
     def test_lanca_assertion_error_quando_erro_visivel(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         # Simula erro APEX visível
         runner._page.wait_for_selector.return_value = None
@@ -97,7 +97,7 @@ class TestVerificarSemErro:
             ApexHelper.verificar_sem_erro(runner, timeout_ms=100)
 
     def test_mensagem_de_erro_inclui_texto_apex(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         runner._page.wait_for_selector.return_value = None
         locator = _make_locator(visible=True, text="Usuário ou senha inválidos")
@@ -114,14 +114,14 @@ class TestVerificarSemErro:
 
 class TestObterMensagemErro:
     def test_retorna_none_quando_sem_erro(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         runner._page.wait_for_selector.side_effect = Exception("timeout")
         runner._page.frames = [runner._page.main_frame]
         assert ApexHelper.obter_mensagem_erro(runner, timeout_ms=100) is None
 
     def test_retorna_texto_do_erro(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         runner._page.wait_for_selector.return_value = None
         locator = _make_locator(visible=True, text="Registro duplicado")
@@ -131,7 +131,7 @@ class TestObterMensagemErro:
         assert resultado == "Registro duplicado"
 
     def test_nao_lanca_excecao(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         runner._page.wait_for_selector.side_effect = Exception("qualquer erro")
         runner._page.frames = [runner._page.main_frame]
@@ -146,7 +146,7 @@ class TestObterMensagemErro:
 
 class TestVerificarSucesso:
     def test_retorna_texto_de_sucesso(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         runner._page.wait_for_selector.return_value = None
         locator = _make_locator(visible=True, text="Registro inserido com sucesso")
@@ -156,7 +156,7 @@ class TestVerificarSucesso:
         assert "sucesso" in resultado.lower() or resultado == "Registro inserido com sucesso"
 
     def test_lanca_assertion_error_quando_sem_sucesso(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         runner._page.wait_for_selector.side_effect = Exception("timeout")
         runner._page.frames = [runner._page.main_frame]
@@ -170,7 +170,7 @@ class TestVerificarSucesso:
 
 class TestAguardarSpinner:
     def test_nao_espera_se_spinner_nao_visivel(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         locator = _make_locator(visible=False)
         runner._page.locator.return_value = locator
@@ -180,7 +180,7 @@ class TestAguardarSpinner:
         runner._page.wait_for_selector.assert_not_called()
 
     def test_aguarda_quando_spinner_visivel(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         locator = _make_locator(visible=True)
         runner._page.locator.return_value = locator
@@ -196,7 +196,7 @@ class TestAguardarSpinner:
 
 class TestLerLinhasGrade:
     def test_retorna_linhas_da_grade(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         linha1 = MagicMock()
         linha1.text_content.return_value = "ANALISTA DE RH"
@@ -209,7 +209,7 @@ class TestLerLinhasGrade:
         assert "ASSISTENTE" in linhas
 
     def test_retorna_lista_vazia_sem_linhas(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         runner._page.locator.return_value.all.return_value = []
         runner._page.frames = [runner._page.main_frame]
@@ -217,7 +217,7 @@ class TestLerLinhasGrade:
         assert linhas == []
 
     def test_ignora_linhas_vazias(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         linha_vazia = MagicMock()
         linha_vazia.text_content.return_value = "   "
@@ -236,7 +236,7 @@ class TestLerLinhasGrade:
 
 class TestVerificarRegistroNaGrade:
     def test_nao_lanca_quando_texto_encontrado(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         linha = MagicMock()
         linha.text_content.return_value = "SV62 TESTE VTAE"
@@ -246,7 +246,7 @@ class TestVerificarRegistroNaGrade:
         ApexHelper.verificar_registro_na_grade(runner, "SV62")
 
     def test_lanca_assertion_error_quando_nao_encontrado(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         linha = MagicMock()
         linha.text_content.return_value = "OUTRO REGISTRO"
@@ -256,7 +256,7 @@ class TestVerificarRegistroNaGrade:
             ApexHelper.verificar_registro_na_grade(runner, "SV62")
 
     def test_lanca_assertion_error_quando_grade_vazia(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         runner._page.locator.return_value.all.return_value = []
         runner._page.frames = [runner._page.main_frame]
@@ -264,7 +264,7 @@ class TestVerificarRegistroNaGrade:
             ApexHelper.verificar_registro_na_grade(runner, "SV62")
 
     def test_busca_case_insensitive(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         linha = MagicMock()
         linha.text_content.return_value = "sv62 teste vtae"
@@ -274,7 +274,7 @@ class TestVerificarRegistroNaGrade:
         ApexHelper.verificar_registro_na_grade(runner, "SV62")
 
     def test_mensagem_erro_lista_linhas_encontradas(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         linha = MagicMock()
         linha.text_content.return_value = "OUTRO REGISTRO"
@@ -291,7 +291,7 @@ class TestVerificarRegistroNaGrade:
 
 class TestObterTituloPagina:
     def test_retorna_titulo_h1(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         locator = _make_locator(visible=True, text="Frequência de Aplicação")
         runner._page.locator.return_value = locator
@@ -300,7 +300,7 @@ class TestObterTituloPagina:
         assert titulo != ""
 
     def test_retorna_string_vazia_sem_titulo(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         locator = _make_locator(visible=False, text="")
         runner._page.locator.return_value = locator
@@ -315,7 +315,7 @@ class TestObterTituloPagina:
 
 class TestInspecionarPagina:
     def test_retorna_dict_com_campos_esperados(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         runner._page.wait_for_selector.side_effect = Exception("timeout")
         locator = _make_locator(visible=False, text="")
@@ -329,7 +329,7 @@ class TestInspecionarPagina:
         assert "frames" in info
 
     def test_url_correto(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner(page_url="http://msi3/apex/f?p=100")
         runner._page.wait_for_selector.side_effect = Exception("timeout")
         locator = _make_locator(visible=False, text="")
@@ -339,7 +339,7 @@ class TestInspecionarPagina:
         assert info["url"] == "http://msi3/apex/f?p=100"
 
     def test_erro_none_quando_sem_erro(self):
-        from src.flows.msi3.apex_helper import ApexHelper
+        from vtae.flows.msi3.apex_helper import ApexHelper
         runner = _make_runner()
         runner._page.wait_for_selector.side_effect = Exception("timeout")
         locator = _make_locator(visible=False, text="")

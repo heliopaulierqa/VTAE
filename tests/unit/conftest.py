@@ -1,8 +1,8 @@
 # tests/conftest.py
 import pytest
 from unittest.mock import MagicMock, patch
-from src.runners.base_runner import BaseRunner
-from src.core.context import FlowContext
+from vtae.runners.base_runner import BaseRunner
+from vtae.core.context import FlowContext
 
 
 class _MockConfig:

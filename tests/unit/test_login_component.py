@@ -1,6 +1,6 @@
 import pytest
-from src.components.si3.login_component import LoginComponent
-from src.core.context import FlowContext
+from vtae.components.si3.login_component import LoginComponent
+from vtae.core.context import FlowContext
 
 
 def test_login_component_executa_com_sucesso(ctx):

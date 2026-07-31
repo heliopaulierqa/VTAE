@@ -16,8 +16,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.flows.si3.cadastro_paciente_flow import CadastroPacienteFlow
-from src.core.result import FlowResult, StepResult
+from vtae.flows.si3.cadastro.cadastro_paciente_flow import CadastroPacienteFlow
+from vtae.core.result import FlowResult, StepResult
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -726,8 +726,8 @@ class TestCp25:
         ctx.config.regioes_ocr["matricula"] = {"x1": 10, "y1": 100, "x2": 320, "y2": 160}
         estado_path = tmp_path / "estado_jornada.json"
         with patch("os.path.exists", return_value=False), \
-             patch("src.flows.si3.cadastro_paciente_flow._ESTADO_PATH", estado_path), \
-             patch("src.vision.ocr.OcrHelper.ler_regiao", return_value="Matricula: 34567"):
+             patch("vtae.flows.si3.cadastro.cadastro_paciente_flow._ESTADO_PATH", estado_path), \
+             patch("vtae.vision.ocr.OcrHelper.ler_regiao", return_value="Matricula: 34567"):
             result = CadastroPacienteFlow().execute(ctx, dados=_dados())
         assert result.steps[24].success is True
         assert json.loads(estado_path.read_text())["paciente_id"] == "34567"
@@ -737,8 +737,8 @@ class TestCp25:
         ctx = _ctx(runner)
         ctx.config.regioes_ocr["matricula"] = {"x1": 10, "y1": 100, "x2": 320, "y2": 160}
         with patch("os.path.exists", return_value=False), \
-             patch("src.vision.ocr.OcrHelper.ler_regiao", return_value=""), \
-             patch("src.vision.ocr.OcrHelper.salvar_debug"):
+             patch("vtae.vision.ocr.OcrHelper.ler_regiao", return_value=""), \
+             patch("vtae.vision.ocr.OcrHelper.salvar_debug"):
             result = CadastroPacienteFlow().execute(ctx, dados=_dados())
         assert result.steps[24].success is False
 

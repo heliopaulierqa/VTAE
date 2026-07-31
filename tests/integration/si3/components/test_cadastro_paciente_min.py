@@ -2,14 +2,14 @@
 
 import pathlib
 
-from src.config import ConfigLoader
-from src.core.context import FlowContext
-from src.core.observer import ExecutionObserver
-from src.flows.si3.login.login_si3_flow import LoginSi3Flow
-from src.flows.si3.cadastro_min.cadastro_paciente_min_flow import CadastroPacienteMinFlow
-from src.runners.opencv_runner import OpenCVRunner
-from src.runners.browser_launcher import abrir_si3_navegador
-from src.core.object_repository import ObjectRepository
+from vtae.config import ConfigLoader
+from vtae.core.context import FlowContext
+from vtae.report.observer import ExecutionObserver
+from vtae.flows.si3.login.login_si3_flow import LoginSi3Flow
+from vtae.flows.si3.cadastro_min.cadastro_paciente_min_flow import CadastroPacienteMinFlow
+from vtae.runners.opencv_runner import OpenCVRunner
+from vtae.runners.browser_launcher import abrir_si3_navegador
+from vtae.core.object_repository import ObjectRepository
 
 
 def test_cadastro_paciente_min_flow():
@@ -68,6 +68,7 @@ def test_cadastro_paciente_min_flow():
         evidence_dir=observer.evidence_dir,
         objects=objects_repo,
     )
+    observer.inject_logger(ctx)  # sem isso o aviso de bootstrap nao vai ao log
 
     result = CadastroPacienteMinFlow().execute(ctx, dados=config.DADOS, observer=observer)
 

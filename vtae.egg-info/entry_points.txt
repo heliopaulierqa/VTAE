@@ -1,2 +1,2 @@
 [console_scripts]
-vtae = src.cli.run:main
+vtae = vtae.cli.run:main

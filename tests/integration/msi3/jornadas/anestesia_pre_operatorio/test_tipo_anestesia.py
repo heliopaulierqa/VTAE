@@ -14,12 +14,12 @@ import pathlib
 import pytest
 from faker import Faker
 
-from src.config.loader import ConfigLoader
-from src.core.context import FlowContext
-from src.core.observer import ExecutionObserver
-from src.flows.msi3.login_flow_msi3 import LoginFlowMsi3
-from src.flows.msi3.tipo_anestesia_flow import TipoAnestesiaFlow
-from src.runners.playwright_runner import PlaywrightRunner
+from vtae.config.loader import ConfigLoader
+from vtae.core.context import FlowContext
+from vtae.report.observer import ExecutionObserver
+from vtae.flows.msi3.login.login_flow_msi3 import LoginFlowMsi3
+from vtae.flows.msi3.tipo_anestesia.tipo_anestesia_flow import TipoAnestesiaFlow
+from vtae.runners.playwright_runner import PlaywrightRunner
 
 fake = Faker("pt_BR")
 

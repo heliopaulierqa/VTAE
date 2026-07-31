@@ -16,11 +16,11 @@ dev = [
 ]
 
 [project.scripts]
-vtae = "src.cli.run:main"
+vtae = "vtae.cli.run:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*"]
+include = ["vtae*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

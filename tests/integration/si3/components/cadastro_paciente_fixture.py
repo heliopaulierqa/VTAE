@@ -33,13 +33,13 @@ import time
 
 from faker import Faker
 
-from src.config import ConfigLoader
-from src.core.context import FlowContext
-from src.core.estado_jornada import salvar as _salvar_estado
-from src.core.observer import ExecutionObserver
-from src.flows.si3.cadastro_paciente_flow import CadastroPacienteFlow
-from src.flows.si3.login_flow import LoginFlow
-from src.runners.opencv_runner import OpenCVRunner
+from vtae.config import ConfigLoader
+from vtae.core.context import FlowContext
+from vtae.core.estado_jornada import salvar as _salvar_estado
+from vtae.report.observer import ExecutionObserver
+from vtae.flows.si3.cadastro.cadastro_paciente_flow import CadastroPacienteFlow
+from vtae.flows.si3.login.login_flow import LoginFlow
+from vtae.runners.opencv_runner import OpenCVRunner
 
 _fake = Faker("pt_BR")
 

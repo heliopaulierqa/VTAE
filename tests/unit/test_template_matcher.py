@@ -10,8 +10,8 @@ import pytest
 from unittest.mock import patch, MagicMock
 import cv2
 
-from src.vision.template import TemplateMatcher, MatchResult, DiagnosticReport
-from src.core.types import TemplateNotFoundError
+from vtae.vision.template import TemplateMatcher, MatchResult, DiagnosticReport
+from vtae.core.exceptions import TemplateNotFoundError
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -247,7 +247,7 @@ class TestFindAll:
         result_matrix[20, 130] = 1.0
         result_matrix[20, 230] = 1.0
 
-        with patch('src.vision.template.cv2.matchTemplate',
+        with patch('vtae.vision.template.cv2.matchTemplate',
                    return_value=result_matrix):
             results = m.find_all("qualquer.png", threshold=0.99)
 
@@ -259,7 +259,7 @@ class TestFindAll:
 
         result_matrix = np.zeros((80, 260), dtype=np.float32)
 
-        with patch('src.vision.template.cv2.matchTemplate',
+        with patch('vtae.vision.template.cv2.matchTemplate',
                    return_value=result_matrix):
             results = m.find_all("qualquer.png", threshold=0.99)
 

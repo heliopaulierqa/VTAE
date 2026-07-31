@@ -1,5 +1,5 @@
-from src.core.context import FlowContext
-from src.core.result import FlowResult, StepResult
+from vtae.core.context import FlowContext
+from vtae.core.result import FlowResult, StepResult
 
 
 def test_context_credenciais_via_config(ctx):

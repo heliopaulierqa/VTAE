@@ -55,7 +55,7 @@ def mock_ctx(mock_runner, mock_config):
 
 @pytest.fixture
 def interp(mock_ctx):
-    from src.core.dsl_interpreter import DSLInterpreter
+    from vtae.core.dsl_interpreter import DSLInterpreter
     return DSLInterpreter(mock_ctx)
 
 

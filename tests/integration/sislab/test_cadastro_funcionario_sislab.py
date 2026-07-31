@@ -12,10 +12,10 @@ Execução:
 """
 from vtae.runners.opencv_runner import OpenCVRunner
 from vtae.core.context import FlowContext
-from vtae.core.observer import ExecutionObserver
-from vtae.flows.login_flow_sislab import LoginFlowSisLab
-from vtae.flows.cadastro_funcionario_flow_sislab import CadastroFuncionarioFlowSislab
-from src.config import ConfigLoader
+from vtae.report.observer import ExecutionObserver
+from vtae.flows.sislab.login.login_flow_sislab import LoginFlowSisLab
+from vtae.flows.sislab.cadastro_funcionario.cadastro_funcionario_flow_sislab import CadastroFuncionarioFlowSislab
+from vtae.config import ConfigLoader
 
 
 def test_cadastro_funcionario_sislab():
@@ -27,6 +27,7 @@ def test_cadastro_funcionario_sislab():
         config=config,
         evidence_dir=observer.evidence_dir,
     )
+    observer.inject_logger(ctx)
 
     # Login
     login_result = LoginFlowSisLab().execute(ctx, observer=observer)

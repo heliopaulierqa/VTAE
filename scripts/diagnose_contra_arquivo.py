@@ -1,5 +1,5 @@
 import cv2
-from src.vision.template import TemplateMatcher
+from vtae.vision.template import TemplateMatcher
 
 
 def diagnose_contra_arquivo(template_path: str, screenshot_path: str) -> str:

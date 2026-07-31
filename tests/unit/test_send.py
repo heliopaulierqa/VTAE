@@ -11,7 +11,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from src.cli.send import (
+from vtae.cli.send import (
     SMTPConfig,
     EmailSender,
     _montar_assunto,

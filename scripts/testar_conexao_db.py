@@ -57,7 +57,7 @@ def main():
 
     print(f"[teste] dsn='{dsn}' user='{user}'")
 
-    from src.runners.database_runner import DatabaseRunner
+    from vtae.runners.database_runner import DatabaseRunner
 
     db = DatabaseRunner(dsn=dsn, user=user, password=senha)
 

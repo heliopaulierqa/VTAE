@@ -11,9 +11,9 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch
 
-from src.config.loader import ConfigLoader
-from src.config.schema import SystemConfig
-from src.core.types import ConfigError
+from vtae.config.loader import ConfigLoader
+from vtae.config.schema import SystemConfig
+from vtae.core.exceptions import ConfigError
 
 
 # ──────────────────────────────────────────────────────────────────────────────

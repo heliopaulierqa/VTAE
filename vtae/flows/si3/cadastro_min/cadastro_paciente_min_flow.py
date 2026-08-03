@@ -55,14 +55,9 @@ from vtae.vision.ocr import OcrHelper
 
 _fake_br = Faker("pt_BR")
 
-# Template do popup HC-INCOR — modal interno Oracle Forms sem handle proprio
-# Deteccao via is_visible — pygetwindow nao enxerga este popup
-_TPL_ERRO_INCOR = "templates/si3/cadastro_paciente_min/popup_erro_incor.png"
-
 
 class CadastroPacienteMinFlow(BaseFlow):
     FLOW_NAME = "CadastroPacienteMinFlow"
-    _TPL = "templates/si3/cadastro_paciente_min"
 
     def execute(self, ctx, dados: dict = None, observer=None) -> FlowResult:
         result = FlowResult(flow_name=self.FLOW_NAME)
@@ -126,7 +121,7 @@ class CadastroPacienteMinFlow(BaseFlow):
         return self._step(
             "CM01", "abrir Cadastro de Pacientes via Localizar no Menu",
             fn, observer,
-            confirm_template=f"{self._TPL}/campo_nome_pesquisa.png",
+            confirm_template=ctx.objects.template("campo_nome_pesquisa"),
             ctx=ctx,
         )
 
@@ -177,7 +172,7 @@ class CadastroPacienteMinFlow(BaseFlow):
         return self._step(
             "CM03", "clicar em Novo na tela de lista de pacientes",
             fn, observer,
-            confirm_template=f"{self._TPL}/campo_nome_social.png",
+            confirm_template=ctx.objects.template("campo_nome_social"),
             ctx=ctx,
         )
 
@@ -299,12 +294,8 @@ class CadastroPacienteMinFlow(BaseFlow):
             pyautogui.press("tab")
             time.sleep(0.5)
 
-            ok_tpl = f"{self._TPL}/btn_ok_lov.png"
-            if self._tpl_existe(ok_tpl):
-                ctx.runner.safe_click(ok_tpl, threshold=0.75)
-            else:
-                x, y = ctx.objects.coord("btn_ok_lov")
-                pyautogui.click(x, y)
+            x, y = ctx.objects.coord("btn_ok_lov")
+            pyautogui.click(x, y)
             time.sleep(0.5)
 
             self._verify_campo_obrigatorio(
@@ -569,11 +560,12 @@ class CadastroPacienteMinFlow(BaseFlow):
         Cenario negativo: quando lista contem valor invalido, este metodo
         detecta e falha — validando a observabilidade do sistema.
         """
-        if not self._tpl_existe(_TPL_ERRO_INCOR):
+        tpl = ctx.objects.template("popup_erro_incor")
+        if not self._tpl_existe(tpl):
             return  # bootstrap — template nao capturado ainda
 
         # threshold=0.75: score maximo real = 0.785 (equalize)
-        if not ctx.runner.is_visible(_TPL_ERRO_INCOR, threshold=0.75):
+        if not ctx.runner.is_visible(tpl, threshold=0.75):
             return  # popup nao detectado — continuar normalmente
 
         # Popup detectado — registrar evidencia

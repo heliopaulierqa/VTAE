@@ -15,10 +15,15 @@ objetos:
     coordenada: { x: 165, y: 219 }
   campo_nome_pesquisa:
     coordenada: { x: 172, y: 259 }
+    template: templates/si3/cadastro_paciente_min/campo_nome_pesquisa.png
   btn_pesquisar_params:
     coordenada: { x: 596, y: 511 }
   btn_novo_lista:
     coordenada: { x: 758, y: 642 }
+
+  # Confirmacao visual de que o formulario abriu — nunca clicado, so procurado
+  campo_nome_social:
+    template: templates/si3/cadastro_paciente_min/campo_nome_social.png
 
   # ── Formulario CM04-CM06 ──────────────────────────────────────────────────
   campo_nome:
@@ -108,6 +113,10 @@ objetos:
     coordenada: { x: 179, y: 357 }  
 
   # ── Popup HC-INCOR (erro Oracle Forms) ────────────────────────────────────
+  # Detectado por template (is_visible), nunca clicado — quem se clica e o
+  # btn_ok_erro_incor abaixo.
+  popup_erro_incor:
+    template: templates/si3/cadastro_paciente_min/popup_erro_incor.png
   btn_ok_erro_incor:
     coordenada: { x: 1044, y: 592 }
   btn_cancelar_popup_nac:

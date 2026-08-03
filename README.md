@@ -336,7 +336,6 @@ VTAE/
 │   ├── unit/
 │   └── integration/si3/
 │       ├── components/
-│       │   ├── login_si3_fixture.py          # ✅ 3x
 │       │   └── test_cadastro_paciente_min.py # ✅ 3x
 │       └── jornadas/
 ├── scripts/

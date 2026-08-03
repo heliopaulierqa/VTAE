@@ -18,8 +18,6 @@ class FlowContext:
     evidence_dir: str = "evidence/"
     jab: Any = None  # NOVO v0.5.25 — JABDriver opcional, conectado no fixture ao lado do OpenCVRunner
     db: Any = None   # NOVO v0.5.28 — DatabaseRunner opcional, mesmo padrao do jab (lazy, cacheado)
-    jab: Any = None  # NOVO v0.5.25 — JABDriver opcional, conectado no fixture ao lado do OpenCVRunner
-    db: Any = None   # NOVO v0.5.28 — DatabaseRunner opcional, mesmo padrao do jab (lazy, cacheado)
     objects: Any = None  # NOVO Fase 0 — ObjectRepository opcional, carregado uma vez do YAML (sem conexao, sem custo de lazy-load)
     _results: list[FlowResult] = field(default_factory=list, repr=False)
 

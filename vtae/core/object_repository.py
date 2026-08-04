@@ -21,6 +21,13 @@ class ObjectRepository:
         um objeto. Tolerante: None se nao mapeado (bootstrap).
         """
         return self._tela.get("titulo_jab")
+    
+    def ancora(self) -> str | None:
+        """
+        Nome do elemento que prova que a tela esta pronta. Propriedade da
+        TELA, como titulo_jab. Tolerante: None quando nao declarada.
+        """
+        return self._tela.get("ancora")
 
     def _obter_objeto(self, nome: str) -> dict:
         objeto = self._objetos.get(nome)
@@ -29,6 +36,22 @@ class ObjectRepository:
                 f"Objeto '{nome}' nao encontrado em objects/cadastro_min.yaml"
             )
         return objeto
+    
+
+    def elemento(self, nome: str) -> dict | None:
+        """
+        Devolve o elemento inteiro (tipo + locators) ou None se o nome
+        nao existe. TOLERANTE por design: quem pergunta e o resolvedor
+        do motor, que precisa testar "tem template?" sem tomar KeyError.
+
+        Distinguir None de "existe mas sem locator" e o que permite o
+        motor dar dois erros diferentes: nome nao declarado vs elemento
+        inalcancavel. Os demais metodos ficam como estao.
+        """
+        objeto = self._objetos.get(nome)
+        if objeto is None:
+            return None
+        return dict(objeto)    
 
     def coord(self, nome: str) -> tuple[int, int]:
         objeto = self._obter_objeto(nome)

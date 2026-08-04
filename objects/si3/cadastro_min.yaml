@@ -1,0 +1,209 @@
+# objects/si3/cadastro_min.yaml
+# Modelo de Elemento — Projeto v1.1, Fase 2 (Motor), peça 1.
+#
+# Cada campo declarado UMA vez: tipo + criticidade + todos os locators.
+# Valores copiados de objects/cadastro_min.yaml (validado em tela real) —
+# apenas reorganizados. NENHUMA coordenada nova, nenhuma regiao nova.
+# O arquivo antigo permanece intacto ate o piloto substituir o flow atual.
+#
+# tipo:        texto | data | lov | lov_lista | botao | resultado
+#   - decide COMO preencher e COMO verificar (matriz do Projeto v1 §6)
+# Obrigatoriedade NAO mora aqui: e propriedade do CENARIO, nao da tela
+# (regra 40). O motor verifica estrito todo campo que o teste declarar;
+# campo nao declarado nao e tocado. Cenario negativo (campo vazio ->
+# esperar erro do Forms) se declara no YAML de flow.
+#
+# Unificacoes feitas (antes eram 2 objetos, agora 1 elemento):
+#   campo_sexo_lov + campo_sexo           -> sexo
+#   campo_cor_etnia_lov + campo_cor_etnia -> cor_etnia
+#   campo_data_nasc (coord + regiao ja juntos) -> data_nascimento
+#
+# Removidos (codigo morto — regra 47): btn_localizar_lov_* (3 elementos).
+# O padrao _selecionar_em_lov usa ENTER para disparar a busca, nunca o botao.
+
+tela:
+  titulo_jab: "Form_Pac0010"
+  # Elemento visual que prova que a tela esta pronta. Usado pela camada de
+  # espera quando o elemento alvo nao tem template proprio (so coordenada).
+  ancora: campo_nome_social
+
+objetos:
+
+  # ── Navegacao (usados pelo step nomeado abrir_modulo) ──────────────────────
+  localizar_menu:
+    tipo: texto
+    coordenada: { x: 626, y: 579 }
+  btn_pesquisar_menu:
+    tipo: botao
+    coordenada: { x: 809, y: 578 }
+  btn_nao_popup:
+    tipo: botao
+    coordenada: { x: 1026, y: 555 }
+  menu_cadastro_paciente:
+    # duplo clique — mecanica do step abrir_modulo, nao do elemento
+    tipo: botao
+    coordenada: { x: 165, y: 219 }
+  nome_pesquisa:
+    tipo: texto
+    coordenada: { x: 172, y: 259 }
+    template: templates/si3/cadastro_paciente_min/campo_nome_pesquisa.png
+  btn_pesquisar_params:
+    tipo: botao
+    coordenada: { x: 596, y: 511 }
+  btn_novo_lista:
+    tipo: botao
+    coordenada: { x: 758, y: 642 }
+
+  # Ancora visual — nunca clicada, so procurada (confirma formulario aberto)
+  campo_nome_social:
+    template: templates/si3/cadastro_paciente_min/campo_nome_social.png
+
+  # ── Formulario ──────────────────────────────────────────────────────────────
+  nome:
+    tipo: texto    coordenada: { x: 63, y: 159 }
+    regiao_ocr: { x1: 27, y1: 145, x2: 447, y2: 168 }
+
+  data_nascimento:
+    tipo: data    coordenada: { x: 384, y: 199 }
+    regiao_ocr: { x1: 363, y1: 195, x2: 463, y2: 207 }
+
+  hora:
+    tipo: data    coordenada: { x: 486, y: 200 }
+
+  sexo:
+    tipo: lov    coordenada: { x: 648, y: 200 }
+    regiao_ocr: { x1: 543, y1: 192, x2: 633, y2: 212 }
+    jab_name: 'Descrição do Sexo.'
+    btn_ok: btn_ok_lov
+
+  btn_ok_lov:
+    tipo: botao
+    coordenada: { x: 222, y: 360 }
+
+  # Nacionalidade: preenchimento e step nomeado (3 sub-popups) —
+  # este elemento guarda a VERIFICACAO do valor final no formulario
+  nacionalidade:
+    tipo: lov    regiao_ocr: { x1: 664, y1: 193, x2: 829, y2: 211 }
+    jab_name: 'Tipo de naturalidade'
+
+  cor_etnia:
+    tipo: lov_lista    coordenada: { x: 195, y: 288 }
+    regiao_ocr: { x1: 22, y1: 278, x2: 200, y2: 296 }
+    jab_name: 'Descrição da Cor/Raça.'
+    campo_localizar: campo_localizar_lov
+    btn_ok: btn_ok_lov_cor_etnia
+    titulo_janela: "Grupo etnico"
+
+  btn_ok_lov_cor_etnia:
+    tipo: botao
+    coordenada: { x: 1005, y: 883 }
+
+  campo_localizar_lov:
+    tipo: texto
+    coordenada: { x: 90, y: 142 }
+
+  # ── Nacionalidade — lista de tipos (step nomeado preencher_nacionalidade) ──
+  btn_lov_nacionalidade:
+    tipo: botao
+    coordenada: { x: 842, y: 197 }
+  item_lista_brasileiro:
+    tipo: botao
+    coordenada: { x: 582, y: 257 }
+  item_lista_estrangeiro:
+    tipo: botao
+    coordenada: { x: 581, y: 274 }
+  item_lista_naturalizado:
+    tipo: botao
+    coordenada: { x: 583, y: 291 }
+  btn_ok_lista_nac:
+    tipo: botao
+    coordenada: { x: 706, y: 326 }
+
+  # ── Popup Brasileiro ────────────────────────────────────────────────────────
+  estado_brasileiro:
+    tipo: lov_lista    coordenada: { x: 247, y: 262 }
+    campo_localizar: campo_localizar_lov
+    btn_ok: btn_ok_lov_estado_brasileiro
+    titulo_janela: "Lista de UF"
+  cidade_brasileiro:
+    tipo: lov_lista    coordenada: { x: 230, y: 288 }
+    campo_localizar: campo_localizar_lov
+    btn_ok: btn_ok_lov_cidade_brasileiro
+    titulo_janela: "Lista de Ci"
+  btn_ok_lov_estado_brasileiro:
+    tipo: botao
+    coordenada: { x: 244, y: 353 }
+  btn_ok_lov_cidade_brasileiro:
+    tipo: botao
+    coordenada: { x: 271, y: 357 }
+  btn_ok_popup_brasileiro:
+    tipo: botao
+    coordenada: { x: 478, y: 362 }
+
+  # ── Popup Estrangeiro ───────────────────────────────────────────────────────
+  pais_estrangeiro:
+    tipo: lov_lista    coordenada: { x: 299, y: 264 }
+    campo_localizar: campo_localizar_lov
+    btn_ok: btn_ok_lov_pais_estrangeiro
+    titulo_janela: "Lista de Pa"
+  data_entrada_brasil:
+    tipo: data    coordenada: { x: 304, y: 288 }
+  estado_estrangeiro:
+    tipo: texto    coordenada: { x: 301, y: 309 }
+  municipio_estrangeiro:
+    tipo: texto    coordenada: { x: 297, y: 334 }
+  btn_ok_lov_pais_estrangeiro:
+    tipo: botao
+    coordenada: { x: 266, y: 358 }
+  btn_ok_popup_estrangeiro:
+    tipo: botao
+    coordenada: { x: 464, y: 367 }
+
+  # ── Popup Naturalizado ──────────────────────────────────────────────────────
+  pais_naturalizado:
+    tipo: lov_lista    coordenada: { x: 347, y: 263 }
+    campo_localizar: campo_localizar_lov
+    btn_ok: btn_ok_lov_pais_naturalizado
+    titulo_janela: "Lista de Pa"
+  data_naturalizacao:
+    tipo: data    coordenada: { x: 287, y: 288 }
+  nr_portaria:
+    tipo: texto    coordenada: { x: 286, y: 307 }
+  btn_ok_lov_pais_naturalizado:
+    tipo: botao
+    coordenada: { x: 272, y: 353 }
+  btn_ok_popup_naturalizado:
+    tipo: botao
+    coordenada: { x: 483, y: 366 }
+
+  # ── Popup HC-INCOR (erro Oracle Forms) ──────────────────────────────────────
+  # Detectado por template (is_visible), nunca clicado — quem se clica sao
+  # os botoes abaixo.
+  popup_erro_incor:
+    template: templates/si3/cadastro_paciente_min/popup_erro_incor.png
+  btn_ok_erro_incor:
+    tipo: botao
+    coordenada: { x: 1044, y: 592 }
+  btn_cancelar_popup_nac:
+    tipo: botao
+    coordenada: { x: 376, y: 370 }
+
+  # ── Salvar / resultado / sair ───────────────────────────────────────────────
+  btn_gerar_matricula:
+    tipo: botao
+    coordenada: { x: 888, y: 654 }
+  btn_sair_1:
+    tipo: botao
+    coordenada: { x: 511, y: 64 }
+  btn_sair_2:
+    tipo: botao
+    coordenada: { x: 512, y: 67 }
+  btn_sair_3:
+    tipo: botao
+    coordenada: { x: 16, y: 575 }
+
+  # Lidos apos F10 + gerar matricula — nunca clicados
+  matricula:
+    tipo: resultado    regiao_ocr: { x1: 565, y1: 148, x2: 662, y2: 166 }
+  identificador:
+    tipo: resultado    regiao_ocr: { x1: 457, y1: 146, x2: 552, y2: 165 }

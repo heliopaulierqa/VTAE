@@ -108,3 +108,25 @@ def test_pygetwindow_ausente_falha_com_aviso(monkeypatch):
     logger = LoggerFalso()
     assert _esperas(logger=logger).esperar_janela_sumir("qualquer") is False
     assert any("pygetwindow" in m for m in logger.mensagens)
+
+
+def test_janela_ja_presente_devolve_true(monkeypatch):
+    monkeypatch.setitem(sys.modules, "pygetwindow",
+                        JanelasFalsas(["Lista de UF"]))
+    assert _esperas().esperar_janela_aparecer("Lista de UF") is True
+
+
+def test_janela_que_nao_abre_estoura_o_timeout(monkeypatch):
+    monkeypatch.setitem(sys.modules, "pygetwindow",
+                        JanelasFalsas(["SI3 - Cadastro"]))
+    logger = LoggerFalso()
+    assert _esperas(logger=logger).esperar_janela_aparecer(
+        "Lista de UF", timeout=0.5) is False
+    assert any("nao abriu" in m for m in logger.mensagens)
+
+
+def test_aparecer_sem_pygetwindow_falha_com_aviso(monkeypatch):
+    monkeypatch.setitem(sys.modules, "pygetwindow", None)
+    logger = LoggerFalso()
+    assert _esperas(logger=logger).esperar_janela_aparecer("qualquer") is False
+    assert any("pygetwindow" in m for m in logger.mensagens)

@@ -21,17 +21,27 @@ dados_faker:
   - campo: data_nascimento
     tipo: faker
     metodo: date_of_birth
-    transformacao: sem_pontuacao
+    transformacao: data_ddmmaaaa
 
   - campo: data_entrada_brasil
     tipo: faker
     metodo: date_of_birth
-    transformacao: sem_pontuacao
+    transformacao: data_ddmmaaaa
 
   - campo: data_naturalizacao
     tipo: faker
     metodo: date_of_birth
-    transformacao: sem_pontuacao
+    transformacao: data_ddmmaaaa
+
+  # Popup Estrangeiro — o flow antigo chamava o Faker direto no codigo.
+  # Dado de teste mora no config, nao no Python (regra 40).
+  - campo: estado_estrangeiro
+    tipo: faker
+    metodo: state_abbr
+
+  - campo: municipio_estrangeiro
+    tipo: faker
+    metodo: city
 
   - campo: nr_portaria
     tipo: faker
@@ -40,6 +50,13 @@ dados_faker:
 
 # ── Dados fixos — listas para selecao aleatoria no flow ─────────────────────
 dados:
+  # Java Access Bridge — pasta "de mentira" com WindowsAccessBridge-64.dll
+  # (lado cliente do pyjab). NAO e o Java real do SI3 nem o JAVA_HOME do
+  # sistema. Cada estacao define SI3_JAB_HOME_FAKE no .env; default
+  # C:\jab_home. Mesma chave e mesmo default do si3_ambulatorio, que ja
+  # roda pyjab validado 3x.
+  jab_home_fake: ${SI3_JAB_HOME_FAKE:-C:\jab_home}
+
   # Cenario de execucao:
   # positivo : dados validos — espera sucesso
   # negativo : dados invalidos — espera deteccao de erro HC-INCOR

@@ -22,12 +22,35 @@ class ObjectRepository:
         """
         return self._tela.get("titulo_jab")
     
+    def titulo_janela(self) -> str | None:
+        """
+        Titulo (parcial) da janela do sistema operacional desta tela.
+        Propriedade da TELA, como titulo_jab. Tolerante: None quando nao
+        declarada — o motor avisa e segue sem garantir foco.
+        """
+        return self._tela.get("titulo_janela")
+    
     def ancora(self) -> str | None:
         """
         Nome do elemento que prova que a tela esta pronta. Propriedade da
         TELA, como titulo_jab. Tolerante: None quando nao declarada.
         """
         return self._tela.get("ancora")
+    
+    def camada_exata(self) -> str:
+        """
+        Como esta tela permite ler o valor REAL de um campo, e nao o
+        bitmap: "pyjab" (Oracle Forms), "playwright" (web) ou "nenhuma"
+        (Citrix, legado sem acessibilidade).
+
+        Propriedade da TELA, como titulo_jab e ancora.
+
+        Default "nenhuma" e DECLARADO, nunca inferido: se o motor
+        adivinhasse pela presenca de titulo_jab, "esqueci de mapear este
+        campo" viraria "este sistema nao tem camada exata" — as duas
+        situacoes que a peca 3 existe para separar.
+        """
+        return self._tela.get("camada_exata", "nenhuma")
 
     def _obter_objeto(self, nome: str) -> dict:
         objeto = self._objetos.get(nome)

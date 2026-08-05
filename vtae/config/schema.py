@@ -101,6 +101,7 @@ TransformacaoTipo = Literal[
     "truncar_50",         # limita a 50 caracteres
     "sem_prefixo",        # remove Dr., Dra., Sr., Sra., Prof. etc.
     "sem_prefixo_upper",  # remove prefixo E converte para maiusculas
+    "data_ddmmaaaa",      # AAAAMMDD ou AAAA-MM-DD -> DDMMAAAA (Oracle Forms)
 ]
 
 
@@ -275,6 +276,18 @@ class SystemConfig:
 
         if transformacao == "sem_pontuacao":
             return valor.replace(".", "").replace("-", "").replace("/", "")
+        
+        if transformacao == "data_ddmmaaaa":
+            # O Forms espera DDMMAAAA; o faker date_of_birth entrega
+            # AAAA-MM-DD. Absorve o sem_pontuacao de proposito: e uma
+            # transformacao so, e o config declara uma coisa so.
+            # Fim de fatia e exclusivo — [6:8] pega os indices 6 e 7.
+            limpo = valor.replace(".", "").replace("-", "").replace("/", "")
+            if len(limpo) == 8 and limpo.isdigit():
+                return limpo[6:8] + limpo[4:6] + limpo[0:4]
+            # Fora do formato volta intacto: transformacao nao e lugar de
+            # explodir — o campo reprova na verificacao, com evidencia.
+            return valor
 
         if transformacao == "upper":
             return valor.upper()

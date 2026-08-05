@@ -92,6 +92,68 @@ class OpenCVRunner(BaseRunner):
             os.makedirs(folder, exist_ok=True)
         pyautogui.screenshot(name)
         return name
+    
+    # ──────────────────────────────────────────────
+    # Acoes primitivas do motor (peca 4)
+    # O core decide O QUE fazer; estas tres fazem COMO — e sao o
+    # unico ponto onde pyautogui/pygetwindow aparecem para o motor.
+    # Nao entram no BaseRunner: o equivalente web e outro (seletor e
+    # teclado do Playwright), e so nasce quando o teste web existir.
+    # ──────────────────────────────────────────────
+
+    def click_xy(self, x: int, y: int) -> None:
+        pyautogui.click(x, y)
+        time.sleep(0.3)
+
+    def press(self, tecla: str, vezes: int = 1, intervalo: float = 0.02) -> None:
+        pyautogui.press(tecla, presses=vezes, interval=intervalo)
+
+    @staticmethod
+    def _primeira_janela(titulo_parcial: str):
+        import pygetwindow as gw
+        titulos = [t for t in gw.getAllTitles() if titulo_parcial in t]
+        if not titulos:
+            return None
+        return gw.getWindowsWithTitle(titulos[0])[0]
+
+    def focar_janela(self, titulo_parcial: str) -> bool:
+        """
+        Traz para frente a primeira janela cujo titulo contem o texto.
+        Tolerante: devolve False e nunca levanta — quem chama decide.
+        """
+        try:
+            janela = self._primeira_janela(titulo_parcial)
+            if janela is None:
+                return False
+            if janela.isMinimized:
+                janela.restore()
+                time.sleep(0.3)
+            janela.activate()
+            time.sleep(0.5)
+            return True
+        except Exception as e:
+            self._log(f"[focar_janela] AVISO: {e}")
+            return False
+
+    def maximizar_janela(self, titulo_parcial: str) -> bool:
+        """
+        Janela do Forms pode abrir reduzida, e ai toda coordenada fixa
+        erra o alvo (secao 7). Tolerante como o focar_janela.
+        """
+        try:
+            janela = self._primeira_janela(titulo_parcial)
+            if janela is None:
+                return False
+            janela.maximize()
+            time.sleep(0.9)
+            return True
+        except Exception as e:
+            self._log(f"[maximizar_janela] AVISO: {e}")
+            return False
+
+    def double_click_xy(self, x: int, y: int) -> None:
+        pyautogui.doubleClick(x, y)
+        time.sleep(0.3)
 
     # ──────────────────────────────────────────────
     # safe_click

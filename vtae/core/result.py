@@ -50,6 +50,11 @@ class StepResult:
     # NOVO v0.5.34 — valor lido via pyjab (leitura exata, sem ruido de OCR)
     # Fica ao lado do ocr_lido para comparacao direta entre as duas camadas
     jab_lido: str | None = None
+    # NOVO — avisos nao-fatais do motor (regra 60): NAO_VERIFICAVEL na
+    # auto-verificacao, leitura degradada, divergencia entre camadas.
+    # Nunca rouba foco durante a execucao — vira faixa no report.html e
+    # resumo no console ao fim (peca 5).
+    avisos: list[str] = field(default_factory=list)
 
     def __str__(self) -> str:
         status = "OK" if self.success else "FALHOU"

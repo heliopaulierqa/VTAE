@@ -23,9 +23,18 @@
 
 tela:
   titulo_jab: "Form_Pac0010"
+  # Como esta tela permite ler o valor REAL de um campo (regra 56).
+  # Declarado, nunca inferido: sem esta linha o default e "nenhuma" e os
+  # jab_name de sexo/nacionalidade/cor_etnia seriam ignorados em silencio.
+  camada_exata: pyjab
   # Elemento visual que prova que a tela esta pronta. Usado pela camada de
   # espera quando o elemento alvo nao tem template proprio (so coordenada).
   ancora: campo_nome_social
+
+  # Titulo (parcial) da janela do Windows desta tela — usado para trazer
+  # a janela para frente antes de tecla global (F10). Declarado, nunca
+  # inferido: sem esta linha o motor avisa e segue sem garantir foco.
+  titulo_janela: "Form_Pac0010"
 
 objetos:
 
@@ -60,18 +69,22 @@ objetos:
 
   # ── Formulario ──────────────────────────────────────────────────────────────
   nome:
-    tipo: texto    coordenada: { x: 63, y: 159 }
+    tipo: texto
+    coordenada: { x: 63, y: 159 }
     regiao_ocr: { x1: 27, y1: 145, x2: 447, y2: 168 }
 
   data_nascimento:
-    tipo: data    coordenada: { x: 384, y: 199 }
+    tipo: data
+    coordenada: { x: 384, y: 199 }
     regiao_ocr: { x1: 363, y1: 195, x2: 463, y2: 207 }
 
   hora:
-    tipo: data    coordenada: { x: 486, y: 200 }
+    tipo: data
+    coordenada: { x: 486, y: 200 }
 
   sexo:
-    tipo: lov    coordenada: { x: 648, y: 200 }
+    tipo: lov
+    coordenada: { x: 648, y: 200 }
     regiao_ocr: { x1: 543, y1: 192, x2: 633, y2: 212 }
     jab_name: 'Descrição do Sexo.'
     btn_ok: btn_ok_lov
@@ -83,12 +96,19 @@ objetos:
   # Nacionalidade: preenchimento e step nomeado (3 sub-popups) —
   # este elemento guarda a VERIFICACAO do valor final no formulario
   nacionalidade:
-    tipo: lov    regiao_ocr: { x1: 664, y1: 193, x2: 829, y2: 211 }
+    tipo: lov
+    regiao_ocr: { x1: 664, y1: 193, x2: 829, y2: 211 }
     jab_name: 'Tipo de naturalidade'
 
   cor_etnia:
-    tipo: lov_lista    coordenada: { x: 195, y: 288 }
-    regiao_ocr: { x1: 22, y1: 278, x2: 200, y2: 296 }
+    tipo: lov_lista
+    coordenada: { x: 195, y: 288 }
+    # x2 era 200 e alcancava o botao da LOV da Religiao (x~188-208). Em
+    # 05/08 o EasyOCR leu esse icone como '2 =' e o campo virou
+    # 'PRETA 2 =' — tres releituras deram o mesmo. Na mesma regiao com
+    # 'PARDA' ele ignorava o icone: a deteccao muda com o conteudo, entao
+    # o ruido e intermitente por natureza. 180 termina a caixa do campo.
+    regiao_ocr: { x1: 22, y1: 278, x2: 180, y2: 296 }
     jab_name: 'Descrição da Cor/Raça.'
     campo_localizar: campo_localizar_lov
     btn_ok: btn_ok_lov_cor_etnia
@@ -121,12 +141,14 @@ objetos:
 
   # ── Popup Brasileiro ────────────────────────────────────────────────────────
   estado_brasileiro:
-    tipo: lov_lista    coordenada: { x: 247, y: 262 }
+    tipo: lov_lista
+    coordenada: { x: 247, y: 262 }
     campo_localizar: campo_localizar_lov
     btn_ok: btn_ok_lov_estado_brasileiro
     titulo_janela: "Lista de UF"
   cidade_brasileiro:
-    tipo: lov_lista    coordenada: { x: 230, y: 288 }
+    tipo: lov_lista
+    coordenada: { x: 230, y: 288 }
     campo_localizar: campo_localizar_lov
     btn_ok: btn_ok_lov_cidade_brasileiro
     titulo_janela: "Lista de Ci"
@@ -142,16 +164,20 @@ objetos:
 
   # ── Popup Estrangeiro ───────────────────────────────────────────────────────
   pais_estrangeiro:
-    tipo: lov_lista    coordenada: { x: 299, y: 264 }
+    tipo: lov_lista
+    coordenada: { x: 299, y: 264 }
     campo_localizar: campo_localizar_lov
     btn_ok: btn_ok_lov_pais_estrangeiro
     titulo_janela: "Lista de Pa"
   data_entrada_brasil:
-    tipo: data    coordenada: { x: 304, y: 288 }
+    tipo: data
+    coordenada: { x: 304, y: 288 }
   estado_estrangeiro:
-    tipo: texto    coordenada: { x: 301, y: 309 }
+    tipo: texto
+    coordenada: { x: 301, y: 309 }
   municipio_estrangeiro:
-    tipo: texto    coordenada: { x: 297, y: 334 }
+    tipo: texto
+    coordenada: { x: 297, y: 334 }
   btn_ok_lov_pais_estrangeiro:
     tipo: botao
     coordenada: { x: 266, y: 358 }
@@ -161,14 +187,17 @@ objetos:
 
   # ── Popup Naturalizado ──────────────────────────────────────────────────────
   pais_naturalizado:
-    tipo: lov_lista    coordenada: { x: 347, y: 263 }
+    tipo: lov_lista
+    coordenada: { x: 347, y: 263 }
     campo_localizar: campo_localizar_lov
     btn_ok: btn_ok_lov_pais_naturalizado
     titulo_janela: "Lista de Pa"
   data_naturalizacao:
-    tipo: data    coordenada: { x: 287, y: 288 }
+    tipo: data
+    coordenada: { x: 287, y: 288 }
   nr_portaria:
-    tipo: texto    coordenada: { x: 286, y: 307 }
+    tipo: texto
+    coordenada: { x: 286, y: 307 }
   btn_ok_lov_pais_naturalizado:
     tipo: botao
     coordenada: { x: 272, y: 353 }
@@ -204,6 +233,8 @@ objetos:
 
   # Lidos apos F10 + gerar matricula — nunca clicados
   matricula:
-    tipo: resultado    regiao_ocr: { x1: 565, y1: 148, x2: 662, y2: 166 }
+    tipo: resultado
+    regiao_ocr: { x1: 565, y1: 148, x2: 662, y2: 166 }
   identificador:
-    tipo: resultado    regiao_ocr: { x1: 457, y1: 146, x2: 552, y2: 165 }
+    tipo: resultado
+    regiao_ocr: { x1: 457, y1: 146, x2: 552, y2: 165 }

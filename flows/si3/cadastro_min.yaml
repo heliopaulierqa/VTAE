@@ -1,0 +1,36 @@
+# flows/si3/cadastro_min.yaml
+# Roteiro do teste — Projeto v1.1 §4. UM YAML por MODULO, nunca por caso
+# de teste (regra 63): a sequencia abaixo serve os 6 cenarios do cadastro
+# min (positivo/negativo x brasileiro/estrangeiro/naturalizado). O que
+# muda entre eles sao os DADOS, no configs/si3/si3_cadastro_paciente_min.
+#
+# Nenhuma coordenada, nenhum sleep, nenhuma verificacao manual (v1.1 §4).
+# O 'tipo:' de cada campo no objects/ decide COMO preencher e COMO
+# verificar; o motor verifica sozinho tudo o que preenche.
+
+flow: cadastro_paciente_min
+objetos: objects/si3/cadastro_min.yaml
+steps_python: vtae.flows.si3.cadastro_min.steps
+
+steps:
+  # ── chegar ao formulario em branco ──────────────────────────────────
+  - abrir_modulo: CADASTRO DE PACIENTE
+  - pesquisar:    "{faker:nome}"
+  - novo:
+
+  # ── formulario ──────────────────────────────────────────────────────
+  # 'verificar' e nao 'preencher': o Nome chega PRE-PREENCHIDO da tela de
+  # pesquisa. O teste prova o valor sem tocar no campo.
+  - verificar:  { campo: nome,            valor: "{faker:nome}" }
+  - preencher:  { campo: data_nascimento, valor: "{faker:data_nascimento}" }
+  - preencher:  { campo: hora,            valor: "0000" }
+  - preencher:  { campo: sexo,            valor: "{sorteio:sexo_opcoes}" }
+  - preencher_nacionalidade: "{sorteio:nacionalidade_opcoes}"
+  - preencher:  { campo: cor_etnia,       valor: "{sorteio:cor_etnia_opcoes}" }
+
+  # ── salvar e ler o que o sistema gerou ──────────────────────────────
+  - salvar: f10
+  - gerar_matricula:
+  - ler_resultado: matricula
+  - ler_resultado: identificador
+  - sair:

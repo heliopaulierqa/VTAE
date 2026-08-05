@@ -22,7 +22,7 @@ MODULOS = {
         "tests/integration/sislab/test_cadastro_funcionario_sislab.py",
     ],
     "si3": [
-        "tests/integration/si3/components/test_cadastro_paciente_min.py",
+        "tests/integration/si3/test_cadastro_min_motor.py",
         "tests/integration/si3/jornadas/internacao/test_01_cadastro_paciente.py",
         "tests/integration/si3/jornadas/internacao/test_02_admissao_internacao.py",
         "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_01_cadastro_paciente.py",
@@ -35,7 +35,11 @@ MODULOS = {
 
 TESTES = {
     # SI3 — testes individuais
-    "cadastro_paciente_min":                 "tests/integration/si3/components/test_cadastro_paciente_min.py",  # novo
+    # Passou a apontar para o motor em 05/08: mesmo cadastro, roteiro
+    # declarado em flows/si3/cadastro_min.yaml. O flow Python antigo
+    # continua acessivel pelo nome abaixo ate a Fase 3 aposenta-lo.
+    "cadastro_paciente_min":                 "tests/integration/si3/test_cadastro_min_motor.py",
+    "cadastro_paciente_min_flow":            "tests/integration/si3/components/test_cadastro_paciente_min.py",
     "cadastro_paciente_jornada":             "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_01_cadastro_paciente.py",
     "admissao_ambulatorio_jornada":          "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_02_admissao_ambulatorio.py",
     "agendamento_jornada":                   "tests/integration/si3/jornadas/ambulatorio/com_agendamento/test_02_agendamento.py",
@@ -67,6 +71,7 @@ JORNADAS = {
 
 _MAPA_TESTE_SISTEMA = {
     "cadastro_paciente_min":                "si3",
+    "cadastro_paciente_min_flow":           "si3",
     "cadastro_paciente_jornada":            "si3",
     "admissao_ambulatorio_jornada":         "si3",
     "agendamento_jornada":                  "si3",

@@ -44,7 +44,6 @@ _NOME_GERENCIAL = {
     "test_admissao_com_agendamento_jornada":       "Admissão com Agendamento",
     "test_admissao_internacao_jornada":            "Admissão Internação",
     "test_cadastro_funcionario_sislab":            "Cadastro Funcionário (SisLab)",
-    "test_frequencia_aplicacao":                   "Frequência de Aplicação",
     "test_tipo_anestesia":                         "Tipo de Anestesia",
 }
 

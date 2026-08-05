@@ -65,3 +65,20 @@ class Esperas:
 
         self._log(f"[espera] timeout de {timeout}s — janela '{titulo_parcial}' aberta")
         return False
+    
+    def esperar_janela_aparecer(self, titulo_parcial: str,
+                                timeout: float = TIMEOUT_PADRAO) -> bool:
+        try:
+            import pygetwindow as gw
+        except ImportError:
+            self._log("[espera] AVISO: pygetwindow ausente — sem como esperar janela")
+            return False
+
+        limite = time.monotonic() + timeout
+        while time.monotonic() < limite:
+            if any(titulo_parcial in t for t in gw.getAllTitles()):
+                return True
+            time.sleep(INTERVALO_POLL)
+
+        self._log(f"[espera] timeout de {timeout}s — janela '{titulo_parcial}' nao abriu")
+        return False

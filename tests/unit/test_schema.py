@@ -171,6 +171,20 @@ class TestTransformacoes:
         """Valor sem pontuação deve ser retornado igual."""
         assert self._aplicar("12345678900", "sem_pontuacao") == "12345678900"
 
+    def test_data_ddmmaaaa_inverte_a_data_do_faker(self):
+        """date_of_birth entrega AAAA-MM-DD; o Forms quer DDMMAAAA."""
+        assert self._aplicar("1985-03-07", "data_ddmmaaaa") == "07031985"
+
+    def test_data_ddmmaaaa_aceita_entrada_ja_limpa(self):
+        assert self._aplicar("19850307", "data_ddmmaaaa") == "07031985"
+
+    def test_data_ddmmaaaa_com_digitos_a_menos_volta_intacto(self):
+        assert self._aplicar("198503", "data_ddmmaaaa") == "198503"
+
+    def test_data_ddmmaaaa_com_texto_volta_intacto(self):
+        assert self._aplicar("ontem", "data_ddmmaaaa") == "ontem"    
+
+
     def test_sem_prefixo_sr(self):
         assert self._aplicar("Sr. João Silva", "sem_prefixo") == "João Silva"
 

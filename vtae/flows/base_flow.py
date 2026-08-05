@@ -54,71 +54,10 @@ Verificacao estrutural via pyjab (v0.5.25):
 
 import os
 import time
-import unicodedata
+
 
 from vtae.core.result import CausaFalha, StepResult
-
-
-def _normalizar(texto: str) -> str:
-    """
-    Remove acentos, separadores de data e converte para maiusculo.
-    Necessario porque:
-    - EasyOCR perde acentos em fontes Oracle Forms (CAMARA vs CÂMARA)
-    - Oracle Forms exibe datas como DD/MM/YYYY mas o flow digita DDMMYYYY
-    - Separadores / e - sao removidos para comparar apenas os digitos
-    """
-    sem_acento = (
-        unicodedata.normalize("NFD", texto)
-        .encode("ascii", "ignore")
-        .decode("ascii")
-    )
-    sem_separadores = sem_acento.replace("/", "").replace("-", "").replace(".", "")
-    return sem_separadores.upper().strip()
-
-
-def _similar(lido: str, esperado: str, tolerancia: float = 0.230) -> bool:
-    """
-    Compara dois textos com tolerancia a erros de OCR via distancia de edicao.
-
-    tolerancia=0.20 aceita ate 20% de caracteres diferentes.
-    Exemplos reais observados no SI3 (Oracle Forms via Edge, CPU):
-      BRUNA  (5 chars)  -> 1 erro permitido  -> '3RUNA' passa  (B/3)
-      OLIVIA COSTA (11) -> 2 erros permitidos -> 'DLIIA COSTA' passa (O/D, V/I)
-      CÂMARA -> CAMARA  -> ja tratado por _normalizar antes de chegar aqui
-
-    Valores genuinamente errados (ex: 'TESTE ERRO' no lugar de 'AMARELA')
-    tem distancia alta e nao passam mesmo com a tolerancia.
-
-    NAO usar em comparacao via pyjab (_verify_campo_via_jab) — leitura
-    exata via Access Bridge nao tem ruido de OCR, entao a tolerancia
-    perderia precisao sem necessidade (regra 30).
-
-    Args:
-        lido:       texto lido pelo OCR (ja normalizado)
-        esperado:   texto esperado (ja normalizado)
-        tolerancia: fracao maxima de erros permitidos (default 0.20 = 20%)
-
-    Returns:
-        True se os textos sao suficientemente similares.
-    """
-    if not lido or not esperado:
-        return False
-    # containment rapido — se um contem o outro, OK direto
-    if esperado in lido or lido in esperado:
-        return True
-    # distancia de edicao (Levenshtein) — implementacao iterativa O(n*m)
-    a, b = lido, esperado
-    if len(a) > len(b):
-        a, b = b, a
-    distancias = range(len(a) + 1)
-    for c2 in b:
-        distancias_ = [distancias[0] + 1]
-        for c1, d0, d1 in zip(a, distancias, distancias[1:]):
-            distancias_.append(min(d1 + 1, d0 + 1, d0 + (c1 != c2)))
-        distancias = distancias_
-    dist = distancias[-1]
-    max_erros = max(1, int(len(esperado) * tolerancia))
-    return dist <= max_erros
+from vtae.core.texto import _normalizar, _similar  # noqa: F401
 
 
 class BaseFlow:

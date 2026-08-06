@@ -102,7 +102,9 @@ def _rodar_pytest(arquivos, ambiente, retry, repeat=1):
         print("[VTAE] Nenhum arquivo de teste encontrado.")
         return 1
 
-    cmd = ["python", "-m", "pytest"] + existentes + ["-v", "--tb=short", f"--count={repeat}"]
+    cmd = [sys.executable, "-m", "pytest"] + existentes + ["-v", "-s", "--tb=short"]
+    if repeat > 1:
+        cmd.append(f"--count={repeat}")
     ultimo_rc = 0
     for i in range(retry + 1):
         if i > 0:
@@ -263,7 +265,7 @@ def cmd_jornada(args):
             resultados.append({"step": i, "teste": label_step, "status": "NAO_ENCONTRADO"})
             break
 
-        cmd = ["python", "-m", "pytest", arquivo, "-v", "--tb=short"]
+        cmd = [sys.executable, "-m", "pytest", arquivo, "-v", "-s", "--tb=short"]
         rc  = subprocess.run(cmd).returncode
 
         status = "PASSOU" if rc == 0 else "FALHOU"

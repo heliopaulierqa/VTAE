@@ -68,7 +68,26 @@ feito por Helio; run.py e docs vivos atualizados. Staged, aguardando commit.
 920 passed, 0 failed (920 coletados — 101 a menos que os 1021 de antes,
 soma da limpeza da geração 2 + deleção dos dois testes obsoletos).**
 Ver marco em §2.1 para a causa de cada grupo de falha e a correção aplicada.
-Próximo passo: commit da triagem (Helio) → peça 5 do motor (fixtures si3/msi3).
+**Peça 5 do motor: fixture `si3` construída (06/08 sessão 2)** —
+`tests/integration/si3/conftest.py`, escopo `module` (decisão de Helio: abre
+e loga 1x por arquivo, jornadas encadeadas reusam a sessão). Desenhada por
+Claude, digitada por Helio em 4 blocos (regra 43); 1 erro estrutural
+encontrado na revisão (fixture aninhada dentro da classe `SessaoSi3` por
+indentação — pytest não descobriria) e corrigido. Limitação registrada, não
+bloqueante: `report.html` é sobrescrito a cada `executar()` na mesma sessão
+— jornada com 2+ flows só guarda o relatório do último. Revisitar na Fase 3.
+Teste de produção escrito por Helio (regra 77) — `tests/integration/si3/
+test_cadastro_paciente_min.py`, as 3 linhas do contrato. **GATE 3x FECHADO
+(06/08 sessão 2): 3 execuções consecutivas 14/14, 10:09–10:19.** Placar
+pyjab nas 3 rodadas: conectou em 2 (r1, r2 — decisor exata nos 3 LOVs),
+falhou em 1 (r3 — `HWND is not Java Window`, degradou para OCR que
+validou). Running total do placar de instabilidade: 4 conexões em 9
+rodadas limpas desde 05/08. `vtae/cli/run.py` atualizado (2 entradas
+apontavam para o teste provisório — `MODULOS["si3"]` e
+`TESTES["cadastro_paciente_min"]` — ambas redirecionadas para o teste de
+produção antes da deleção, senão `vtae run` quebraria).
+`test_cadastro_min_motor.py` provisório removido por Helio (`git rm`).
+**Item 6 do §2.3 fechado — peça 5 do motor concluída.**
 
 **Fato medido (6 rodadas limpas): conexão pyjab é INSTÁVEL — conectou em 2
 (15:14 de 05/08 e 08:24 de 06/08, decisor exata nos 3 LOVs), falhou em 4
@@ -86,7 +105,8 @@ investigar: TIMEOUT_CONEXAO=10s vs tempo real de registro do Access Bridge
 4. Investigar instabilidade da conexão pyjab (medição, não chute).
 5. Unitário do `LeitorJab` (desenho aprovado: FakeDriver injetado + fake em
    `sys.modules`).
-6. **Peça 5 do motor: fixtures `si3`/`msi3`** ← PRÓXIMO — aposenta o teste provisório.
+6. ~~Peça 5 do motor: fixture `si3`~~ ✅ 06/08 sessão 2 — gate 3x fechado,
+   teste provisório removido. `msi3` fica para quando um teste web novo pedir.
 7. Fase 3: **Helio constrói os testes do zero** (admissões, cadastro completo),
    cada um com gate 3x próprio; Claude revisa e explica.
 8. Fases futuras: Cliente 2/Citrix · Recorder (gravar = gerar YAMLs) · Tooling.
@@ -98,7 +118,7 @@ investigar: TIMEOUT_CONEXAO=10s vs tempo real de registro do Access Bridge
 |---|---|---|
 | 0 | Piloto do Modelo de Elemento | ✅ concluída |
 | 1 | Extração do core para `vtae/` | ✅ concluída |
-| 2 | **O MOTOR** (6 peças) | 🟡 atual — peças 1–4 prontas; **GATE 3x FECHADO (06/08)**; geração 2 removida e 86 vermelhos zerados (06/08 sessão 2); faltam peça 5 (fixtures) e 6 (testes-padrão 3 linhas) |
+| 2 | **O MOTOR** (6 peças) | 🟡 atual — peças 1–5 prontas (fixture si3, gate 3x fechado 06/08); geração 2 removida e 86 vermelhos zerados (06/08 sessão 2); falta só peça 6 (testes-padrão 3 linhas — já demonstrada no cadastro_min, falta propagar) |
 | 3 | Reescrita dos testes (por Helio, do zero) | aguarda gate da Fase 2 |
 | 4–6 | Citrix · Recorder · Tooling | futuras |
 

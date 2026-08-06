@@ -36,10 +36,10 @@ MODULOS = {
 TESTES = {
     # SI3 — testes individuais
     # Passou a apontar para o motor em 05/08: mesmo cadastro, roteiro
-    # declarado em flows/si3/cadastro_min.yaml. O flow Python antigo
-    # continua acessivel pelo nome abaixo ate a Fase 3 aposenta-lo.
+    # declarado em flows/si3/cadastro_min.yaml. A entrada do flow antigo
+    # (cadastro_paciente_min_flow) saiu na limpeza da geracao 2 (06/08);
+    # o flow Python antigo morre na Fase 3.
     "cadastro_paciente_min":                 "tests/integration/si3/test_cadastro_min_motor.py",
-    "cadastro_paciente_min_flow":            "tests/integration/si3/components/test_cadastro_paciente_min.py",
     "cadastro_paciente_jornada":             "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_01_cadastro_paciente.py",
     "admissao_ambulatorio_jornada":          "tests/integration/si3/jornadas/ambulatorio/sem_agendamento/test_02_admissao_ambulatorio.py",
     "agendamento_jornada":                   "tests/integration/si3/jornadas/ambulatorio/com_agendamento/test_02_agendamento.py",

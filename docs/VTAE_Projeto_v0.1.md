@@ -55,14 +55,20 @@ quê. Nada do legado será aproveitado como teste de produção.
 | 05/08 15:14 | **Gate — caminho ESTRANGEIRO fechado: 3 execuções consecutivas 17/17 verde (15:10, 15:12, 15:14)** |
 | 06/08 07:40 | **Gate — caminho NATURALIZADO verde: 17/17** (pyjab não conectou, OCR validou — 5ª medição da instabilidade: 1 sucesso em 5) |
 | 06/08 08:25 | **GATE 3x FECHADO — BRASILEIRO 17/17 com decisor exata nos 3 LOVs. Três caminhos de nacionalidade verdes, 5 execuções consecutivas sem falha. Config restaurado (3 opções).** Placar pyjab: 2 conexões em 6 rodadas limpas |
+| 06/08 | **Commit do gate + CLI honesto + docs vivos realizado.** Sessão encerrada com working tree limpa |
+| 06/08 (sessão 2) | **Limpeza da geração 2 aprovada por Helio** após levantamento de referências (grep no repo inteiro). Saem: dsl_interpreter.py, test_dsl_interpreter.py, vtae/components/, test_login_component.py, objects/cadastro_min.yaml antigo, test_cadastro_paciente_min.py (teste do flow antigo) + entrada `cadastro_paciente_min_flow` do CLI. **Correções ao plano original:** test_piloto_cadastro_min.py MANTIDO (não é órfão — valida o motor sem tela e guarda a pendência 7); object_repository.py MANTIDO (é núcleo do motor: executor.py o importa). Flow antigo de 823 linhas fica inalcançável até a Fase 3 (sem escopo novo) |
+| 06/08 (sessão 2) | **Triagem dos 86 vermelhos FECHADA.** Causas: (a) `test_cadastro_paciente_flow.py` — 82 falhas, teste do flow legado mockado desatualizado (flow real funciona em tela, o unitário mockado só simulava até CP04) — DELETADO; (b) `test_login_flow_msi3.py` — 2 falhas por `assert_called_with` capturando só a última chamada de `wait_template` (a do `confirm_template` do BaseFlow, timeout=8/threshold=0.7) em vez da chamada explícita do flow (timeout=15.0) — corrigido para `assert_any_call`; 1 falha (`test_mw05_chama_inspecionar_pagina_em_falha`) testava uma chamada a `ApexHelper.inspecionar_pagina` que o código nunca implementou — Helio decidiu deletar o teste, não implementar a feature; (c) `test_config_loader.py` — mensagem de erro do teste tinha acento, código não — projeto inteiro escreve sem acento por padrão, teste corrigido. **Baseline final: 920 passed, 0 failed.** Vermelho volta a significar quebra real |
 
 ### 2.2 O que ESTÁ SENDO FEITO (agora)
 
-**GATE 3x DO MOTOR: FECHADO em 06/08 08:25.** ESTRANGEIRO 3x (05/08) +
-NATURALIZADO (06/08 07:40) + BRASILEIRO (06/08 08:25) — 5 execuções
-consecutivas 17/17. Config restaurado com as 3 opções.
-**Próxima ação: COMMIT de tudo (run.py, config, docs), depois limpeza da
-geração 2.**
+**LIMPEZA DA GERAÇÃO 2 EXECUTADA (06/08, sessão 2)** — `git rm` dos 6 arquivos
+feito por Helio; run.py e docs vivos atualizados. Staged, aguardando commit.
+
+**Triagem concluída e aplicada por Helio (06/08 sessão 2). Baseline atual:
+920 passed, 0 failed (920 coletados — 101 a menos que os 1021 de antes,
+soma da limpeza da geração 2 + deleção dos dois testes obsoletos).**
+Ver marco em §2.1 para a causa de cada grupo de falha e a correção aplicada.
+Próximo passo: commit da triagem (Helio) → peça 5 do motor (fixtures si3/msi3).
 
 **Fato medido (6 rodadas limpas): conexão pyjab é INSTÁVEL — conectou em 2
 (15:14 de 05/08 e 08:24 de 06/08, decisor exata nos 3 LOVs), falhou em 4
@@ -74,17 +80,13 @@ investigar: TIMEOUT_CONEXAO=10s vs tempo real de registro do Access Bridge
 
 ### 2.3 O que VAI SER FEITO (ordem acordada em 05/08)
 
-1. **Fechar o gate**: NATURALIZADO e BRASILEIRO (1 caminho por vez); restaurar config.
-2. **Limpeza da geração 2** — deletar: `dsl_interpreter.py` (673 linhas mortas),
-   `vtae/components/`, `objects/cadastro_min.yaml` antigo, testes órfãos
-   (`test_dsl_interpreter`, `test_login_component`, `test_piloto_cadastro_min`).
-3. **Triagem dos 86 unitários vermelhos** — agrupar por arquivo: morrem com a
-   limpeza / obsoletos / quebras reais. (86 vermelhos permanentes ensinam a
-   ignorar vermelho — maior risco de qualidade do projeto.)
+1. ~~Fechar o gate~~ ✅ 06/08.
+2. ~~Limpeza da geração 2~~ ✅ 06/08 sessão 2.
+3. ~~Triagem dos 86 unitários vermelhos~~ ✅ 06/08 sessão 2 — 920 passed, 0 failed.
 4. Investigar instabilidade da conexão pyjab (medição, não chute).
 5. Unitário do `LeitorJab` (desenho aprovado: FakeDriver injetado + fake em
    `sys.modules`).
-6. Peça 5 do motor: fixtures `si3`/`msi3` — aposenta o teste provisório.
+6. **Peça 5 do motor: fixtures `si3`/`msi3`** ← PRÓXIMO — aposenta o teste provisório.
 7. Fase 3: **Helio constrói os testes do zero** (admissões, cadastro completo),
    cada um com gate 3x próprio; Claude revisa e explica.
 8. Fases futuras: Cliente 2/Citrix · Recorder (gravar = gerar YAMLs) · Tooling.
@@ -96,7 +98,7 @@ investigar: TIMEOUT_CONEXAO=10s vs tempo real de registro do Access Bridge
 |---|---|---|
 | 0 | Piloto do Modelo de Elemento | ✅ concluída |
 | 1 | Extração do core para `vtae/` | ✅ concluída |
-| 2 | **O MOTOR** (6 peças) | 🟡 atual — peças 1–4 prontas; **GATE 3x FECHADO (06/08)**; faltam peça 5 (fixtures) e 6 (testes-padrão 3 linhas) |
+| 2 | **O MOTOR** (6 peças) | 🟡 atual — peças 1–4 prontas; **GATE 3x FECHADO (06/08)**; geração 2 removida e 86 vermelhos zerados (06/08 sessão 2); faltam peça 5 (fixtures) e 6 (testes-padrão 3 linhas) |
 | 3 | Reescrita dos testes (por Helio, do zero) | aguarda gate da Fase 2 |
 | 4–6 | Citrix · Recorder · Tooling | futuras |
 

@@ -33,8 +33,7 @@ VTAE/
 │   │   ├── object_repository.py  adapter do YAML de objetos
 │   │   ├── estado_jornada.py     estado entre flows de jornada (JSON)
 │   │   ├── texto.py         _normalizar / _similar (tolerância OCR)
-│   │   ├── health_check.py  pré-condições de ambiente
-│   │   └── dsl_interpreter.py    [MORTO — remover] 673 linhas, geração 2
+│   │   └── health_check.py  pré-condições de ambiente
 │   ├── vision/              template matching (diagnose!) + EasyOCR
 │   ├── runners/
 │   │   ├── opencv_runner.py     desktop: template, pyautogui, verify_lov
@@ -44,15 +43,13 @@ VTAE/
 │   │   └── database_runner.py   [CONGELADO — InCor]
 │   ├── flows/               flows Python legados por sistema (geração 1)
 │   │   └── si3/cadastro_min/steps.py  steps nomeados usados pelo motor
-│   ├── components/          [MORTO — remover] geração 2
 │   ├── config/              ConfigLoader + SystemConfig (schema)
 │   ├── cli/                 vtae run / send / summary
 │   └── report/              observer, report.html, summary, metrics
 ├── flows/                   ★ YAMLs de flow (roteiros do motor)
 │   └── si3/cadastro_min.yaml    38 linhas — o cadastro inteiro
 ├── objects/                 ★ YAMLs de objetos (Modelo de Elemento)
-│   ├── si3/cadastro_min.yaml    atual (tipo/criticidade/locators)
-│   └── cadastro_min.yaml        [MORTO — remover] geração 2
+│   └── si3/cadastro_min.yaml    atual (tipo/criticidade/locators)
 ├── configs/                 dados por teste (YAML + .env; credencial nunca no YAML)
 ├── templates/               PNGs dos locators de template
 ├── tests/                   unit/ (fakes) e integration/ (tela real)
@@ -181,5 +178,5 @@ que casa com o item mais próximo sem erro visível (só pyjab pega) · **Gate 3
 3 execuções consecutivas sem falha · **Bootstrap** recurso não calibrado gera
 aviso, não quebra · **Jornada** flows encadeados com estado · **Modelo de
 Elemento** um registro por objeto de tela com todos os locators · **Geração 1**
-flows Python legados · **Geração 2** [MORTA] dsl_interpreter/components ·
-**Geração 3** o motor.
+flows Python legados · **Geração 2** [REMOVIDA na limpeza de 06/08]
+dsl_interpreter/components · **Geração 3** o motor.

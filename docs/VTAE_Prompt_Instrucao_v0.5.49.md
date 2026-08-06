@@ -1,5 +1,5 @@
 # VTAE — Prompt de Instrução Geral do Projeto
-**Data:** 05/08/2026 (tarde-2) | **Versão:** v0.5.49 — EM ANDAMENTO (atualizado em tempo real durante a sessão)
+**Data:** 06/08/2026 | **Versão:** v0.5.49 — SESSÃO ENCERRADA (gate fechado, commit feito)
 Use este documento como primeira mensagem no próximo chat.
 Referência acima deste documento: **`docs/VTAE_Projeto_v0.1.md`** (documento VIVO — consolida e substitui v1/v1.1)
 e **`docs/VTAE_Manual_Tecnico_v0.1.md`** (documento VIVO — substitui Manual v1).
@@ -149,13 +149,21 @@ fila.** Próximo: commit → limpeza da geração 2.
 - Este documento atualizado em tempo real (regra 76).
 
 ---
-## 7. Próximo passo concreto
-1. Rodada 3 do gate: PowerShell avulso, `vtae run --test cadastro_paciente_min`,
-   minimizar tudo, aguardar veredito.
-2. Se verde: rodadas NATURALIZADO e BRASILEIRO (editar config, 1 linha).
-3. Se vermelho: abrir evidence/ PRIMEIRO (regra 8), diagnóstico com print
-   na mão antes de qualquer mudança.
-4. Gate fechado → restaurar config → commit → limpeza da geração 2.
+## 7. Próximo passo concreto (início do próximo chat)
+**Consultar PRIMEIRO os docs vivos: `docs/VTAE_Projeto_v0.1.md` (§2 —
+feito/fazendo/a fazer) e `docs/VTAE_Manual_Tecnico_v0.1.md` (regra 79).**
+
+1. **LIMPEZA DA GERAÇÃO 2** — Claude lista cada arquivo a deletar
+   (dsl_interpreter.py, vtae/components/, objects/cadastro_min.yaml antigo,
+   test_dsl_interpreter, test_login_component, test_piloto_cadastro_min) e
+   verifica o que ainda os referencia (atenção: object_repository é usado
+   pelo teste provisório via titulo_jab — avaliar). Helio aprova antes de
+   qualquer remoção. Commit próprio.
+2. Triagem dos 86 unitários vermelhos (agrupar por arquivo).
+3. Unitário do LeitorJab (desenho já aprovado).
+4. Investigar instabilidade pyjab (2 conexões em 6) — medição, não chute.
+5. Peça 5 (fixture si3) e peça 6 (testes-padrão 3 linhas) fecham a Fase 2.
+6. Depois: Fase 3 — HELIO escreve os testes do zero, Claude revisa (regra 77).
 
 **Marco desta sessão (até agora):** o ambiente ficou honesto — descoberto
 que o CLI rodava testes no Python global desde sempre (corrigido com

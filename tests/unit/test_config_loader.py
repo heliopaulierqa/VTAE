@@ -358,7 +358,7 @@ class TestErros:
         with pytest.raises(ConfigError) as exc_info:
             ConfigLoader.carregar("sistema_inexistente", configs_dir=configs)
 
-        assert "não encontrado" in str(exc_info.value)
+        assert "nao encontrado" in str(exc_info.value)
 
     def test_ambiente_invalido(self, tmp_path):
         """Ambiente não definido no YAML deve lançar ConfigError."""

@@ -117,7 +117,7 @@ class TestStepAbrirPagina:
 
     def test_mw01_aguarda_campo_usuario(self, flow, mock_ctx):
         flow._step_abrir_pagina(mock_ctx)
-        mock_ctx.runner.wait_template.assert_called_with("#P9999_USERNAME", timeout=15.0)
+        mock_ctx.runner.wait_template.assert_any_call("#P9999_USERNAME", timeout=15.0)
 
     def test_mw01_sucesso(self, flow, mock_ctx):
         step = flow._step_abrir_pagina(mock_ctx)
@@ -233,17 +233,11 @@ class TestStepValidar:
             step = flow._step_validar(mock_ctx)
         assert not step.success
 
-    def test_mw05_chama_inspecionar_pagina_em_falha(self, flow, mock_ctx):
-        mock_ctx.runner.wait_template.return_value = False
-        with patch("vtae.flows.msi3.login.login_flow_msi3.ApexHelper.inspecionar_pagina") as mock_insp:
-            flow._step_validar(mock_ctx)
-        mock_insp.assert_called_once()
-
     def test_mw05_aguarda_tela_principal_com_timeout_15s(self, flow, mock_ctx):
         mock_ctx.runner.wait_template.return_value = True
         with patch("vtae.flows.msi3.login.login_flow_msi3.ApexHelper.inspecionar_pagina"):
             flow._step_validar(mock_ctx)
-        mock_ctx.runner.wait_template.assert_called_with(
+        mock_ctx.runner.wait_template.assert_any_call(
             "h3.t-Card-title", timeout=15.0
         )
 

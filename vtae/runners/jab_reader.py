@@ -41,9 +41,6 @@ class LeitorJab:
         self._logger = logger
         self._timeout = timeout
         self._driver = None
-        # Uma falha de conexao nao se repete a cada campo: 14 steps
-        # tentando abrir o Access Bridge que nao existe custaria minutos.
-        self._desistiu = False
 
     def _log(self, msg: str) -> None:
         if self._logger:
@@ -52,7 +49,7 @@ class LeitorJab:
             print(msg)
 
     def _conectar(self) -> None:
-        if self._driver is not None or self._desistiu:
+        if self._driver is not None:
             return
         try:
             if self._jab_home:
@@ -62,7 +59,6 @@ class LeitorJab:
                                      timeout=self._timeout)
             self._log(f"[jab] conectado a janela Java '{self._titulo}'")
         except Exception as erro:
-            self._desistiu = True
             self._log(f"[jab] AVISO: nao conectou a '{self._titulo}' — a "
                       f"verificacao cai para OCR nesta execucao: {erro}")
 

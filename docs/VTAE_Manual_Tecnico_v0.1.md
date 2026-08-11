@@ -1,6 +1,6 @@
 # VTAE — Manual Técnico (documento vivo)
 
-**Versão do documento:** v0.1 · **Atualizado em:** 05/08/2026 (em tempo real durante as sessões)
+**Versão do documento:** v0.1 · **Atualizado em:** 06/08/2026 12:05 (em tempo real durante as sessões)
 **Substitui:** VTAE_Manual_Tecnico_v1.md (29/07) e VTAE_documentacao_tecnica_v.0.md — versões antigas podem ser apagadas.
 **Público:** quem precisa entender o que o framework FAZ e ONDE cada coisa mora.
 
@@ -101,9 +101,13 @@ Peças (cada uma com unitário próprio em `tests/unit/`):
 
 **LeitorJab (`runners/jab_reader.py`):** adaptador `.ler(nome) -> str|None`
 entre pyjab e o Verificador. JAVA_HOME "de mentira" do config ANTES do import;
-conexão cacheada; `TIMEOUT_CONEXAO=10` (regra 71: camada de verificação nunca
-segura a jornada); falha degrada para OCR com aviso. **[PARCIAL]** sem unitário
-ainda (pendência aberta).
+`TIMEOUT_CONEXAO=10` (regra 71: camada de verificação nunca segura a
+jornada); falha degrada para OCR com aviso. Cache é só do sucesso — desde
+06/08 (sessão 3) uma falha de conexão NÃO é mais permanente: cada campo LOV
+que ainda não conectou tenta de novo em `_conectar()` (causa raiz medida é
+corrida de startup do Access Bridge, não ausência do driver — ver Projeto
+§2.1). Testado em `tests/unit/test_jab_reader.py` (7 casos, FakeDriver
+via `sys.modules` — item 5 do Projeto §2.3 fechado 06/08).
 
 **Boot provisório:** `tests/integration/si3/test_cadastro_min_motor.py` abre o
 SI3 (browser_launcher), espera `popup_conexao.png`, roda `LoginFlow` (por
@@ -152,10 +156,10 @@ sexo/nacionalidade/cor_etnia=**pyjab exato** · matricula/identificador=OCR poll
 
 ## 7. Testes
 
-- **`tests/unit/`** — baseline atual: **967 passed / 86 failed**. As 86 são
-  dívida antiga; triagem agendada (Projeto §2.3 item 3). Convenção: um arquivo
-  de teste por módulo; FAKES em vez de MagicMock (fake devolve o programado e
-  registra a FORMA da chamada — mock passaria sem provar nada, regra 42).
+- **`tests/unit/`** — baseline atual: **927 passed, 0 failed** (06/08 sessão
+  3). Convenção: um arquivo de teste por módulo; FAKES em vez de MagicMock
+  (fake devolve o programado e registra a FORMA da chamada — mock passaria
+  sem provar nada, regra 42).
 - **`tests/integration/`** — contra sistema real; componente (1 flow) ou
   jornada (flows encadeados com `estado_jornada.json`).
 - Debug de verify_lov vai para `/tmp/...png` **[QUEBRADO no Windows — cai na

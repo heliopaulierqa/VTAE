@@ -1,6 +1,6 @@
 # VTAE — Projeto (documento vivo)
 
-**Versão do documento:** v0.1 · **Atualizado em:** 05/08/2026 15:20 (em tempo real durante as sessões)
+**Versão do documento:** v0.1 · **Atualizado em:** 06/08/2026 12:20 (em tempo real durante as sessões)
 **Substitui e consolida:** VTAE_Projeto_v1.md (23/07) e VTAE_Projeto_v1.1.md (03/08) — já apagados por Helio.
 
 > **REGRA DE USO (inegociável):** este documento e o `VTAE_Manual_Tecnico_v0.1.md`
@@ -58,57 +58,46 @@ quê. Nada do legado será aproveitado como teste de produção.
 | 06/08 | **Commit do gate + CLI honesto + docs vivos realizado.** Sessão encerrada com working tree limpa |
 | 06/08 (sessão 2) | **Limpeza da geração 2 aprovada por Helio** após levantamento de referências (grep no repo inteiro). Saem: dsl_interpreter.py, test_dsl_interpreter.py, vtae/components/, test_login_component.py, objects/cadastro_min.yaml antigo, test_cadastro_paciente_min.py (teste do flow antigo) + entrada `cadastro_paciente_min_flow` do CLI. **Correções ao plano original:** test_piloto_cadastro_min.py MANTIDO (não é órfão — valida o motor sem tela e guarda a pendência 7); object_repository.py MANTIDO (é núcleo do motor: executor.py o importa). Flow antigo de 823 linhas fica inalcançável até a Fase 3 (sem escopo novo) |
 | 06/08 (sessão 2) | **Triagem dos 86 vermelhos FECHADA.** Causas: (a) `test_cadastro_paciente_flow.py` — 82 falhas, teste do flow legado mockado desatualizado (flow real funciona em tela, o unitário mockado só simulava até CP04) — DELETADO; (b) `test_login_flow_msi3.py` — 2 falhas por `assert_called_with` capturando só a última chamada de `wait_template` (a do `confirm_template` do BaseFlow, timeout=8/threshold=0.7) em vez da chamada explícita do flow (timeout=15.0) — corrigido para `assert_any_call`; 1 falha (`test_mw05_chama_inspecionar_pagina_em_falha`) testava uma chamada a `ApexHelper.inspecionar_pagina` que o código nunca implementou — Helio decidiu deletar o teste, não implementar a feature; (c) `test_config_loader.py` — mensagem de erro do teste tinha acento, código não — projeto inteiro escreve sem acento por padrão, teste corrigido. **Baseline final: 920 passed, 0 failed.** Vermelho volta a significar quebra real |
+| 06/08 (sessão 3) | **Investigada e corrigida a instabilidade da conexão pyjab (item 4 do §2.3).** Causa raiz não é nova: já tinha sido medida em 29-30/07 (`VTAE_Prompt_Instrucao_v0.5.35.md` §3.1) como corrida de startup — a janela do SI3 ainda registrando no Java Access Bridge quando o primeiro campo LOV tenta conectar. O bug real estava em `vtae/runners/jab_reader.py`: a flag `_desistiu` tratava essa falha transitória como permanente, matando a camada exata pros campos seguintes da mesma execução (contraste com o flow antigo, que se recuperava em CM07/CM08). Fix: removida a flag — `_conectar()` volta a tentar em cada campo que ainda não conectou; sucesso continua cacheado. Diff de 2 linhas, aplicado por Claude a pedido direto de Helio. **Gate 3x fechado**: `6105df61` (11:33, S07 sem jab), `987c5760` (11:49, S07/S08/S09 com jab), `a014d1a2` (11:53, S07 sem jab — erro `HWND is not Java Window` reproduzido ao vivo — S08/S09 recuperam). Achado colateral: `execution.json` não serializa `jab_lido` (só existe no `.log` texto) — gap do `observer.py`, registrado como pendência, não corrigido |
+| 06/08 (sessão 3) | **Unitário do `LeitorJab` escrito (item 5 do §2.3) — `tests/unit/test_jab_reader.py`, 7 casos** (desenho aprovado por Helio antes do código). `FakeDriver`/`FakeElemento` reais injetados via `monkeypatch.setitem(sys.modules, ...)` — sem MagicMock (regra 42) — cobrindo: leitura com sucesso, elemento ausente, falha de conexão, reconexão no campo seguinte (prova o fix de hoje), cache do sucesso, erro na busca sem derrubar a conexão, e `JAVA_HOME` setado antes do `import pyjab` (regra 31). Escrito por Claude a pedido direto de Helio. 7/7 passou; `pytest tests/unit -q` → **927 passed, 0 failed** (920 + 7, zero regressão). **Itens 4 e 5 do §2.3 fechados — Fase 2 (o motor) concluída. Fase 3 aberta**: Helio escreve os testes de produção do zero a partir daqui |
+| 06/08 (sessão 3) | **`VTAE_Manual_Criacao_Testes_v0.1.md` criado** — terceiro documento vivo, o "como fazer" das 5 peças (objects, templates, config, steps nomeados, flow+teste), com `cadastro_min` como exemplo real e os tipos de campo, verbos do motor, scripts de calibração e armadilhas do Oracle Forms. Escrito por Claude a pedido de Helio, pensando na Admissão de Pronto Socorro como primeiro teste da Fase 3 — não existe flow legado de pronto socorro pra herdar, então é construção do zero de verdade |
 
 ### 2.2 O que ESTÁ SENDO FEITO (agora)
 
-**LIMPEZA DA GERAÇÃO 2 EXECUTADA (06/08, sessão 2)** — `git rm` dos 6 arquivos
-feito por Helio; run.py e docs vivos atualizados. Staged, aguardando commit.
+Itens 4 e 5 do §2.3 fechados nesta sessão (ver marcos 06/08 sessão 3 em
+§2.1) — fix do `_desistiu` no `LeitorJab` + gate 3x, e o unitário do
+`LeitorJab` (7 casos, 927/0 na suíte). **Fase 2 concluída. Fase 3 aberta**
+— próximo passo é Helio começar a escrever os testes de produção do zero
+(item 7 do §2.3): admissões, cadastro completo, cada um com seu gate 3x
+próprio. Claude revisa e explica, não escreve o teste de produção.
 
-**Triagem concluída e aplicada por Helio (06/08 sessão 2). Baseline atual:
-920 passed, 0 failed (920 coletados — 101 a menos que os 1021 de antes,
-soma da limpeza da geração 2 + deleção dos dois testes obsoletos).**
-Ver marco em §2.1 para a causa de cada grupo de falha e a correção aplicada.
-**Peça 5 do motor: fixture `si3` construída (06/08 sessão 2)** —
-`tests/integration/si3/conftest.py`, escopo `module` (decisão de Helio: abre
-e loga 1x por arquivo, jornadas encadeadas reusam a sessão). Desenhada por
-Claude, digitada por Helio em 4 blocos (regra 43); 1 erro estrutural
-encontrado na revisão (fixture aninhada dentro da classe `SessaoSi3` por
-indentação — pytest não descobriria) e corrigido. Limitação registrada, não
-bloqueante: `report.html` é sobrescrito a cada `executar()` na mesma sessão
-— jornada com 2+ flows só guarda o relatório do último. Revisitar na Fase 3.
-Teste de produção escrito por Helio (regra 77) — `tests/integration/si3/
-test_cadastro_paciente_min.py`, as 3 linhas do contrato. **GATE 3x FECHADO
-(06/08 sessão 2): 3 execuções consecutivas 14/14, 10:09–10:19.** Placar
-pyjab nas 3 rodadas: conectou em 2 (r1, r2 — decisor exata nos 3 LOVs),
-falhou em 1 (r3 — `HWND is not Java Window`, degradou para OCR que
-validou). Running total do placar de instabilidade: 4 conexões em 9
-rodadas limpas desde 05/08. `vtae/cli/run.py` atualizado (2 entradas
-apontavam para o teste provisório — `MODULOS["si3"]` e
-`TESTES["cadastro_paciente_min"]` — ambas redirecionadas para o teste de
-produção antes da deleção, senão `vtae run` quebraria).
-`test_cadastro_min_motor.py` provisório removido por Helio (`git rm`).
-**Item 6 do §2.3 fechado — peça 5 do motor concluída.**
-
-**Fato medido (6 rodadas limpas): conexão pyjab é INSTÁVEL — conectou em 2
-(15:14 de 05/08 e 08:24 de 06/08, decisor exata nos 3 LOVs), falhou em 4
-(`HWND is not Java Window`, degradou para OCR que validou).** Correlação com
-janela na frente DESCARTADA. Causa não medida. A degradação projetada
-(regra 71) segurou o verde em todas — o desenho funcionou. Candidato a
-investigar: TIMEOUT_CONEXAO=10s vs tempo real de registro do Access Bridge
-(hipótese — medir antes de mudar).
+Pendências abertas, não bloqueantes, registradas para não se perder:
+- `execution.json` não carrega `jab_lido` (gap de serialização em
+  `vtae/report/observer.py`) — só o `.log` texto tem o dado. Avaliar se
+  vale corrigir antes da Fase 3, senão todo gate que envolva pyjab depende
+  de puxar o `.log` manualmente.
+- `S04 verificar nome` falhou 2x hoje (`OCR nao leu nada`) — flakiness sem
+  relação com pyjab, não investigada ainda.
+- 2 execuções hoje terminaram em "0/0 steps OK" logo após S01/S02, sem
+  `ERROR` registrado — Helio confirmou que não foi Ctrl+C, o processo caiu
+  sozinho. Sem traceback capturado (o `.log` estruturado não guarda
+  stdout/stderr do pytest). Precisa de captura completa do terminal na
+  próxima ocorrência para investigar.
 
 ### 2.3 O que VAI SER FEITO (ordem acordada em 05/08)
 
 1. ~~Fechar o gate~~ ✅ 06/08.
 2. ~~Limpeza da geração 2~~ ✅ 06/08 sessão 2.
 3. ~~Triagem dos 86 unitários vermelhos~~ ✅ 06/08 sessão 2 — 920 passed, 0 failed.
-4. Investigar instabilidade da conexão pyjab (medição, não chute).
-5. Unitário do `LeitorJab` (desenho aprovado: FakeDriver injetado + fake em
-   `sys.modules`).
+4. ~~Investigar instabilidade da conexão pyjab~~ ✅ 06/08 sessão 3 — causa raiz
+   já era conhecida (29-30/07), bug era o `_desistiu` permanente; corrigido,
+   gate 3x fechado.
+5. ~~Unitário do `LeitorJab`~~ ✅ 06/08 sessão 3 — 7 casos, `pytest tests/unit`
+   927 passed, 0 failed.
 6. ~~Peça 5 do motor: fixture `si3`~~ ✅ 06/08 sessão 2 — gate 3x fechado,
    teste provisório removido. `msi3` fica para quando um teste web novo pedir.
-7. Fase 3: **Helio constrói os testes do zero** (admissões, cadastro completo),
-   cada um com gate 3x próprio; Claude revisa e explica.
+7. **Fase 3 (aberta 06/08): Helio constrói os testes do zero** (admissões,
+   cadastro completo), cada um com gate 3x próprio; Claude revisa e explica.
 8. Fases futuras: Cliente 2/Citrix · Recorder (gravar = gerar YAMLs) · Tooling.
 9. ⏸ Banco congelado até liberação do InCor.
 
@@ -118,8 +107,8 @@ investigar: TIMEOUT_CONEXAO=10s vs tempo real de registro do Access Bridge
 |---|---|---|
 | 0 | Piloto do Modelo de Elemento | ✅ concluída |
 | 1 | Extração do core para `vtae/` | ✅ concluída |
-| 2 | **O MOTOR** (6 peças) | 🟡 atual — peças 1–5 prontas (fixture si3, gate 3x fechado 06/08); geração 2 removida e 86 vermelhos zerados (06/08 sessão 2); falta só peça 6 (testes-padrão 3 linhas — já demonstrada no cadastro_min, falta propagar) |
-| 3 | Reescrita dos testes (por Helio, do zero) | aguarda gate da Fase 2 |
+| 2 | **O MOTOR** (6 peças) | ✅ concluída 06/08 — peças 1-6 prontas; geração 2 removida e 86 vermelhos zerados (sessão 2); instabilidade pyjab corrigida e `LeitorJab` testado, gate 3x fechado (sessão 3); baseline 927 passed, 0 failed |
+| 3 | Reescrita dos testes (por Helio, do zero) | 🟡 aberta 06/08 |
 | 4–6 | Citrix · Recorder · Tooling | futuras |
 
 ## 4. Método de trabalho

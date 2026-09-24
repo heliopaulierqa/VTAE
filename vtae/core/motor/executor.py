@@ -28,6 +28,9 @@ from vtae.core.object_repository import ObjectRepository
 from vtae.core.result import FlowResult
 
 TIMEOUT_RESULTADO = 15.0
+
+# Verbo 'esperar': aplicacao recem-aberta demora mais que um campo.
+TIMEOUT_ESPERAR = 30.0
 INTERVALO_RESULTADO = 0.5
 
 # Releituras de um campo recem-preenchido antes de dar por divergente.
@@ -76,7 +79,14 @@ class Executor:
         plano = carregar(caminho_yaml)
         self.objetos = ObjectRepository.from_yaml(plano.objetos)
         self.registro = self._resolver_registro(plano)
-        dados = self._ctx.config.DADOS
+        dados = dict(self._ctx.config.DADOS)
+        # Credenciais do config.yaml ficam disponiveis ao roteiro como
+        # {dado:usuario} e {dado:senha} — copia local, o SystemConfig nao
+        # muda. Chave com o mesmo nome em dados: tem prioridade.
+        for chave, atributo in (("usuario", "USER"), ("senha", "PASSWORD")):
+            valor = getattr(self._ctx.config, atributo, None)
+            if valor:
+                dados.setdefault(chave, valor)
 
         # Antes do primeiro clique: YAML errado nao chega na tela (regra 45).
         validar(plano, self.objetos, self.registro, dados)
@@ -137,6 +147,14 @@ class Executor:
             self._verificar_declarado(step.argumento, coleta)
         elif step.verbo == "salvar":
             self.acoes.salvar(step.argumento)
+        elif step.verbo == "abrir":
+            self.acoes.abrir(self.interpolador.resolver(step.argumento))
+        elif step.verbo == "esperar":
+            self._esperar(step.argumento, coleta)
+        elif step.verbo == "clicar":
+            self.acoes.clicar(step.argumento)
+        elif step.verbo == "teclar":
+            self.acoes.teclar(self.interpolador.resolver(step.argumento))
         elif step.verbo == "ler_resultado":
             self._ler_resultado(step.argumento, coleta)
         # Evidencia sempre, com ou sem verificacao: pyjab prova o que o
@@ -150,9 +168,22 @@ class Executor:
             argumento = self.interpolador.resolver(argumento)
         self.registro[step.verbo](self._ctx, self, argumento)
 
+    def _esperar(self, nome, coleta) -> None:
+        if not self.esperas.esperar_visivel(nome, timeout=TIMEOUT_ESPERAR):
+            raise StepError(f"'{nome}' nao apareceu em {TIMEOUT_ESPERAR:.0f}s.")
+        # Ver a tela chegar E prova: o step fica validado no relatorio.
+        coleta.validated = True
+
     def _preencher(self, campo, coleta) -> None:
         valor = self.interpolador.resolver(campo.valor)
         self.acoes.preencher(campo.campo, valor)
+        if (self.objetos.elemento(campo.campo) or {}).get("sigiloso"):
+            # Senha: nao se le de volta (a tela mostra ***) e o valor nunca
+            # vai para relatorio nem log. Registrado como aviso, nao
+            # escondido.
+            coleta.avisos.append(
+                f"{campo.campo}: campo sigiloso — preenchido, nao verificado")
+            return
         self._aplicar(self._verificar_estavel(campo.campo, valor), coleta)
 
     def _verificar_estavel(self, nome, esperado):

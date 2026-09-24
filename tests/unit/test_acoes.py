@@ -196,10 +196,18 @@ def test_salvar_sem_titulo_declarado_nao_foca_mas_pressiona():
     assert runner.chamadas == [("press", "f10", 1)]
 
 
-def test_mecanica_de_salvar_desconhecida_explode():
+def test_salvar_com_combinacao_sem_runner_capaz_explode():
+    # Decisao 26: 'ctrl+s' e valido. O FakeRunner so sabe 'press', entao
+    # a combinacao tem que falhar ALTO — nunca apertar so o 'ctrl'.
     acoes, _ = _acoes()
-    with pytest.raises(StepError, match="desconhecida"):
+    with pytest.raises(StepError, match="combinacoes"):
         acoes.salvar("ctrl+s")
+
+
+def test_salvar_em_elemento_declarado_clica_nele():
+    acoes, runner = _acoes()
+    acoes.salvar("btn_ok_lov")
+    assert runner.chamadas == [("click", 90, 91)]
 
 
 # ── as duas tabelas de tipo nao podem divergir ───────────────────────

@@ -46,7 +46,12 @@ from vtae.core.exceptions import ConfigError
 # menu+pesquisa+popup+duplo clique, no MSI3 seria uma URL, e os dois
 # nao tem nada em comum medido ainda. Fica como step nomeado ate o
 # teste web mostrar o que generalizar (regra 50).
-VERBOS_MOTOR = ("preencher", "verificar", "salvar", "ler_resultado")
+#
+# 24/09/2026 — verbos genericos (decisao 26). Todo sistema, desktop ou
+# web, tem campo livre, campo de dominio e botao; toda interacao se
+# escreve com estes oito verbos. Nenhum deles conhece sistema algum.
+VERBOS_MOTOR = ("abrir", "esperar", "clicar", "teclar",
+                "preencher", "verificar", "salvar", "ler_resultado")
 
 # Verbos que recebem { campo: <nome>, valor: <valor> }.
 # 'verificar' nasceu de um caso real (regra 50): o campo Nome do cadastro
@@ -56,7 +61,8 @@ VERBOS_MOTOR = ("preencher", "verificar", "salvar", "ler_resultado")
 VERBOS_DE_CAMPO = ("preencher", "verificar")
 
 # Verbos do motor cujo argumento e um texto simples.
-VERBOS_ESCALARES = ("salvar", "ler_resultado")
+VERBOS_ESCALARES = ("abrir", "esperar", "clicar", "teclar",
+                    "salvar", "ler_resultado")
 
 
 @dataclass(frozen=True)
@@ -97,6 +103,10 @@ class Plano:
     objetos: str
     steps: tuple[Step, ...]
     steps_python: str | None = None
+    # Pasta com config.yaml (+ .env) deste roteiro — usada pelo
+    # 'vtae executar'. Opcional aqui para nao quebrar quem ja roda via
+    # fixture; o 'vtae executar' cobra a presenca.
+    dados: str | None = None
 
 
 def carregar(caminho: str) -> Plano:
@@ -113,7 +123,8 @@ def montar(cru: dict, origem: str = "<memoria>") -> Plano:
     steps = tuple(_step(item, origem, i)
                   for i, item in enumerate(cru["steps"], 1))
     return Plano(flow=cru["flow"], objetos=cru["objetos"], steps=steps,
-                 steps_python=cru.get("steps_python"))
+                 steps_python=cru.get("steps_python"),
+                 dados=cru.get("dados"))
 
 
 def _step(item, origem: str, ordem: int) -> Step:

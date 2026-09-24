@@ -28,9 +28,9 @@ CHAVES_POR_TIPO = {
 # do titulo da janela do Windows, nao nome de elemento.
 CHAVES_QUE_APONTAM_ELEMENTO = ("campo_localizar", "btn_ok")
 
-# A segunda mecanica de salvar nasce quando o teste web mostrar qual e
-# (regra 64).
-MECANICAS_SALVAR = ("f10",)
+# 'salvar' nao tem mais mecanica fixa (decisao 26): o argumento e o
+# nome de um elemento (clica nele) ou uma tecla/combinacao (tecla).
+# F10 deixou de ser conhecimento do nucleo — e so mais uma tecla.
 
 
 def validar(plano, objetos, registro: dict, dados: dict) -> None:
@@ -61,7 +61,16 @@ def _do_step(step, objetos, registro, dados) -> list[str]:
                 + _dos_valores(step.argumento.valor, onde, dados))
 
     if step.verbo == "salvar":
-        return _do_salvar(step.argumento, onde)
+        return _do_salvar(step.argumento, onde, objetos)
+
+    if step.verbo == "clicar":
+        return _do_alcancavel(step.argumento, onde, objetos)
+
+    if step.verbo == "esperar":
+        return _do_esperar(step.argumento, onde, objetos)
+
+    if step.verbo in ("abrir", "teclar"):
+        return _dos_valores(step.argumento, onde, dados)
 
     if step.verbo == "ler_resultado":
         return _do_ler_resultado(step.argumento, onde, objetos)
@@ -109,11 +118,35 @@ def _do_verificar(campo: Campo, onde: str, objetos) -> list[str]:
     return []
 
 
-def _do_salvar(argumento, onde: str) -> list[str]:
-    if argumento in MECANICAS_SALVAR:
-        return []
-    return [f"{onde}: mecanica de salvar '{argumento}' desconhecida — "
-            f"conhecidas: {list(MECANICAS_SALVAR)}."]
+def _do_salvar(argumento, onde: str, objetos) -> list[str]:
+    """Elemento declarado -> clica nele. Qualquer outra coisa -> tecla."""
+    if objetos.elemento(argumento) is not None:
+        return _do_alcancavel(argumento, onde, objetos)
+    return []
+
+
+def _do_alcancavel(nome, onde: str, objetos) -> list[str]:
+    elemento = objetos.elemento(nome)
+    if elemento is None:
+        return [f"{onde}: '{nome}' nao declarado em objects/."]
+    if not any(elemento.get(k) for k in ("template", "coordenada", "seletor")):
+        return [f"{onde}: '{nome}' nao tem template, coordenada nem seletor "
+                f"— nao ha como clicar nele."]
+    return []
+
+
+def _do_esperar(nome, onde: str, objetos) -> list[str]:
+    """
+    Esperar exige template: sem imagem nao ha condicao a observar, e
+    'seguir sem esperar' seria um passo que passa sem provar nada.
+    """
+    elemento = objetos.elemento(nome)
+    if elemento is None:
+        return [f"{onde}: '{nome}' nao declarado em objects/."]
+    if not elemento.get("template"):
+        return [f"{onde}: '{nome}' nao tem template — 'esperar' precisa de "
+                f"uma imagem para saber quando a tela chegou."]
+    return []
 
 
 def _do_ler_resultado(nome, onde: str, objetos) -> list[str]:

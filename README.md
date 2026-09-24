@@ -4,282 +4,150 @@
 > para sistemas web modernos, legados desktop e ambientes híbridos.
 
 ![Python](https://img.shields.io/badge/Python-3.13%2B-blue)
-![Versão](https://img.shields.io/badge/versão-0.5.20-purple)
-![Testes](https://img.shields.io/badge/testes-282%20unitários-green)
-![Fase](https://img.shields.io/badge/fase-1%20(gate)%20em%20curso-orange)
+![Versão](https://img.shields.io/badge/versão-0.5.13-purple)
+![Testes](https://img.shields.io/badge/testes-297%20unitários-green)
+![Fase](https://img.shields.io/badge/fase-B%20—%20Observabilidade%20campos%20texto-brightgreen)
 
 ---
 
 ## O que é o VTAE
 
-Framework híbrido de automação de testes que combina visão computacional (OpenCV), controle de browser (Playwright) e OCR (EasyOCR) para interagir com qualquer sistema — como um usuário humano faria.
+Framework híbrido de automação de testes que combina visão computacional (OpenCV),
+controle de browser (Playwright) e OCR (EasyOCR) para interagir com qualquer sistema
+como um usuário humano faria.
+
+**Palavra-chave: CONFIANÇA.** Teste que executa sem validar resultado é script, não teste.
 
 Ideal para:
-- Sistemas web modernos (Oracle APEX, React, Angular)
 - Sistemas legados desktop sem API de automação (Oracle Forms, Citrix)
+- Sistemas web modernos (Oracle APEX, React, Angular)
 - Ambientes híbridos onde Playwright e OpenCV precisam trabalhar juntos
 
 ---
 
-## Instalação
+## Pré-requisitos
 
-### 1. Pré-requisito
+| Requisito | Versão | Observação |
+|---|---|---|
+| Python | 3.13+ | Única dependência de SO |
+| Git | qualquer | Para clonar o repositório |
+| Resolução | 1920x1080 | Coordenadas calibradas nessa resolução |
+| SI3 | aberto e maximizado | Antes de rodar testes desktop |
 
-**Python 3.13+** — única dependência de SO. Sem Java/JDK nem Tesseract.
+> ✅ **Tesseract removido na v0.5.11** — EasyOCR instalado via pip, sem dependência de SO.
+
+---
+
+## Instalação em máquina nova
+
+### 1. Clonar o repositório
 
 ```bash
-python --version  # deve retornar 3.13.x
+git clone <url-do-repositorio>
+cd VTAE
 ```
 
-> ⚠️ **Resolução de tela: 1920x1080.** Coordenadas absolutas quebram silenciosamente em outras resoluções.
+### 2. Criar e ativar o ambiente virtual
 
-### 2. Instalar (recomendado)
-
-```bash
-instalar.bat   # cria .venv, instala dependências, valida EasyOCR
-```
-
-**Manual:**
+**Windows:**
 ```bash
 python -m venv .venv
 .venv\Scripts\activate
+```
+
+**Linux/Mac:**
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+> O `.venv` está no `.gitignore` — **nunca commitar**. Sempre ativar antes de trabalhar.
+
+### 3. Instalar dependências
+
+```bash
 pip install -r requirements.txt
 pip install -e .
 playwright install chromium
 ```
 
-### 3. Credenciais
+> ⚠️ EasyOCR baixa modelos (~200MB) na primeira execução. Segunda execução usa cache.
 
-Cada funcionalidade tem seu próprio `.env`. **Nunca commitar no Git.**
+### 4. Configurar credenciais
+
+Cada jornada tem seu próprio `.env`. **Nunca commitar no Git.**
 
 ```bash
-# configs/si3/si3_login/.env
-SI3_USER=seu_usuario
-SI3_PASS=sua_senha
-
 # configs/si3/si3_cadastro_paciente/.env
 SI3_USER=seu_usuario
 SI3_PASS=sua_senha
-SI3_PACIENTE_ID=   # vazio = cadastra novo; preenchido = reutiliza
+SI3_PACIENTE_ID=        # vazio = cadastra novo; preenchido = reutiliza
+
+# configs/si3/si3_internacao/.env
+SI3_USER=seu_usuario
+SI3_PASS=sua_senha
+SI3_PACIENTE_ID=
+
+# configs/si3/si3_ambulatorio/.env
+SI3_USER=seu_usuario
+SI3_PASS=sua_senha
+SI3_PACIENTE_ID=
+
+# configs/msi3/.env
+MSI3_USER=seu_usuario
+MSI3_PASS=sua_senha
+
+# .env na raiz (pyjab — JAVA_HOME de mentira para Access Bridge)
+SI3_JAB_HOME_FAKE=C:\jab_home
 ```
 
-> **Regra:** nenhum comentário na mesma linha de `VAR=valor`. Comentários sempre em linha separada acima.
+> Comentários no .env sempre em linha separada — **nunca na mesma linha do VAR=valor**.
 
-### 4. Verificar instalação
+### 5. Verificar instalação
 
 ```bash
-python -c "from src.vision.ocr import OcrHelper; OcrHelper.verificar_instalacao()"
+# EasyOCR
+python -c "from src.vision.ocr import OcrHelper; print('EasyOCR OK')"
+
+# Testes unitários (deve passar 297, 76 falhas conhecidas pré-existentes)
 python -m pytest tests/unit/ -v
+
+# CLI
 vtae systems
+```
+
+### 6. Primeiro teste
+
+Abra o SI3 maximizado na tela principal e execute:
+
+```bash
+vtae run --test cadastro_paciente_jornada
 ```
 
 ---
 
-## CLI — Comandos principais
+## CLI — comandos disponíveis
 
 ```bash
-# ── Jornadas completas ──────────────────────────────────────────────
+# Jornadas completas
 vtae run --jornada internacao
 vtae run --jornada ambulatorio
 vtae run --jornada ambulatorio_com_agendamento
 vtae run --jornada internacao --repeat 3
 
-# ── Testes individuais ──────────────────────────────────────────────
-vtae run --test login_si3_novo
-vtae run --test cadastro_paciente_min
+# Testes individuais
 vtae run --test cadastro_paciente_jornada
 vtae run --test admissao_internacao_jornada
 vtae run --test admissao_ambulatorio_jornada
+vtae run --test agendamento_jornada
+vtae run --test cadastro_funcionario
 
-# ── Utilitários ─────────────────────────────────────────────────────
-vtae systems          # lista sistemas disponíveis
-vtae flakiness --top 5  # campos mais instáveis
+# Utilitários
+vtae systems          # lista sistemas detectados
+vtae flakiness --top 5  # top steps mais flaky
 vtae clean --days 7   # limpa evidências antigas
 vtae summary          # relatório gerencial
-vtae metrics          # métricas de execução
-```
-
----
-
-## Debug e calibração — Comandos do terminal
-
-### Capturar screenshot e identificar coordenadas
-
-```bash
-# Tirar screenshot com 3s de delay (tempo para clicar na janela do sistema)
-python -c "import pyautogui, time; time.sleep(3); pyautogui.screenshot('screenshot_sistema.png'); print('salvo')"
-
-# Abrir no Paint para identificar coordenadas (x,y na barra de status)
-python -c "import subprocess; subprocess.Popen(['mspaint', 'screenshot_sistema.png'])"
-```
-
-### Capturar template a partir do screenshot
-
-```bash
-# Recortar template com coordenadas identificadas no Paint
-python -c "
-from PIL import Image
-img = Image.open('screenshot_sistema.png')
-x1, y1, x2, y2 = 288, 224, 509, 358   # suas coordenadas
-recorte = img.crop((x1, y1, x2, y2))
-recorte.save('templates/si3/meu_modulo/meu_template.png')
-print('Tamanho:', recorte.size)
-recorte.show()
-"
-```
-
-### Validar score de template (diagnose)
-
-```bash
-# v0.5.34 — script único e parametrizável (scripts/diagnose_contra_arquivo.py)
-# substitui os antigos diagnose_algumacoisa.py — nunca criar um script novo por investigação
-
-# Modo 1 — mede o template contra uma imagem já salva ("com imagem")
-python scripts/diagnose_contra_arquivo.py templates/si3/meu_modulo/meu_template.png screenshot_sistema.png
-
-# Modo 2 — screenshot omitido: captura a tela ao vivo (3s de delay) e mede contra o print real
-python scripts/diagnose_contra_arquivo.py templates/si3/meu_modulo/meu_template.png
-```
-
-> ATENÇÃO: template sempre PRIMEIRO, screenshot depois — inversão retorna 0.0 sempre.
-> A captura ao vivo é salva com timestamp em `evidence/diagnose_manual/` — fica registrada, não é descartável.
-
-**Equivalente antigo (ainda funciona, mas prefira o script acima):**
-```bash
-python -c "
-from src.vision.template import TemplateMatcher
-print(TemplateMatcher().diagnose(
-    'templates/si3/meu_modulo/meu_template.png',
-    'screenshot_sistema.png'
-))"
-```
-
-| Score | Diagnóstico | Ação |
-|---|---|---|
-| ≥ 0.88 | Aprovado | Prosseguir |
-| 0.75–0.87 | Aceitável | Documentar threshold no código |
-| 0.50–0.74 | Problema estrutural | Recapturar |
-| < 0.50 | Escala errada | Verificar método de captura |
-
-> ⚠️ Oracle Forms via Edge tem teto real ~0.79. Documentar e justificar quando abaixo de 0.88.
-
-> **Medir sensibilidade E especificidade:** rodar o diagnose também contra uma tela ONDE O ELEMENTO NÃO DEVERIA APARECER — um score alto ali é falso positivo em potencial, mesmo que o score contra a tela certa também esteja alto. Foi assim que o threshold do L03 (LoginSi3Flow) subiu de 0.7 para 0.85: o pior falso positivo medido foi 0.746.
-
-### Capturar coordenada de campo
-
-```bash
-# Abre contador regressivo — posicionar mouse no campo durante a contagem
-python scripts/posicao_mouse.py
-```
-
-### Testar OCR de uma região — com imagem já salva
-
-```bash
-# Testa leitura de uma região específica de uma imagem existente
-# ("com imagem" — não captura a tela, lê o arquivo informado)
-# Salva _crop_raw.png (recorte bruto) e _crop_proc.png (recorte após pré-processamento do OCR)
-python scripts/testar_regiao_ocr.py screenshot_sistema.png x1 y1 x2 y2
-
-# Exemplos reais:
-python scripts/testar_regiao_ocr.py screenshot_cadastro.png 27 145 447 168    # campo nome
-python scripts/testar_regiao_ocr.py screenshot_cadastro.png 363 195 463 207   # data nasc
-python scripts/testar_regiao_ocr.py screenshot_cadastro.png 543 192 633 212   # sexo
-python scripts/testar_regiao_ocr.py screenshot_cadastro.png 565 148 662 166   # matricula
-```
-
-> Diferença entre as duas ferramentas: `diagnose_contra_arquivo.py` mede "o elemento está aqui?" (score de imagem);
-> `testar_regiao_ocr.py` mede "o que está escrito aqui?" (texto lido). Use os dois juntos quando o problema
-> não estiver claro — comparar o `_crop_raw.png` (o que a região realmente capturou) contra o texto retornado
-> já resolve a maioria dos casos de OCR não ler o valor esperado.
-
-### Testar OCR sem arquivo salvo — direto do OcrHelper
-
-```bash
-# Lê uma região diretamente de um screenshot já existente, sem passar pelo script de calibração
-python -c "
-from src.vision.ocr import OcrHelper
-regiao = (27, 145, 447, 168)   # x1, y1, x2, y2
-texto = OcrHelper.ler_regiao('screenshot_cadastro.png', regiao)
-print('OCR leu:', repr(texto))
-"
-
-# Gera um recorte ampliado para inspeção visual quando o OCR não lê o esperado
-python -c "
-from src.vision.ocr import OcrHelper
-OcrHelper.salvar_debug('screenshot_cadastro.png', (27, 145, 447, 168), 'debug_ocr.png')
-print('salvo: debug_ocr.png')
-"
-```
-
-### Verificar config carregado (debug de dados)
-
-```bash
-# Confirma que o config.yaml e .env foram carregados corretamente
-python -c "
-from src.config import ConfigLoader
-import pathlib
-c = ConfigLoader.carregar('si3_cadastro_paciente_min', configs_dir=pathlib.Path('configs/si3'))
-print('DADOS:', c.DADOS)
-print('URL:', c.url)
-print('OCR ENGINE:', c.ocr_engine)
-"
-```
-
-### Testar _normalizar e _similar manualmente
-
-```bash
-python -c "
-import sys; sys.path.insert(0, '.')
-from vtae.flows.base_flow import _normalizar, _similar
-# Testar normalizacao
-print(_normalizar('CÂMARA'))           # CAMARA
-print(_normalizar('04/11/2023'))       # 04112023
-# Testar similaridade
-print(_similar('3RUNA', 'BRUNA'))      # True  (B/3 — 1 erro em 5)
-print(_similar('DLIIA', 'OLIVIA'))     # True  (O/D, V/I — 2 erros em 6)
-print(_similar('TESTE ERRO', 'BRUNA')) # False (muito diferente)
-"
-```
-
-### Ler arquivo completo pelo terminal
-
-```bash
-# Ler qualquer arquivo do projeto sem editor
-cat src/flows/si3/cadastro_min/cadastro_paciente_min_flow.py
-cat configs/si3/si3_cadastro_paciente_min/config.yaml
-cat vtae/flows/base_flow.py
-
-# Com numeração de linhas (útil para identificar onde editar)
-cat -n vtae/flows/base_flow.py
-
-# Filtrar linhas com palavra-chave
-cat vtae/flows/base_flow.py | grep -n "_verify_campo"
-cat vtae/flows/base_flow.py | grep -n "def _"
-
-# Ver apenas parte do arquivo (linhas 50 a 100)
-sed -n '50,100p' vtae/flows/base_flow.py
-```
-
-### Ver evidências de execução
-
-```bash
-# Listar execuções do dia
-ls evidence/2026-06-25/
-
-# Ver log de execução
-cat evidence/2026-06-25/test_cadastro_paciente_min_flow/execution.log
-
-# Abrir relatório HTML no browser
-start evidence/2026-06-25/test_cadastro_paciente_min_flow/report.html
-
-# Ver estado da jornada (paciente_id compartilhado)
-cat evidence/estado_jornada.json
-
-# Ver histórico de flakiness
-cat evidence/flakiness.json
-
-# Ver capturas manuais do diagnose ao vivo (Modo 2 do diagnose_contra_arquivo.py)
-ls evidence/diagnose_manual/
+vtae metrics          # métricas de cobertura
 ```
 
 ---
@@ -288,133 +156,134 @@ ls evidence/diagnose_manual/
 
 ```
 VTAE/
-├── instalar.bat                         # instalação do zero
-├── vtae.bat                             # wrapper que ativa .venv
-├── src/
-│   ├── core/           # FlowContext, result, observer, types, estado_jornada
-│   ├── vision/         # TemplateMatcher (multi-scale), OcrHelper, OcrEngine
-│   ├── runners/
-│   │   ├── opencv_runner.py
-│   │   ├── playwright_runner.py
-│   │   └── browser_launcher.py          # subprocess — não Playwright
-│   ├── flows/
-│   │   ├── base_flow.py                 # v0.5.20: _normalizar + _similar + verify com comparação
-│   │   ├── si3/
-│   │   │   ├── login/
-│   │   │   │   └── login_si3_flow.py    # LoginSi3Flow ✅ 3x
-│   │   │   ├── cadastro_min/
-│   │   │   │   └── cadastro_paciente_min_flow.py  # CadastroPacienteMinFlow ✅ 3x
-│   │   │   ├── cadastro_paciente_flow.py    (CP01–CP23) ✅ 3x
-│   │   │   ├── admissao_internacao_flow.py  (AI01–AI19) ✅ 3x
-│   │   │   ├── admissao_ambulatorio_flow.py (AB01–AB16) ✅ 3x — guards Fase 1 pendentes
-│   │   │   ├── agendamento_flow.py          (AG01–AG13) ✅ 3x
-│   │   │   └── admissao_com_agendamento_flow.py   🔜 3x pendente pós-gate
-│   │   ├── sislab/
-│   │   │   └── cadastro_funcionario_flow.py (CF01–CF10) ✅
-│   │   └── msi3/
-│   │       ├── frequencia_aplicacao_flow.py (FA01–FA10) ✅
-│   │       └── tipo_anestesia_flow.py       (TA01–TA09) ✅
-│   ├── config/         # ConfigLoader + schema.py
-│   └── cli/            # run.py, send.py
-├── configs/
-│   └── si3/
-│       ├── si3_login/
-│       ├── si3_cadastro_paciente_min/
-│       ├── si3_cadastro_paciente/
-│       ├── si3_internacao/
-│       ├── si3_ambulatorio/
-│       └── si3_agendamento/
-├── templates/si3/
-│   ├── login/
-│   ├── cadastro_paciente_min/
-│   ├── cadastro_paciente/
-│   ├── admissao_internacao/
-│   ├── admissao_ambulatorio/
-│   ├── agendamento/
-│   └── common/                          # 🔜 Fase 1 Passo B
+├── vtae/                    O MOTOR — código genérico do framework
+│   ├── core/                FlowContext, StepResult, Observer, estado_jornada
+│   ├── vision/              TemplateMatcher (multi-scale) + OcrEngine (EasyOCR)
+│   ├── runners/             OpenCVRunner, PlaywrightRunner
+│   ├── flows/               BaseFlow + flows por sistema
+│   └── report/              observer.py, report_generator.py, summary_generator.py
+│
+├── objects/                 Modelo de Elemento — YAML por tela (ObjectRepository)
+├── configs/                 Dados de teste por funcionalidade (config.yaml + .env)
+├── templates/               PNGs para template matching
 ├── tests/
-│   ├── unit/
-│   └── integration/si3/
-│       ├── components/
-│       │   └── test_cadastro_paciente_min.py # ✅ 3x
-│       └── jornadas/
+│   ├── unit/                297 testes com mock — rodam sem SI3 aberto
+│   └── integration/
+│       └── si3/jornadas/    testes contra o sistema real
 ├── scripts/
-│   ├── posicao_mouse.py           # captura coordenadas
-│   ├── testar_regiao_ocr.py       # calibra regioes OCR (com imagem salva)
-│   └── diagnose_contra_arquivo.py # score de template — com imagem ou captura ao vivo (v0.5.34)
-└── evidence/
-    ├── flakiness.json
-    ├── estado_jornada.json
-    ├── diagnose_manual/              # capturas ao vivo do diagnose_contra_arquivo.py
+│   ├── posicao_mouse.py     capturar coordenadas x,y na tela
+│   ├── testar_regiao_ocr.py calibrar região OCR — ver o que o EasyOCR lê
+│   └── diagnose_contra_arquivo.py  medir score de template vs screenshot
+├── docs/                    documentação do projeto
+│   ├── VTAE_Projeto_v1.docx       o leme — visão total e fases
+│   ├── VTAE_Manual_Tecnico_v1.md  como cada arquivo funciona
+│   ├── VTAE_Roadmap_v0.1.md       checklist de direção
+│   └── VTAE_Manual_Criacao_Testes_v0.1.md  passo a passo
+├── VTAE_Prompt_Instrucao_v0.5.13.md  registro operacional de sessão
+├── README.md                este arquivo
+└── evidence/                gerado automaticamente ao rodar testes
+    ├── flakiness.json       histórico pass/fail por step
+    ├── estado_jornada.json  paciente_id entre steps da jornada
     └── YYYY-MM-DD/
         └── <teste>/
-            ├── execution.log
-            ├── execution.json
-            └── report.html
+            ├── execution.log    log estruturado
+            ├── execution.json   dados por step (CI/CD)
+            └── report.html      relatório visual com screenshots
 ```
-
----
-
-## BaseFlow — helpers disponíveis (v0.5.20)
-
-```python
-# Wrapper canônico com observabilidade
-self._step(step_id, descricao, fn, observer, confirm_template, validated, ctx)
-
-# Leitura segura de dados e coordenadas
-self._dado(dados, chave, step_id)
-self._coord(coords, nome)
-self._tpl_existe(path)
-
-# Foco de janela
-self._focar_si3()
-self._focar_navegador_sislab(titulo_parcial)
-
-# Ação com confirmação visual
-self._clicar_aguardar(ctx, acao, confirmacao, timeout, threshold, retries, label)
-
-# Verificação OCR de campo (v0.5.20 — compara valor lido vs esperado)
-self._verify_campo_obrigatorio(ctx, nome, valor_esperado, step_id, regiao_key, ocr_holder)
-self._verify_campo_opcional(ctx, nome, valor_esperado, step_id, regiao_key, ocr_holder)
-```
-
-**Funções auxiliares (módulo, fora da classe):**
-```python
-_normalizar(texto)                        # remove acentos + separadores
-_similar(lido, esperado, tolerancia=0.30) # Levenshtein 30%
-```
-
----
-
-## Observabilidade
-
-| Arquivo | Conteúdo |
-|---|---|
-| `execution.log` | Log estruturado com timestamps |
-| `execution.json` | Dados por step para CI/CD |
-| `report.html` | Relatório com screenshots de cada step |
-| `summary/*.html` | Relatório gerencial |
-| `flakiness.json` | Histórico global de pass/fail |
-| `estado_jornada.json` | `paciente_id` compartilhado entre flows |
 
 ---
 
 ## Sistemas automatizados
 
-| Sistema | Tipo | Flows validados |
+| Sistema | Tipo | Runner | Status |
+|---|---|---|---|
+| SI3 | Desktop Oracle Forms | OpenCVRunner | ✅ Login, CadastroPaciente, AdmissaoInternacao, AdmissaoAmbulatorio, Agendamento |
+| SisLab | Desktop Oracle Forms | OpenCVRunner | ✅ Login, CadastroFuncionario |
+| MSI3 | Web Oracle APEX 23.1 | Playwright+OpenCV | ✅ Login, FrequenciaAplicacao, TipoAnestesia |
+
+---
+
+## Padrão de validação por tipo de campo
+
+| Tipo | Método | O que prova |
 |---|---|---|
-| SI3 | Desktop Oracle Forms | Login ✅, CadastroPacienteMin ✅, CadastroPaciente ✅, AdmissaoInternacao ✅, AdmissaoAmbulatorio ✅, Agendamento ✅ |
-| SisLab | Desktop Oracle Forms | Login, CadastroFuncionario ✅ |
-| MSI3 | Web Oracle APEX 23.1 | Login, FrequenciaAplicacao ✅, TipoAnestesia ✅ |
+| Texto livre (nome, data, etnia) | `verify_lov` com região calibrada | Campo não ficou vazio + valor lido aparece no report |
+| Numérico (matrícula, leito) | `verify_fill` com região calibrada | Valor exato conferido |
+| LOV (seleção de lista) | `verify_lov` com região calibrada | Seleção não ficou vazia |
+| Navegação / clique | `confirm_template` | Tela destino apareceu |
+| Web (APEX/MSI3) | `verify_fill_web` via DOM | Sem OCR — lê direto do DOM |
+
+### Como calibrar uma região OCR
+
+1. Rodar o teste — abrir o screenshot do step no Paint
+2. Cursor no canto **superior-esquerdo** do campo preenchido → anotar x1, y1
+3. Cursor no canto **inferior-direito** do campo preenchido → anotar x2, y2
+4. Atualizar `regioes_ocr` no `config.yaml`
+5. Rodar — verificar `[verify_lov] OK — campo preenchido: 'VALOR'` no log
+6. Abrir `report.html` — confirmar `OCR leu: VALOR` no badge do step
+
+```yaml
+# config.yaml — regioes_ocr
+regioes_ocr:
+  nome_social: { x1: 18, y1: 148, x2: 350, y2: 162 }  # habilitado ✅
+  nr_admissao: { x1: 0, y1: 0, x2: 0, y2: 0 }          # bootstrap — desabilitado
+```
+
+---
+
+## Padrões Oracle Forms
+
+| Situação | Estratégia |
+|---|---|
+| Transição de tela crítica | `_clicar_aguardar(acao, confirmacao)` — nunca sleep fixo |
+| Campo texto livre | `verify_lov` com região calibrada |
+| Campo numérico | `verify_fill` com região calibrada |
+| LOV resultado único | OK direto (sem busca) |
+| LOV com lista | digita → Localizar → `double_click` |
+| Campo com acento | `type_text()` obrigatório |
+| Salvar | **F10** (nunca Ctrl+S) |
+| Navegar módulo | Localizar no Menu → Pesquisar → Não → `double_click` |
+| Popup variável | `_tpl_existe()` + `is_visible(threshold=0.80)` |
+
+---
+
+## Observabilidade — o que cada execução gera
+
+| Arquivo | Para quem | Conteúdo |
+|---|---|---|
+| `report.html` | Dev / QA | Screenshots por step, badge ✔ VALIDADO, OCR leu: valor, histórico flakiness |
+| `execution.json` | CI/CD | Dados estruturados — step_id, duration_ms, ocr_lido, causa_falha |
+| `execution.log` | Dev | Log com timestamps — inclui [verify_lov] e [verify_fill] |
+| `summary/summary_*.html` | Gestor | Verde/vermelho por jornada, sem ruído técnico |
+| `flakiness.json` | QA | Histórico acumulado — taxa de falha e duração por step |
 
 ---
 
 ## Documentação
 
-| Arquivo | Descrição |
-|---|---|
-| `docs/VTAE_Prompt_Instrucao_Geral_v0_5_20.md` | Estado atual — usar como contexto em novo chat |
-| `docs/VTAE_Manual_Criacao_Testes_v0_5_18.docx` | Manual completo de criação de testes |
-| `VTAE_Roadmap_Observabilidade_v0_5_17.docx` | Roadmap Fase 1 detalhado |
-| `docs/VTAE_Documentacao_Tecnica.docx` | Arquitetura, runners, matchers |
-| `CHANGELOG.md` | Histórico de mudanças |
+| Documento | Localização | Papel |
+|---|---|---|
+| VTAE_Projeto_v1.docx | docs/ | O leme — visão total, todas as fases A→H |
+| VTAE_Manual_Tecnico_v1.md | docs/ | Como cada arquivo funciona, linha a linha |
+| VTAE_Roadmap_v0.1.md | docs/ | Checklist de direção — evolui a cada fase |
+| VTAE_Manual_Criacao_Testes_v0.1.md | docs/ | Passo a passo para criar novos testes |
+| VTAE_Prompt_Instrucao_v0.5.13.md | raiz | Registro operacional — contexto para novo chat |
+
+---
+
+## Ambiente virtual — referência rápida
+
+```bash
+# Criar (uma vez por máquina)
+python -m venv .venv
+
+# Ativar (sempre antes de trabalhar)
+.venv\Scripts\activate       # Windows
+source .venv/bin/activate    # Linux/Mac
+
+# Instalar
+pip install -r requirements.txt && pip install -e . && playwright install chromium
+
+# Desativar
+deactivate
+```

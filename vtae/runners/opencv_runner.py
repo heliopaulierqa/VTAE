@@ -108,6 +108,25 @@ class OpenCVRunner(BaseRunner):
     def press(self, tecla: str, vezes: int = 1, intervalo: float = 0.02) -> None:
         pyautogui.press(tecla, presses=vezes, interval=intervalo)
 
+    def teclar(self, partes: list[str]) -> None:
+        """
+        Uma tecla ou combinacao. Tecla desconhecida EXPLODE: o
+        pyautogui.press ignora nome invalido em silencio, e um 'salvar'
+        que nao salva e falso sucesso.
+        """
+        invalidas = [p for p in partes if not pyautogui.isValidKey(p)]
+        if invalidas:
+            raise ValueError(f"tecla(s) desconhecida(s): {invalidas}")
+        if len(partes) == 1:
+            pyautogui.press(partes[0])
+        else:
+            pyautogui.hotkey(*partes)
+
+    def abrir_aplicacao(self, comando: str) -> None:
+        """Inicia o programa sem esperar ele fechar."""
+        import subprocess
+        subprocess.Popen(comando, shell=True)
+
     @staticmethod
     def _primeira_janela(titulo_parcial: str):
         import pygetwindow as gw

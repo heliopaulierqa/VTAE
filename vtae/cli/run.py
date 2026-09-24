@@ -534,6 +534,17 @@ def cmd_send(args):
             print(f"[VTAE] Erro: {e}")
 
 
+def cmd_mapear(args):
+    from vtae.cli.mapear import mapear
+    mapear(args.objetos, args.templates)
+
+
+def cmd_executar(args):
+    from vtae.cli.executar import executar_roteiro
+    ok = executar_roteiro(args.roteiro, vezes=args.vezes, ambiente=args.ambiente)
+    sys.exit(0 if ok else 1)
+
+
 def main():
     # Garante working directory correto independente de onde vtae for chamado
     # vtae/cli/run.py -> vtae/cli -> vtae -> VTAE/
@@ -596,8 +607,24 @@ def main():
     p_met.add_argument("--html", action="store_true",
                        help="Gerar dashboard HTML alem do output no terminal")
 
+    # vtae executar — qualquer roteiro, qualquer sistema (decisao 26)
+    p_exe = sub.add_parser("executar",
+                           help="Executar um roteiro declarativo de qualquer sistema")
+    p_exe.add_argument("roteiro", help="caminho do roteiro, ex: flows/meu_sistema/login.yaml")
+    p_exe.add_argument("--vezes", type=int, default=1,
+                       help="repetir N vezes seguidas; 3 = gate (para na primeira falha)")
+    p_exe.add_argument("--env", dest="ambiente", default=None)
+
+    # vtae mapear — grava elementos de uma tela desenhando retangulos
+    p_map = sub.add_parser("mapear", help="Mapear elementos de uma tela (qualquer sistema)")
+    p_map.add_argument("objetos", help="arquivo de objetos, ex: objects/meu_sistema/login.yaml")
+    p_map.add_argument("--templates", default=None,
+                       help="pasta dos recortes (padrao: templates/<sistema>/<tela>)")
+
     args = parser.parse_args()
     dispatch = {
+        "mapear":    cmd_mapear,
+        "executar":  cmd_executar,
         "run":       cmd_run,
         "systems":   cmd_systems,
         "clean":     cmd_clean,

@@ -117,12 +117,39 @@ class Acoes:
                       f"template nao encontrado")
         return alvo.ponto
 
-    def salvar(self, mecanica: str) -> None:
-        if mecanica != "f10":
-            raise StepError(f"mecanica de salvar '{mecanica}' desconhecida.")
+    def salvar(self, alvo: str) -> None:
+        """
+        Elemento declarado -> clica nele (botao Salvar). Qualquer outra
+        coisa e tecla ou combinacao (f10, ctrl+s). O nucleo nao sabe
+        como cada sistema salva — quem sabe e o roteiro.
+        """
+        if self._objetos.elemento(alvo) is not None:
+            self.clicar(alvo)
+            return
+        self.teclar(alvo)
+
+    def teclar(self, tecla: str) -> None:
+        """
+        Uma tecla ('enter', 'f10') ou combinacao ('ctrl+s'). Foca a janela
+        declarada antes: tecla vai para quem tem o foco.
+        """
         self._focar()
-        self._runner.press("f10")
+        partes = [p.strip().lower() for p in str(tecla).split("+") if p.strip()]
+        if not partes:
+            raise StepError(f"tecla vazia: {tecla!r}")
+        if hasattr(self._runner, "teclar"):
+            self._runner.teclar(partes)
+        elif len(partes) == 1:
+            self._runner.press(partes[0])
+        else:
+            raise StepError(f"o runner nao sabe teclar combinacoes: {tecla!r}")
         self._pausar(PAUSA_CLIQUE)
+
+    def abrir(self, comando: str) -> None:
+        """Inicia a aplicacao sob teste. COMO iniciar e do runner."""
+        if not hasattr(self._runner, "abrir_aplicacao"):
+            raise StepError("o runner nao sabe abrir aplicacoes.")
+        self._runner.abrir_aplicacao(comando)
 
     # ------------------------------------------------------------------
     def _receita_digitar(self, nome, elemento, valor) -> None:

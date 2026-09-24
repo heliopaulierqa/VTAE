@@ -32,7 +32,10 @@ from vtae.core.exceptions import ConfigError
 # precisar dela, medida (regra 50).
 _PLACEHOLDER = re.compile(r"\{(\w+):(\w+)\}")
 
-PREFIXOS = ("faker", "sorteio")
+# 'dado' le um valor FIXO da secao dados: do config.yaml — credencial,
+# URL, caminho de executavel. Sem ele, usuario e senha nao tinham como
+# chegar ao roteiro sem Python.
+PREFIXOS = ("faker", "sorteio", "dado")
 
 
 def checar(valor: str, dados: dict) -> tuple[str, str] | None:
@@ -55,6 +58,11 @@ def checar(valor: str, dados: dict) -> tuple[str, str] | None:
             f"aceitos: {list(PREFIXOS)}.")
 
     conteudo = _exigir(chave, prefixo, dados)
+
+    if prefixo == "dado" and not isinstance(conteudo, (str, int, float)):
+        raise ConfigError(
+            f"'{{dado:{chave}}}': esperava texto em dados['{chave}'], "
+            f"encontrou {type(conteudo).__name__}.")
 
     if prefixo == "faker" and not isinstance(conteudo, str):
         raise ConfigError(
@@ -108,8 +116,8 @@ class Interpolador:
             return valor
 
         prefixo, chave = achado
-        if prefixo == "faker":
-            return self._dados[chave]
+        if prefixo in ("faker", "dado"):
+            return str(self._dados[chave])
         if chave not in self._sorteados:
             self._sorteados[chave] = str(random.choice(self._dados[chave]))
         return self._sorteados[chave]

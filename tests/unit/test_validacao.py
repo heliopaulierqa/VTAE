@@ -107,9 +107,13 @@ def test_step_nomeado_registrado_passa():
 
 
 # ── salvar e ler_resultado ───────────────────────────────────────────
-def test_mecanica_de_salvar_desconhecida_explode():
-    with pytest.raises(ConfigError, match="desconhecida"):
-        _validar({"salvar": "ctrl+s"})
+def test_salvar_por_tecla_qualquer_passa():
+    # Decisao 26: o nucleo nao conhece F10 — tecla e dado do roteiro.
+    _validar({"salvar": "ctrl+s"})
+
+
+def test_salvar_por_botao_declarado_passa():
+    _validar({"salvar": "btn_ok_lov"})
 
 
 def test_ler_resultado_de_elemento_inexistente_explode():
@@ -137,9 +141,9 @@ def test_interpolacao_no_argumento_de_step_nomeado_tambem_e_checada():
 def test_problemas_sao_acumulados_numa_mensagem_so():
     with pytest.raises(ConfigError) as erro:
         _validar({"preencher": {"campo": "fantasma", "valor": "X"}},
-                 {"salvar": "ctrl+s"})
+                 {"clicar": "outro_fantasma"})
     assert "fantasma" in str(erro.value)
-    assert "ctrl+s" in str(erro.value)
+    assert "outro_fantasma" in str(erro.value)
 
 
 def test_mensagem_cita_o_id_do_step():

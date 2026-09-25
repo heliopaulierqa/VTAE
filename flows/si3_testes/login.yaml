@@ -1,0 +1,16 @@
+# O que este teste prova: com usuario e senha validos, a tela principal abre.
+flow: login_si3
+# onde estão os elementos
+objetos: objects/si3_testes/login.yaml
+# onde estão config.yaml e .env
+dados: configs/si3_testes/login
+
+steps:
+  - esperar: btn_conectar
+  - preencher: { campo: campo_user, valor:  "{dado:usuario}" }
+  - preencher: { campo: campo_senha, valor: "{dado:senha}" }
+  - clicar: btn_conectar
+  - esperar: btn_conectar
+  - esperar: tela_principal
+  - clicar: btn_sair
+  - esperar: btn_conectar

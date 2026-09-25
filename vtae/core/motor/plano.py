@@ -120,6 +120,15 @@ def montar(cru: dict, origem: str = "<memoria>") -> Plano:
         if not cru.get(chave):
             raise ConfigError(
                 f"{origem}: '{chave}' ausente ou vazio no YAML de flow.")
+    if not isinstance(cru["steps"], list):
+        # Sem o '- ' o YAML vira dicionario e passos com o mesmo verbo se
+        # sobrescrevem EM SILENCIO (dois 'esperar' viram um). Explode aqui.
+        raise ConfigError(
+            f"{origem}: cada passo em 'steps:' precisa comecar com '- ' "
+            f"(hifen e espaco). Exemplo:\n"
+            f"  steps:\n"
+            f"    - esperar: btn_conectar\n"
+            f"    - clicar:  btn_conectar")
     steps = tuple(_step(item, origem, i)
                   for i, item in enumerate(cru["steps"], 1))
     return Plano(flow=cru["flow"], objetos=cru["objetos"], steps=steps,

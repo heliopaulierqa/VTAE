@@ -1,0 +1,21 @@
+# Gerado por 'vtae mapear'. Pode editar a mao.
+tela:
+  titulo_janela: "Menu Principal"
+
+objetos:
+  btn_sair:
+    tipo: botao
+    coordenada: { x: 20, y: 575 }
+    template: templates/meu_sistema/login/btn_sair.png
+  1:
+    tipo: texto
+    coordenada: { x: 390, y: 261 }
+    regiao_ocr: { x1: 276, y1: 244, x2: 505, y2: 278 }
+  senha:
+    tipo: texto
+    coordenada: { x: 387, y: 290 }
+    regiao_ocr: { x1: 271, y1: 273, x2: 503, y2: 307 }
+  btn_entrar:
+    tipo: botao
+    coordenada: { x: 332, y: 328 }
+    template: templates/meu_sistema/login/btn_entrar.png

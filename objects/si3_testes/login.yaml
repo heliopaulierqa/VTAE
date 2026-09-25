@@ -1,0 +1,36 @@
+# Gerado por 'vtae mapear'. Pode editar a mao.
+tela:
+  titulo_janela: "Menu Principal"
+
+objetos:
+  tela_principal:
+    tipo: botao
+    coordenada: { x: 134, y: 34 }
+    template: templates/si3_testes/login/tela_principal.png
+
+  campo_user:
+    tipo: texto
+    coordenada: { x: 390, y: 262 }
+    regiao_ocr: { x1: 334, y1: 256, x2: 496, y2: 275 }
+
+  campo_senha:
+    tipo: texto
+    sigiloso: true
+    coordenada: { x: 389, y: 292 }
+    regiao_ocr: { x1: 277, y1: 278, x2: 502, y2: 307 }
+
+  btn_conectar:
+    tipo: botao
+    coordenada: { x: 334, y: 327 }
+    template: templates/si3_testes/login/btn_conectar.png
+
+  tela_login:
+    tipo: botao
+    coordenada: { x: 301, y: 234 }
+    template: templates/si3_testes/login/tela_login.png
+
+  btn_sair:
+    tipo: botao
+    coordenada: { x: 24, y: 575 }
+    template: templates/si3_testes/login/btn_conectar.png  
+

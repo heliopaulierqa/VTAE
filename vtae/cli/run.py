@@ -541,7 +541,13 @@ def cmd_mapear(args):
 
 def cmd_executar(args):
     from vtae.cli.executar import executar_roteiro
-    ok = executar_roteiro(args.roteiro, vezes=args.vezes, ambiente=args.ambiente)
+    from vtae.core.exceptions import ConfigError
+    try:
+        ok = executar_roteiro(args.roteiro, vezes=args.vezes, ambiente=args.ambiente)
+    except ConfigError as erro:
+        # Erro de escrita do teste: mensagem limpa, sem traceback de Python.
+        print(f"\n[VTAE] O teste nao foi executado — nada foi clicado.\n{erro}\n")
+        sys.exit(2)
     sys.exit(0 if ok else 1)
 
 

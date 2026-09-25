@@ -1,0 +1,13 @@
+# Dados do teste de login
+tipo: desktop
+runner: opencv
+ambientes:
+  dev:
+    url: ''
+
+
+# Usuario e senha vem do .env desta pasta — nunca escritos aqui.
+# No roteiro eles viram {dado:usuario} e {dado:senha}.
+credenciais:
+  usuario: ${SI3_USUARIO}
+  senha:   ${SI3_SENHA}

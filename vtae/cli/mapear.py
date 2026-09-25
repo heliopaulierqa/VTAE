@@ -33,6 +33,10 @@ TIPOS = ("texto", "data", "lov", "lov_lista", "botao", "resultado")
 TIPOS_COM_TEMPLATE = ("botao",)
 ESPERA_INICIAL = 5
 LIMIAR_AMBIGUIDADE = 0.85
+# Retangulo maior que isto (fracao da tela) quase sempre e engano: o
+# elemento e pequeno. Medido no primeiro uso real (25/09): um retangulo
+# da tela inteira virou 'tela_login' sem imagem e sem utilidade.
+FRACAO_MAXIMA_DA_TELA = 0.25
 
 
 # ── logica pura (testavel sem tela) ──────────────────────────────────
@@ -82,6 +86,39 @@ def preparar_arquivo(caminho: Path, titulo_janela: str = "") -> None:
         "objetos:\n", encoding="utf-8")
 
 
+def janela_no_ponto(janelas, x: int, y: int) -> str:
+    """
+    Titulo da janela mais ao topo que contem o ponto (x, y).
+
+    'janelas' e a lista [(titulo, esquerda, topo, largura, altura)] na
+    ordem do Windows — de cima para baixo — tirada ANTES de a tela cheia
+    do mapear abrir. Usar a janela ativa falhou no primeiro uso real: ela
+    era o app do Claude, nao o sistema (25/09).
+    """
+    for titulo, esq, topo, larg, alt in janelas:
+        if titulo and esq <= x < esq + larg and topo <= y < topo + alt:
+            return titulo
+    return ""
+
+
+def grande_demais(caixa, largura_tela: int, altura_tela: int) -> bool:
+    x1, y1, x2, y2 = caixa
+    return (x2 - x1) * (y2 - y1) > FRACAO_MAXIMA_DA_TELA * largura_tela * altura_tela
+
+
+def definir_titulo_se_vazio(caminho: Path, titulo: str) -> bool:
+    """Preenche titulo_janela so se estiver vazio. Nunca sobrescreve."""
+    if not titulo or not caminho.exists():
+        return False
+    texto = caminho.read_text(encoding="utf-8")
+    vazio = 'titulo_janela: ""'
+    if vazio not in texto:
+        return False
+    caminho.write_text(texto.replace(vazio, f'titulo_janela: "{titulo}"', 1),
+                       encoding="utf-8")
+    return True
+
+
 def nomes_existentes(caminho: Path) -> set:
     if not caminho.exists():
         return set()
@@ -126,15 +163,21 @@ def mapear(arquivo_objetos: str, pasta_templates: str | None = None) -> None:
     print(f"[mapear] Deixe a tela do sistema na frente, maximizada. "
           f"Screenshot em {ESPERA_INICIAL}s...")
     time.sleep(ESPERA_INICIAL)
-    titulo = ""
+    # Mouse para longe: botao com o mouse em cima muda de cor, e o recorte
+    # sairia diferente do botao 'normal' que o teste vai procurar (25/09).
+    largura_tela, altura_tela = pyautogui.size()
+    pyautogui.moveTo(largura_tela - 2, altura_tela // 2)
+    time.sleep(0.3)
+    janelas = []
     try:
         import pygetwindow as gw
-        ativa = gw.getActiveWindow()
-        titulo = ativa.title if ativa else ""
+        for j in gw.getAllWindows():
+            if j.visible and not j.isMinimized and j.title.strip():
+                janelas.append((j.title, j.left, j.top, j.width, j.height))
     except Exception:
         pass
     tela = pyautogui.screenshot()
-    preparar_arquivo(caminho, titulo)
+    preparar_arquivo(caminho)
 
     raiz = tk.Tk()
     raiz.attributes("-fullscreen", True)
@@ -179,6 +222,13 @@ def mapear(arquivo_objetos: str, pasta_templates: str | None = None) -> None:
             return
 
         caixa = (min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1))
+        if grande_demais(caixa, tela.width, tela.height) and not messagebox.askyesno(
+                "Retangulo muito grande",
+                "Este retangulo cobre mais de um quarto da tela. Elementos sao "
+                "pequenos: marque so o botao, so a caixa do campo.\n\n"
+                "Gravar assim mesmo?", parent=raiz):
+            canvas.delete(estado["ret"])
+            return
         template = None
         if tipo in TIPOS_COM_TEMPLATE:
             recorte = tela.crop(caixa)
@@ -200,6 +250,10 @@ def mapear(arquivo_objetos: str, pasta_templates: str | None = None) -> None:
             canvas.delete(estado["ret"])
             return
         estado["mapeados"] += 1
+        titulo = janela_no_ponto(janelas, (caixa[0] + caixa[2]) // 2,
+                                 (caixa[1] + caixa[3]) // 2)
+        if definir_titulo_se_vazio(caminho, titulo):
+            print(f"[mapear] janela do sistema: '{titulo}'")
         canvas.itemconfig(estado["ret"], outline="green")
         canvas.create_text(caixa[0], caixa[1] - 4, anchor="sw", fill="green",
                            font=("Arial", 11, "bold"), text=f"{nome} ({tipo})")

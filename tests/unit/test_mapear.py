@@ -54,3 +54,28 @@ def test_ambiguidade_e_medida():
     assert contar_ocorrencias(tela, recorte) == 2
     unico = tela.crop((0, 0, 200, 100))
     assert contar_ocorrencias(tela, unico) == 1
+
+
+# ── correcoes do primeiro uso real (25/09) ───────────────────────────
+from vtae.cli.mapear import definir_titulo_se_vazio, grande_demais, janela_no_ponto
+
+
+def test_titulo_vem_da_janela_sob_o_elemento_nao_da_janela_ativa():
+    janelas = [("Claude", 1200, 0, 700, 1000),        # ativa, por cima, a direita
+               ("Menu Principal", 0, 0, 1920, 1080)]  # o sistema, atras
+    assert janela_no_ponto(janelas, 390, 262) == "Menu Principal"
+    assert janela_no_ponto(janelas, 1500, 500) == "Claude"
+    assert janela_no_ponto([], 1, 1) == ""
+
+
+def test_retangulo_da_tela_inteira_e_grande_demais():
+    assert grande_demais((0, 1, 1918, 1027), 1920, 1080)
+    assert not grande_demais((334, 256, 496, 275), 1920, 1080)
+
+
+def test_titulo_so_e_preenchido_se_vazio(tmp_path):
+    arq = tmp_path / "o.yaml"
+    preparar_arquivo(arq)
+    assert definir_titulo_se_vazio(arq, "Menu Principal")
+    assert not definir_titulo_se_vazio(arq, "Outra")
+    assert 'titulo_janela: "Menu Principal"' in arq.read_text(encoding="utf-8")

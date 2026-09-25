@@ -70,13 +70,20 @@ def executar_roteiro(caminho: str, vezes: int = 1, ambiente=None,
                           evidence_dir=observer.evidence_dir)
         observer.inject_logger(ctx)
 
+        erro_de_escrita = False
         try:
             resultado = Executor(ctx, observer=observer,
                                  leitor_exato=_leitor_exato(plano, config)
                                  ).executar(caminho)
+        except ConfigError:
+            # Roteiro com erro de escrita: nada foi executado, entao nao se
+            # gera relatorio — um "PASSOU 0/0" seria mentira.
+            erro_de_escrita = True
+            raise
         finally:
-            relatorio = observer.report(ctx)
-            ctx.print_summary()
+            if not erro_de_escrita:
+                relatorio = observer.report(ctx)
+                ctx.print_summary()
 
         print(f"\n[VTAE] Execucao {vez}/{vezes}: "
               f"{'PASSOU' if resultado.success else 'FALHOU'}")

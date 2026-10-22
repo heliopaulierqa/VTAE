@@ -1,6 +1,8 @@
 # vtae/core/object_repository.py
 import yaml
 
+from vtae.core.exceptions import ConfigError
+
 
 class ObjectRepository:
     def __init__(self, objetos: dict, tela: dict = None):
@@ -10,7 +12,8 @@ class ObjectRepository:
     @classmethod
     def from_yaml(cls, caminho: str) -> "ObjectRepository":
         with open(caminho, "r", encoding="utf-8") as f:
-            conteudo = yaml.safe_load(f)
+            texto = f.read()
+        conteudo = ler_yaml_de_objetos(caminho, texto)
         objetos = conteudo.get("objetos", {})
         tela = conteudo.get("tela", {})
         return cls(objetos, tela)
@@ -123,3 +126,25 @@ class ObjectRepository:
         """
         objeto = self._obter_objeto(nome)
         return objeto.get("jab_name")
+
+
+def ler_yaml_de_objetos(caminho, texto: str) -> dict:
+    """
+    Le o arquivo de objetos e, se estiver mal escrito, diz a linha e o
+    formato certo em vez de um traceback do yaml. Uso real 25/09: blocos
+    copiados de outro arquivo sem 'objetos:' e sem o recuo de 2 espacos.
+    """
+    try:
+        return yaml.safe_load(texto) or {}
+    except yaml.YAMLError as erro:
+        marca = getattr(erro, "problem_mark", None)
+        linha = f" (linha {marca.line + 1})" if marca else ""
+        raise ConfigError(
+            f"{caminho}: arquivo de objetos mal escrito{linha}.\n"
+            f"  O formato e sempre:\n"
+            f"    tela:\n"
+            f"      titulo_janela: \"...\"\n"
+            f"    objetos:\n"
+            f"      nome_do_elemento:        <- 2 espacos antes do nome\n"
+            f"        tipo: botao            <- 4 espacos antes de tipo, coordenada...\n"
+            f"  Todos os elementos ficam dentro de 'objetos:', com o mesmo recuo.") from None

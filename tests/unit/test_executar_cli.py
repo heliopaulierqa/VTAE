@@ -47,22 +47,44 @@ def _projeto(tmp_path):
     """)
 
 
-def test_roteiro_de_sistema_qualquer_fecha_gate_3x(tmp_path, capsys):
+def test_roteiro_de_sistema_qualquer_fecha_gate_3x(tmp_path, capsys, monkeypatch):
     _projeto(tmp_path)
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
     runner = FakeRunner()
     assert executar_roteiro("flows/ficticio/login.yaml", vezes=3, runner=runner)
     assert runner.chamadas.count(("abrir", "ficticio.exe")) == 3
     assert "GATE FECHADO — 3/3" in capsys.readouterr().out
 
 
-def test_roteiro_sem_dados_no_cabecalho_explica_o_que_falta(tmp_path):
+def test_roteiro_sem_dados_no_cabecalho_explica_o_que_falta(tmp_path, monkeypatch):
     import pytest
     from vtae.core.exceptions import ConfigError
     _projeto(tmp_path)
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
     (tmp_path / "flows/ficticio/sem_dados.yaml").write_text(
         "flow: x\nobjetos: objects/ficticio/login.yaml\nsteps:\n  - clicar: btn_entrar\n",
         encoding="utf-8")
     with pytest.raises(ConfigError, match="dados: configs"):
         executar_roteiro("flows/ficticio/sem_dados.yaml", runner=FakeRunner())
+
+
+def test_gate_nao_fecha_com_degradacao(tmp_path, capsys, monkeypatch):
+    # 25/09: gate 3/3 com btn_sair clicado por posicao nao pode valer.
+    _projeto(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    class RunnerSemTemplate(FakeRunner):
+        def find_template(self, template, threshold=None):
+            return None
+
+    (tmp_path / "objects/ficticio/login.yaml").write_text(textwrap.dedent("""
+        objetos:
+          tela_login: { tipo: botao, template: tela_login.png }
+          usuario:    { tipo: texto, coordenada: { x: 10, y: 10 } }
+          senha:      { tipo: texto, sigiloso: true, coordenada: { x: 20, y: 20 } }
+          btn_entrar: { tipo: botao, template: btn.png, coordenada: { x: 30, y: 30 } }
+    """), encoding="utf-8")
+    assert not executar_roteiro("flows/ficticio/login.yaml", vezes=3,
+                                runner=RunnerSemTemplate())
+    saida = capsys.readouterr().out
+    assert "GATE NAO FECHADO — degradacao em ['S04'] na execucao 1" in saida

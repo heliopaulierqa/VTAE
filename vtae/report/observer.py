@@ -135,6 +135,8 @@ class ExecutionObserver:
             self._logger.info(msg)
         else:
             self._logger.error(msg)
+        for aviso in step.avisos:
+            self._logger.warning(f"[{step.step_id}] AVISO: {aviso}")
 
     def log_flow_result(self, result: FlowResult) -> None:
         status = "PASSOU" if result.success else "FALHOU"
@@ -213,6 +215,7 @@ class ExecutionObserver:
                             "causa_falha":    s.causa_falha.value if s.causa_falha else None,
                             "validated":      s.validated,
                             "ocr_lido":       s.ocr_lido,
+                            "avisos":         s.avisos,
                             "timestamp":      s.timestamp,
                         }
                         for s in f.steps

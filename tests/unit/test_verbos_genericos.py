@@ -92,6 +92,9 @@ class FakeRunner:
     def click_xy(self, x, y):
         self.chamadas.append(("click", x, y))
 
+    def double_click_xy(self, x, y):
+        self.chamadas.append(("duplo", x, y))
+
     def press(self, tecla, vezes=1, intervalo=0.02):
         self.chamadas.append(("press", tecla, vezes))
 
@@ -178,3 +181,18 @@ def test_esperar_que_nao_chega_falha_alto(tmp_path):
     resultado = Executor(FakeCtx(runner), pausar=lambda s: None).executar(caminho)
     assert not resultado.success
     assert "nao apareceu" in resultado.steps[0].error
+
+def test_clicar_duas_vezes_usa_duplo_clique(tmp_path):
+    # 25/09: item de menu que so abre com duplo clique (Manual §3.3, 3 telas).
+    runner = FakeRunner()
+    caminho = _roteiro(tmp_path, {"clicar_duas_vezes": "btn_entrar"})
+    resultado = Executor(FakeCtx(runner), pausar=lambda s: None).executar(caminho)
+    assert resultado.success, [s.error for s in resultado.steps]
+    assert ("duplo", 30, 30) in runner.chamadas
+    assert ("click", 30, 30) not in runner.chamadas
+
+
+def test_clicar_duas_vezes_em_elemento_inexistente_explode_antes(tmp_path):
+    caminho = _roteiro(tmp_path, {"clicar_duas_vezes": "nao_existe"})
+    with pytest.raises(ConfigError):
+        Executor(FakeCtx(FakeRunner()), pausar=lambda s: None).executar(caminho)

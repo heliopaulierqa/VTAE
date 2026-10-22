@@ -93,6 +93,13 @@ def executar_roteiro(caminho: str, vezes: int = 1, ambiente=None,
                 print(f"[VTAE] GATE NAO FECHADO — falhou na execucao {vez}.")
             return False
 
+        degradados = [s.step_id for s in resultado.steps
+                      if any(a.startswith("DEGRADACAO") for a in s.avisos)]
+        if degradados and vezes > 1:
+            print(f"[VTAE] GATE NAO FECHADO — degradacao em {degradados} "
+                  f"na execucao {vez}. Remapeie o elemento (Manual §0.7).")
+            return False
+
     if vezes > 1:
         print(f"\n[VTAE] GATE FECHADO — {vezes}/{vezes} execucoes sem falha.")
     return True

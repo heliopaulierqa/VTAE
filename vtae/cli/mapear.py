@@ -70,7 +70,8 @@ def bloco_yaml(nome: str, entrada: dict) -> str:
 def preparar_arquivo(caminho: Path, titulo_janela: str = "") -> None:
     """Cria o arquivo de objetos se nao existir; garante 'objetos:' no fim."""
     if caminho.exists():
-        conteudo = yaml.safe_load(caminho.read_text(encoding="utf-8")) or {}
+        from vtae.core.object_repository import ler_yaml_de_objetos
+        conteudo = ler_yaml_de_objetos(caminho, caminho.read_text(encoding="utf-8"))
         chaves = list(conteudo)
         if chaves and chaves[-1] != "objetos":
             raise ValueError(

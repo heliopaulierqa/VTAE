@@ -32,5 +32,5 @@ objetos:
   btn_sair:
     tipo: botao
     coordenada: { x: 24, y: 575 }
-    template: templates/si3_testes/login/btn_conectar.png  
+    template: templates/si3_testes/login/btn_sair.png 
 

@@ -50,7 +50,10 @@ from vtae.core.exceptions import ConfigError
 # 24/09/2026 — verbos genericos (decisao 26). Todo sistema, desktop ou
 # web, tem campo livre, campo de dominio e botao; toda interacao se
 # escreve com estes oito verbos. Nenhum deles conhece sistema algum.
-VERBOS_MOTOR = ("abrir", "esperar", "clicar", "teclar",
+# 25/09/2026 — clicar_duas_vezes promovido a verbo (Manual §3.3): o duplo
+# clique aparece em 3 telas medidas (item do menu, item medico nas duas
+# admissoes). Duplo clique existe em desktop e web; nao e de sistema algum.
+VERBOS_MOTOR = ("abrir", "esperar", "clicar", "clicar_duas_vezes", "teclar",
                 "preencher", "verificar", "salvar", "ler_resultado")
 
 # Verbos que recebem { campo: <nome>, valor: <valor> }.
@@ -61,7 +64,7 @@ VERBOS_MOTOR = ("abrir", "esperar", "clicar", "teclar",
 VERBOS_DE_CAMPO = ("preencher", "verificar")
 
 # Verbos do motor cujo argumento e um texto simples.
-VERBOS_ESCALARES = ("abrir", "esperar", "clicar", "teclar",
+VERBOS_ESCALARES = ("abrir", "esperar", "clicar", "clicar_duas_vezes", "teclar",
                     "salvar", "ler_resultado")
 
 

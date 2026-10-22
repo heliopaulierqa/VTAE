@@ -65,6 +65,9 @@ class Acoes:
         self._esperas = esperas
         self._logger = logger
         self._pausar = pausar
+        # Lista de avisos do step em execucao — o executor a liga na Coleta,
+        # para que a degradacao chegue ao log, ao JSON e ao gate.
+        self.avisos = None
         # Despacho por dicionario: a lista de tipos que a mecanica sabe
         # executar vira um DADO que se pode ler e comparar com a
         # CHAVES_POR_TIPO da validacao. Uma cadeia de if esconderia essa
@@ -112,9 +115,10 @@ class Acoes:
             raise StepError(
                 f"'{nome}' inalcancavel — sem template encontrado e sem "
                 f"coordenada utilizavel.")
-        if alvo.degradado:
-            self._log(f"[acoes] '{nome}' resolvido por coordenada fixa — "
-                      f"template nao encontrado")
+        if alvo.degradado and self.avisos is not None:
+            self.avisos.append(
+                f"DEGRADACAO em '{nome}': template nao encontrado, "
+                f"usando coordenada fixa")
         return alvo.ponto
 
     def salvar(self, alvo: str) -> None:

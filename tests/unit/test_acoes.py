@@ -226,3 +226,13 @@ def test_clicar_duas_vezes_em_elemento_inalcancavel_explode():
     acoes, _ = _acoes()
     with pytest.raises(StepError, match="inalcancavel"):
         acoes.clicar_duas_vezes("inalcancavel")    
+
+def test_clique_degradado_vira_aviso_do_step():
+    # 25/09: o aviso ia so para o terminal; o gate fechou degradado.
+    acoes, runner = _acoes()
+    acoes.avisos = []
+    acoes.clicar("so_template")
+    assert ("click", 70, 71) in runner.chamadas
+    assert acoes.avisos == [
+        "DEGRADACAO em 'so_template': template nao encontrado, "
+        "usando coordenada fixa"]

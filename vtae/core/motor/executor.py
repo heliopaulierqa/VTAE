@@ -96,9 +96,10 @@ class Executor:
         self.esperas = Esperas(self.objetos, runner)
         self.verificador = Verificador(self.objetos, runner,
                                        leitor_exato=self._leitor_exato)
+        logger = getattr(self._ctx, "_logger", None)
         self.acoes = Acoes(self.objetos, runner,
-                           Resolvedor(self.objetos, runner),
-                           self.esperas, pausar=self._pausar)
+                           Resolvedor(self.objetos, runner, logger=logger),
+                           self.esperas, logger=logger, pausar=self._pausar)
 
         resultado = FlowResult(flow_name=plano.flow)
         for step in plano.steps:
@@ -133,6 +134,8 @@ class Executor:
     def _executar_step(self, step):
         coleta = _passo.Coleta()
         self._coleta_atual = coleta
+        if self.acoes is not None:
+            self.acoes.avisos = coleta.avisos
         return _passo.executar(
             step.id, step.descricao,
             lambda: self._despachar(step, coleta),
@@ -153,6 +156,8 @@ class Executor:
             self._esperar(step.argumento, coleta)
         elif step.verbo == "clicar":
             self.acoes.clicar(step.argumento)
+        elif step.verbo == "clicar_duas_vezes":
+            self.acoes.clicar_duas_vezes(step.argumento)
         elif step.verbo == "teclar":
             self.acoes.teclar(self.interpolador.resolver(step.argumento))
         elif step.verbo == "ler_resultado":

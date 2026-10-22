@@ -536,7 +536,13 @@ def cmd_send(args):
 
 def cmd_mapear(args):
     from vtae.cli.mapear import mapear
-    mapear(args.objetos, args.templates)
+    from vtae.core.exceptions import ConfigError
+    try:
+        mapear(args.objetos, args.templates)
+    except (ConfigError, ValueError) as erro:
+        # Arquivo de objetos mal escrito: mensagem limpa, sem traceback.
+        print(f"\n[mapear] Nada foi gravado.\n{erro}\n")
+        sys.exit(2)
 
 
 def cmd_executar(args):

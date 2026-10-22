@@ -5,6 +5,7 @@ from PIL import Image, ImageDraw
 
 from vtae.cli.mapear import (anexar, contar_ocorrencias, montar_entrada,
                              preparar_arquivo)
+from vtae.core.exceptions import ConfigError
 from vtae.core.object_repository import ObjectRepository
 
 
@@ -79,3 +80,26 @@ def test_titulo_so_e_preenchido_se_vazio(tmp_path):
     assert definir_titulo_se_vazio(arq, "Menu Principal")
     assert not definir_titulo_se_vazio(arq, "Outra")
     assert 'titulo_janela: "Menu Principal"' in arq.read_text(encoding="utf-8")
+
+# 25/09: blocos colados sem 'objetos:' e com recuo misto davam traceback do yaml.
+COLADO_SEM_CABECALHO = (
+    "campo_user:\n"
+    "    tipo: texto\n"
+    "\n"
+    "  campo_senha:\n"
+    "    tipo: texto\n")
+
+
+def test_mapear_em_arquivo_mal_escrito_explica_o_formato(tmp_path):
+    arq = tmp_path / "objects/sis/cadastro.yaml"
+    arq.parent.mkdir(parents=True)
+    arq.write_text(COLADO_SEM_CABECALHO, encoding="utf-8")
+    with pytest.raises(ConfigError, match="linha 4"):
+        preparar_arquivo(arq)
+
+
+def test_executar_com_objetos_mal_escritos_explica_o_formato(tmp_path):
+    arq = tmp_path / "cadastro.yaml"
+    arq.write_text(COLADO_SEM_CABECALHO, encoding="utf-8")
+    with pytest.raises(ConfigError, match="objetos:"):
+        ObjectRepository.from_yaml(str(arq))

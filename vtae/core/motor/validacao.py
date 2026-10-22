@@ -63,7 +63,7 @@ def _do_step(step, objetos, registro, dados) -> list[str]:
     if step.verbo == "salvar":
         return _do_salvar(step.argumento, onde, objetos)
 
-    if step.verbo == "clicar":
+    if step.verbo in ("clicar", "clicar_duas_vezes"):
         return _do_alcancavel(step.argumento, onde, objetos)
 
     if step.verbo == "esperar":

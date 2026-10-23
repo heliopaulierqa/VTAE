@@ -1,22 +1,25 @@
 # VTAE — Visual Test Automation Engine
 
-> Framework híbrido de automação de testes baseado em Visão Computacional + IA  
-> para sistemas web modernos, legados desktop e ambientes híbridos.
+> Framework de automação de testes baseado em Visão Computacional + OCR,
+> genérico para qualquer sistema com tela: desktop, legado, Citrix e web.
 
 ![Python](https://img.shields.io/badge/Python-3.13%2B-blue)
-![Versão](https://img.shields.io/badge/versão-0.5.13-purple)
-![Testes](https://img.shields.io/badge/testes-297%20unitários-green)
-![Fase](https://img.shields.io/badge/fase-B%20—%20Observabilidade%20campos%20texto-brightgreen)
+![Versão](https://img.shields.io/badge/versão-0.5.49-purple)
+![Testes](https://img.shields.io/badge/testes-952%20unitários-green)
+![Fase](https://img.shields.io/badge/fase-2%20—%20Formato%20declarativo-brightgreen)
 
 ---
 
 ## O que é o VTAE
 
-Framework híbrido de automação de testes que combina visão computacional (OpenCV),
+Framework de automação de testes que combina visão computacional (OpenCV),
 controle de browser (Playwright) e OCR (EasyOCR) para interagir com qualquer sistema
 como um usuário humano faria.
 
 **Palavra-chave: CONFIANÇA.** Teste que executa sem validar resultado é script, não teste.
+
+**Independente de sistema.** Nada no núcleo depende de um sistema específico.
+SI3, SisLab e MSI3 são campos de prova reais, não referência de design.
 
 Ideal para:
 - Sistemas legados desktop sem API de automação (Oracle Forms, Citrix)
@@ -32,7 +35,7 @@ Ideal para:
 | Python | 3.13+ | Única dependência de SO |
 | Git | qualquer | Para clonar o repositório |
 | Resolução | 1920x1080 | Coordenadas calibradas nessa resolução |
-| SI3 | aberto e maximizado | Antes de rodar testes desktop |
+| Sistema sob teste | aberto e maximizado | Antes de mapear ou executar |
 
 > ✅ **Tesseract removido na v0.5.11** — EasyOCR instalado via pip, sem dependência de SO.
 
@@ -73,9 +76,14 @@ playwright install chromium
 
 > ⚠️ EasyOCR baixa modelos (~200MB) na primeira execução. Segunda execução usa cache.
 
+> ⚠️ `pip install -e .` e o `.venv` **guardam o caminho absoluto da pasta**.
+> Se a pasta do projeto for movida ou renomeada, veja
+> [Problemas comuns](#problemas-comuns).
+
 ### 4. Configurar credenciais
 
-Cada jornada tem seu próprio `.env`. **Nunca commitar no Git.**
+Cada teste tem seu `.env` na pasta de dados (`configs/<sistema>/<funcionalidade>/`).
+**Nunca commitar no Git.**
 
 ```bash
 # configs/si3/si3_cadastro_paciente/.env
@@ -83,21 +91,11 @@ SI3_USER=seu_usuario
 SI3_PASS=sua_senha
 SI3_PACIENTE_ID=        # vazio = cadastra novo; preenchido = reutiliza
 
-# configs/si3/si3_internacao/.env
-SI3_USER=seu_usuario
-SI3_PASS=sua_senha
-SI3_PACIENTE_ID=
-
-# configs/si3/si3_ambulatorio/.env
-SI3_USER=seu_usuario
-SI3_PASS=sua_senha
-SI3_PACIENTE_ID=
-
 # configs/msi3/.env
 MSI3_USER=seu_usuario
 MSI3_PASS=sua_senha
 
-# .env na raiz (pyjab — JAVA_HOME de mentira para Access Bridge)
+# .env na raiz (opcional — pyjab, JAVA_HOME de mentira para Access Bridge)
 SI3_JAB_HOME_FAKE=C:\jab_home
 ```
 
@@ -106,49 +104,105 @@ SI3_JAB_HOME_FAKE=C:\jab_home
 ### 5. Verificar instalação
 
 ```bash
-# EasyOCR
-python -c "from src.vision.ocr import OcrHelper; print('EasyOCR OK')"
+# Pacote instalado e apontando para ESTA pasta
+python -c "import vtae; print(vtae.__file__)"
 
-# Testes unitários (deve passar 297, 76 falhas conhecidas pré-existentes)
-python -m pytest tests/unit/ -v
+# Testes unitários (952 passando em 25/09/2026)
+python -m pytest tests/unit/
 
 # CLI
 vtae systems
 ```
 
-### 6. Primeiro teste
+O caminho impresso pelo primeiro comando precisa ser o da pasta atual do projeto.
 
-Abra o SI3 maximizado na tela principal e execute:
+---
+
+## Criar um teste — caminho atual
+
+Passo a passo completo: **VTAE_Manual_Criacao_Testes, §0** (do zero ao gate).
 
 ```bash
-vtae run --test cadastro_paciente_jornada
+# 1. Mapear os elementos da tela (5 s para deixar a tela na frente)
+vtae mapear objects/<sistema>/<funcionalidade>.yaml
+
+# 2. Escrever o roteiro em flows/<sistema>/<funcionalidade>.yaml
+#    com os verbos genéricos: abrir, esperar, clicar, teclar,
+#    preencher, verificar, salvar, ler_resultado
+
+# 3. Executar uma vez
+vtae executar flows/<sistema>/<funcionalidade>.yaml
+
+# 4. Gate: 3 execuções seguidas, para na primeira falha
+vtae executar flows/<sistema>/<funcionalidade>.yaml --vezes 3
 ```
+
+Regras:
+- Uma pasta por sistema, um arquivo por funcionalidade (em `objects/` e em `flows/`).
+- Elementos do caminho até a tela (menu, busca, popup) vão no arquivo de objetos do próprio roteiro.
+- A prova de cada passo tem que ser **exclusiva da tela depois da ação** — o recorte não pode aparecer na tela anterior.
+- O gate não fecha com degradação (template caiu para coordenada).
 
 ---
 
 ## CLI — comandos disponíveis
 
 ```bash
-# Jornadas completas
-vtae run --jornada internacao
-vtae run --jornada ambulatorio
-vtae run --jornada ambulatorio_com_agendamento
-vtae run --jornada internacao --repeat 3
-
-# Testes individuais
-vtae run --test cadastro_paciente_jornada
-vtae run --test admissao_internacao_jornada
-vtae run --test admissao_ambulatorio_jornada
-vtae run --test agendamento_jornada
-vtae run --test cadastro_funcionario
+# Caminho atual (decisão 26)
+vtae mapear objects/<sistema>/<tela>.yaml       # mapear elementos de uma tela
+vtae executar flows/<sistema>/<roteiro>.yaml    # rodar qualquer roteiro
+vtae executar flows/<sistema>/<roteiro>.yaml --vezes 3   # gate
 
 # Utilitários
-vtae systems          # lista sistemas detectados
+vtae systems            # lista sistemas detectados
 vtae flakiness --top 5  # top steps mais flaky
-vtae clean --days 7   # limpa evidências antigas
-vtae summary          # relatório gerencial
-vtae metrics          # métricas de cobertura
+vtae clean --days 7     # limpa evidências antigas
+vtae summary            # relatório gerencial
+vtae metrics            # métricas de cobertura
+
+# Acervo histórico (testes em Python — só consulta, sem gate)
+vtae run --test cadastro_paciente_jornada
+vtae run --jornada internacao
 ```
+
+---
+
+## Problemas comuns
+
+### `ModuleNotFoundError: No module named 'vtae'` ou `Fatal error in launcher: Unable to create process` depois de mover/renomear a pasta
+
+**Causa:** `pip install -e .` não copia o código — registra o caminho da pasta.
+O `.venv` também guarda o caminho absoluto de onde foi criado. Movendo ou
+renomeando qualquer pasta do caminho, os dois passam a apontar para um lugar
+que não existe.
+
+**Correção** (na pasta nova):
+
+```powershell
+# 1. Sair do .venv antigo e apagá-lo (o pip.exe dele aponta para a pasta velha)
+deactivate
+Remove-Item -Recurse -Force .venv
+
+# 2. Recriar o ambiente virtual
+python -m venv .venv
+.venv\Scripts\activate
+python -m pip install -r requirements.txt
+python -m pip install -e .
+playwright install chromium
+```
+
+> Use `python -m pip` em vez de `pip`: o `pip.exe` grava o caminho do Python
+> de onde foi criado; `python -m pip` usa sempre o Python ativo.
+
+**Conferir:**
+
+```powershell
+python -c "import sys; print(sys.prefix)"        # deve mostrar ...\VTAE\.venv da pasta nova
+python -c "import vtae; print(vtae.__file__)"    # deve mostrar ...\VTAE\vtae\__init__.py da pasta nova
+```
+
+> O prompt mostrar `(.venv)` não garante nada: o `activate` de um `.venv`
+> antigo ativa o caminho velho. Confie no `sys.prefix`.
 
 ---
 
@@ -157,33 +211,28 @@ vtae metrics          # métricas de cobertura
 ```
 VTAE/
 ├── vtae/                    O MOTOR — código genérico do framework
-│   ├── core/                FlowContext, StepResult, Observer, estado_jornada
+│   ├── cli/                 vtae mapear, vtae executar, vtae run...
+│   ├── core/                FlowContext, ObjectRepository, motor declarativo
 │   ├── vision/              TemplateMatcher (multi-scale) + OcrEngine (EasyOCR)
-│   ├── runners/             OpenCVRunner, PlaywrightRunner
-│   ├── flows/               BaseFlow + flows por sistema
+│   ├── runners/             OpenCVRunner, PlaywrightRunner, DatabaseRunner, jab_reader
+│   ├── flows/               flows Python do acervo histórico
 │   └── report/              observer.py, report_generator.py, summary_generator.py
 │
-├── objects/                 Modelo de Elemento — YAML por tela (ObjectRepository)
+├── flows/                   Roteiros YAML — um arquivo por funcionalidade
+├── objects/                 Modelo de Elemento — YAML por tela (gerado pelo vtae mapear)
 ├── configs/                 Dados de teste por funcionalidade (config.yaml + .env)
-├── templates/               PNGs para template matching
+├── templates/               PNGs para template matching (gerados pelo vtae mapear)
 ├── tests/
-│   ├── unit/                297 testes com mock — rodam sem SI3 aberto
-│   └── integration/
-│       └── si3/jornadas/    testes contra o sistema real
+│   ├── unit/                testes com mock — rodam sem sistema aberto
+│   └── integration/         testes do acervo histórico contra o sistema real
 ├── scripts/
 │   ├── posicao_mouse.py     capturar coordenadas x,y na tela
 │   ├── testar_regiao_ocr.py calibrar região OCR — ver o que o EasyOCR lê
 │   └── diagnose_contra_arquivo.py  medir score de template vs screenshot
-├── docs/                    documentação do projeto
-│   ├── VTAE_Projeto_v1.docx       o leme — visão total e fases
-│   ├── VTAE_Manual_Tecnico_v1.md  como cada arquivo funciona
-│   ├── VTAE_Roadmap_v0.1.md       checklist de direção
-│   └── VTAE_Manual_Criacao_Testes_v0.1.md  passo a passo
-├── VTAE_Prompt_Instrucao_v0.5.13.md  registro operacional de sessão
+├── docs/                    os quatro documentos do projeto (ver abaixo)
 ├── README.md                este arquivo
 └── evidence/                gerado automaticamente ao rodar testes
     ├── flakiness.json       histórico pass/fail por step
-    ├── estado_jornada.json  paciente_id entre steps da jornada
     └── YYYY-MM-DD/
         └── <teste>/
             ├── execution.log    log estruturado
@@ -193,17 +242,30 @@ VTAE/
 
 ---
 
-## Sistemas automatizados
+## Campos de prova
 
-| Sistema | Tipo | Runner | Status |
-|---|---|---|---|
-| SI3 | Desktop Oracle Forms | OpenCVRunner | ✅ Login, CadastroPaciente, AdmissaoInternacao, AdmissaoAmbulatorio, Agendamento |
-| SisLab | Desktop Oracle Forms | OpenCVRunner | ✅ Login, CadastroFuncionario |
-| MSI3 | Web Oracle APEX 23.1 | Playwright+OpenCV | ✅ Login, FrequenciaAplicacao, TipoAnestesia |
+| Sistema | Tipo | Estado |
+|---|---|---|
+| SI3 | Oracle Forms → login migrado para APEX (10/2026) | Login: gate 3/3 em 25/09 (Forms); refazendo no APEX. Próximo: cadastro |
+| SauceDemo | Web | Bancada web — a montar |
+| SisLab | Desktop Oracle Forms | Exploração (trilha paralela, sem gate) |
+| MSI3 | Web Oracle APEX | Candidata a terceira bancada (decisão 21) |
+
+> Os testes estão sendo refeitos do zero (10/2026) com `vtae mapear` + roteiro YAML.
+> O piloto CadastroMin foi removido.
+>
+> Os testes em Python de SI3, SisLab e MSI3 (cadastro de paciente, admissões,
+> agendamento, cadastro de funcionário, frequência de aplicação, tipo de anestesia)
+> são **acervo histórico**: ficam para consulta, sem calibração nem gate.
 
 ---
 
-## Padrão de validação por tipo de campo
+## Referência — padrões do acervo histórico
+
+Usados nos flows Python antigos. Ficam como consulta; testes novos usam os
+verbos genéricos do roteiro YAML.
+
+### Validação por tipo de campo
 
 | Tipo | Método | O que prova |
 |---|---|---|
@@ -213,33 +275,11 @@ VTAE/
 | Navegação / clique | `confirm_template` | Tela destino apareceu |
 | Web (APEX/MSI3) | `verify_fill_web` via DOM | Sem OCR — lê direto do DOM |
 
-### Como calibrar uma região OCR
-
-1. Rodar o teste — abrir o screenshot do step no Paint
-2. Cursor no canto **superior-esquerdo** do campo preenchido → anotar x1, y1
-3. Cursor no canto **inferior-direito** do campo preenchido → anotar x2, y2
-4. Atualizar `regioes_ocr` no `config.yaml`
-5. Rodar — verificar `[verify_lov] OK — campo preenchido: 'VALOR'` no log
-6. Abrir `report.html` — confirmar `OCR leu: VALOR` no badge do step
-
-```yaml
-# config.yaml — regioes_ocr
-regioes_ocr:
-  nome_social: { x1: 18, y1: 148, x2: 350, y2: 162 }  # habilitado ✅
-  nr_admissao: { x1: 0, y1: 0, x2: 0, y2: 0 }          # bootstrap — desabilitado
-```
-
----
-
-## Padrões Oracle Forms
+### Padrões Oracle Forms
 
 | Situação | Estratégia |
 |---|---|
 | Transição de tela crítica | `_clicar_aguardar(acao, confirmacao)` — nunca sleep fixo |
-| Campo texto livre | `verify_lov` com região calibrada |
-| Campo numérico | `verify_fill` com região calibrada |
-| LOV resultado único | OK direto (sem busca) |
-| LOV com lista | digita → Localizar → `double_click` |
 | Campo com acento | `type_text()` obrigatório |
 | Salvar | **F10** (nunca Ctrl+S) |
 | Navegar módulo | Localizar no Menu → Pesquisar → Não → `double_click` |
@@ -251,30 +291,36 @@ regioes_ocr:
 
 | Arquivo | Para quem | Conteúdo |
 |---|---|---|
-| `report.html` | Dev / QA | Screenshots por step, badge ✔ VALIDADO, OCR leu: valor, histórico flakiness |
-| `execution.json` | CI/CD | Dados estruturados — step_id, duration_ms, ocr_lido, causa_falha |
-| `execution.log` | Dev | Log com timestamps — inclui [verify_lov] e [verify_fill] |
+| `report.html` | Dev / QA | Screenshots por step, badge ✔ VALIDADO, OCR leu: valor |
+| `execution.json` | CI/CD | Dados estruturados — step_id, duration_ms, ocr_lido, causa_falha, avisos de degradação |
+| `execution.log` | Dev | Log com timestamps — inclui avisos de degradação |
 | `summary/summary_*.html` | Gestor | Verde/vermelho por jornada, sem ruído técnico |
 | `flakiness.json` | QA | Histórico acumulado — taxa de falha e duração por step |
+
+> ⚠️ Dívida conhecida: avisos de degradação ainda **não** aparecem no `report.html` —
+> conferir no `execution.log` ou no `execution.json`.
 
 ---
 
 ## Documentação
 
-| Documento | Localização | Papel |
-|---|---|---|
-| VTAE_Projeto_v1.docx | docs/ | O leme — visão total, todas as fases A→H |
-| VTAE_Manual_Tecnico_v1.md | docs/ | Como cada arquivo funciona, linha a linha |
-| VTAE_Roadmap_v0.1.md | docs/ | Checklist de direção — evolui a cada fase |
-| VTAE_Manual_Criacao_Testes_v0.1.md | docs/ | Passo a passo para criar novos testes |
-| VTAE_Prompt_Instrucao_v0.5.13.md | raiz | Registro operacional — contexto para novo chat |
+Fonte da verdade: os quatro documentos em `docs/`. Em conflito, o Projeto vence.
+
+| Documento | Papel |
+|---|---|
+| VTAE_Roadmap.docx | **Ler primeiro** — onde o trabalho parou e o próximo passo |
+| VTAE_Projeto.docx | O leme — visão total, fases 1–6, decisões |
+| VTAE_Manual_Criacao_Testes.docx | Passo a passo para criar testes (§0: do zero ao gate) |
+| VTAE_Manual_Tecnico.docx | Como cada parte do framework funciona |
+
+A versão de cada documento vive dentro dele, nunca no nome do arquivo.
 
 ---
 
 ## Ambiente virtual — referência rápida
 
 ```bash
-# Criar (uma vez por máquina)
+# Criar (uma vez por máquina — e de novo se a pasta for movida)
 python -m venv .venv
 
 # Ativar (sempre antes de trabalhar)
@@ -283,6 +329,9 @@ source .venv/bin/activate    # Linux/Mac
 
 # Instalar
 pip install -r requirements.txt && pip install -e . && playwright install chromium
+
+# Conferir qual Python está em uso
+python -c "import sys; print(sys.prefix)"
 
 # Desativar
 deactivate

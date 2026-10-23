@@ -1,13 +1,12 @@
-# Dados do teste de login
+# O VTAE exige estas linhas em todo config. Copie como estao.
 tipo: desktop
 runner: opencv
 ambientes:
   dev:
     url: ''
 
-
-# Usuario e senha vem do .env desta pasta — nunca escritos aqui.
+# Usuario e senha vem do .env (proximo arquivo) — nunca escritos aqui.
 # No roteiro eles viram {dado:usuario} e {dado:senha}.
 credenciais:
-  usuario: ${SI3_USUARIO}
-  senha:   ${SI3_SENHA}
+  usuario: ${MEU_SISTEMA_USUARIO}
+  senha:   ${MEU_SISTEMA_SENHA}
